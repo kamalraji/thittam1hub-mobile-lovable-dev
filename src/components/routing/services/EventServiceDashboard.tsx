@@ -5,6 +5,7 @@ import { PageHeader } from '../PageHeader';
 import { useEventManagementPaths } from '@/hooks/useEventManagementPaths';
 import { useEventManagementMetrics, DashboardEventRow } from '@/hooks/useEventManagementMetrics';
 import { OrganizerBreadcrumbs } from '@/components/organization/OrganizerBreadcrumbs';
+import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
 
 /**
  * EventServiceDashboard provides the AWS-style service landing page for Event Management.
@@ -89,10 +90,9 @@ export const EventServiceDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <OrgPageWrapper>
       <OrganizerBreadcrumbs current="event-management" />
-      <main className="px-2 sm:px-4 lg:px-6 py-4 sm:py-6">
-        <div className="w-full space-y-6 sm:space-y-8">
+      <div className="space-y-6 sm:space-y-8">
           {/* Page Header */}
           <PageHeader
             title="Event Management"
@@ -428,7 +428,6 @@ export const EventServiceDashboard: React.FC = () => {
             </div>
           </section>
         </div>
-      </main>
-    </div>
+    </OrgPageWrapper>
   );
 };

@@ -4,6 +4,7 @@ import { useOrganizationAnalytics, useOrganizationEvents } from '@/hooks/useOrga
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, UsersIcon, TrophyIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { OrganizationBreadcrumbs } from '@/components/organization/OrganizationBreadcrumbs';
+import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
 
 interface OrganizationAnalyticsDashboardProps {
   organizationId?: string;
@@ -30,7 +31,7 @@ export const OrganizationAnalyticsDashboard: React.FC<OrganizationAnalyticsDashb
   ];
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <OrgPageWrapper className="space-y-5 sm:space-y-6">
       <div className="space-y-2">
         <OrganizationBreadcrumbs
           items={[
@@ -66,6 +67,6 @@ export const OrganizationAnalyticsDashboard: React.FC<OrganizationAnalyticsDashb
           </Card>
         ))}
       </div>
-    </div>
+    </OrgPageWrapper>
   );
 };

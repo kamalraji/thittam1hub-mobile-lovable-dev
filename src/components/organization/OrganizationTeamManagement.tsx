@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { UserPlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useToast } from '@/hooks/use-toast';
+import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
 
 export const OrganizationTeamManagement: React.FC = () => {
   const organization = useCurrentOrganization();
@@ -69,7 +70,7 @@ export const OrganizationTeamManagement: React.FC = () => {
   }
 
   return (
-     <div className="space-y-6">
+    <OrgPageWrapper className="space-y-6">
        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
          <div>
            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Team Management</h2>
@@ -185,7 +186,7 @@ export const OrganizationTeamManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </OrgPageWrapper>
   );
 };
 

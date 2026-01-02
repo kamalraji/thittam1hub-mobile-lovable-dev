@@ -11,6 +11,7 @@ import { useEventCreatePath } from '@/hooks/useEventCreatePath';
 import { OrgRoleAccessBanner } from '@/components/organization/OrgRoleAccessBanner';
 import { useEventManagementMetrics } from '@/hooks/useEventManagementMetrics';
 import { OrganizerBreadcrumbs } from '@/components/organization/OrganizerBreadcrumbs';
+import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
 
 interface Event {
     id: string;
@@ -167,12 +168,12 @@ export function OrganizerDashboard() {
     const isSummaryLoading = isLoading && isHealthy !== false;
 
     return (
-        <div className="min-h-screen bg-background">
+        <OrgPageWrapper>
             {/* Breadcrumb */}
             <OrganizerBreadcrumbs current="dashboard" />
 
             {/* Hero with glassmorphic organization summary */}
-            <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <section className="mt-4">
                 <div className="relative overflow-hidden rounded-3xl shadow-xl min-h-[150px] sm:min-h-[200px]">
                     {/* Themed gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-background to-primary/5" />
@@ -623,6 +624,6 @@ export function OrganizerDashboard() {
                     </section>
                 )}
             </main>
-        </div>
+        </OrgPageWrapper>
     );
 }
