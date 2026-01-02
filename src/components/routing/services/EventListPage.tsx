@@ -30,10 +30,11 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
   const [modeFilter, setModeFilter] = useState<EventMode | 'ALL'>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
+  const [ownershipFilter, setOwnershipFilter] = useState<'all' | 'mine'>('all');
 
   // Load events scoped by organization or user's personal events
   const { data: events = [] } = useQuery<Event[]>({
-    queryKey: ['organizer-events', filterBy, organization?.id ?? 'personal', user?.id],
+    queryKey: ['organizer-events', filterBy, organization?.id ?? 'personal', user?.id, ownershipFilter],
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -45,6 +46,10 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
       // Filter by organization if in org context, otherwise show user's personal events
       if (organization?.id) {
         query = query.eq('organization_id', organization.id);
+        // Apply ownership filter only in org context
+        if (ownershipFilter === 'mine') {
+          query = query.eq('owner_id', user?.id ?? '');
+        }
       } else {
         // Personal events: owned by user and no organization
         query = query.is('organization_id', null).eq('owner_id', user?.id ?? '');
@@ -199,10 +204,26 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
     onChange: setModeFilter,
   };
 
+  const ownershipFilterConfig = {
+    id: 'ownership',
+    label: 'Events',
+    type: 'select' as const,
+    value: ownershipFilter,
+    options: [
+      { label: 'All Events', value: 'all' },
+      { label: 'My Events', value: 'mine' },
+    ],
+    onChange: setOwnershipFilter,
+  };
+
+  // Only show ownership filter when in org context
+  const baseFilters = [searchFilter, statusFilterConfig, modeFilterConfig];
   const filters =
     filterBy === 'templates'
       ? [searchFilter]
-      : [searchFilter, statusFilterConfig, modeFilterConfig];
+      : organization?.id
+        ? [...baseFilters, ownershipFilterConfig]
+        : baseFilters;
 
   const viewControls =
     filterBy === 'templates'
