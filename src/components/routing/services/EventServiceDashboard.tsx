@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '../PageHeader';
@@ -7,6 +7,8 @@ import { useEventManagementMetrics, DashboardEventRow } from '@/hooks/useEventMa
 import { OrganizerBreadcrumbs } from '@/components/organization/OrganizerBreadcrumbs';
 import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
 import { useOptionalOrganization } from '@/components/organization/OrganizationContext';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 /**
  * EventServiceDashboard provides the AWS-style service landing page for Event Management.
@@ -19,6 +21,7 @@ import { useOptionalOrganization } from '@/components/organization/OrganizationC
 export const EventServiceDashboard: React.FC = () => {
   const { user } = useAuth();
   const organization = useOptionalOrganization();
+  const [onlyMine, setOnlyMine] = useState(false);
   const { createPath, listPath, eventDetailPath, eventEditPath } = useEventManagementPaths();
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export const EventServiceDashboard: React.FC = () => {
     canonical.setAttribute('href', window.location.href);
   }, []);
 
-  const { events, registrationsByEvent, metrics } = useEventManagementMetrics(organization?.id);
+  const { events, registrationsByEvent, metrics } = useEventManagementMetrics(organization?.id, onlyMine);
 
   const analyticsPath = listPath.startsWith('/dashboard')
     ? '/dashboard/analytics'
@@ -109,6 +112,20 @@ export const EventServiceDashboard: React.FC = () => {
                 Welcome back, <span className="font-semibold">{user.name}</span>! Ready to manage your
                 events?
               </p>
+            </div>
+          )}
+
+          {/* Ownership Toggle - only show in org context */}
+          {organization?.id && (
+            <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-3 sm:p-4">
+              <Switch
+                id="only-mine-toggle"
+                checked={onlyMine}
+                onCheckedChange={setOnlyMine}
+              />
+              <Label htmlFor="only-mine-toggle" className="text-sm text-muted-foreground cursor-pointer">
+                Show only my created events
+              </Label>
             </div>
           )}
 

@@ -22,15 +22,16 @@ export type EventManagementMetrics = {
  * Shared data hook for Event Management dashboards.
  *
  * - Fetches recent events scoped by organization or user's personal events
+ * - Optionally filters to only user-owned events (onlyMine)
  * - Aggregates registrations per event
  * - Exposes summary metrics for tiles / widgets
  */
-export const useEventManagementMetrics = (organizationId?: string) => {
+export const useEventManagementMetrics = (organizationId?: string, onlyMine?: boolean) => {
   const { user } = useAuth();
 
   // Prefetch recent events - scoped by org or user's personal events
   const { data: events } = useQuery<DashboardEventRow[]>({
-    queryKey: ['event-service-dashboard-events', organizationId ?? 'personal', user?.id],
+    queryKey: ['event-service-dashboard-events', organizationId ?? 'personal', user?.id, onlyMine ?? false],
     queryFn: async () => {
       let query = supabase
         .from('events')
@@ -41,6 +42,10 @@ export const useEventManagementMetrics = (organizationId?: string) => {
       if (organizationId) {
         // Scoped to specific organization
         query = query.eq('organization_id', organizationId);
+        // Apply ownership filter if requested
+        if (onlyMine) {
+          query = query.eq('owner_id', user?.id ?? '');
+        }
       } else {
         // Personal events: owned by user with no organization
         query = query.is('organization_id', null).eq('owner_id', user?.id ?? '');
@@ -65,6 +70,7 @@ export const useEventManagementMetrics = (organizationId?: string) => {
       'event-service-dashboard-registrations',
       organizationId ?? 'personal',
       user?.id,
+      onlyMine ?? false,
       (events ?? []).map((e) => e.id),
     ],
     enabled: !!events && events.length > 0,
