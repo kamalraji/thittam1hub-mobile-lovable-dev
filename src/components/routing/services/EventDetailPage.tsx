@@ -16,6 +16,7 @@ import {
   MapPinIcon,
   GlobeAltIcon,
   CogIcon,
+  PaintBrushIcon,
 } from '@heroicons/react/24/outline';
 import { AttendanceList } from '@/components/attendance';
 import { supabase } from '@/integrations/supabase/looseClient';
@@ -127,10 +128,16 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ defaultTab = '
     ...(canManage
       ? [
         {
+          label: 'Edit Landing Page',
+          action: () => (window.location.href = `/console/events/${eventId}/page-builder`),
+          icon: PaintBrushIcon,
+          variant: 'primary' as const,
+        },
+        {
           label: 'Edit Event',
           action: () => (window.location.href = `/console/events/${eventId}/edit`),
           icon: PencilIcon,
-          variant: 'primary' as const,
+          variant: 'secondary' as const,
         },
       ]
       : []),
