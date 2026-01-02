@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useMyMemberOrganizations } from '@/hooks/useOrganization';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Sidebar,
   SidebarContent,
@@ -27,16 +28,22 @@ import { Home, ChevronDown, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   MobileSidebarHeader,
+  SidebarUserFooter,
   orgServices,
   sidebarStyles,
 } from '@/components/sidebar';
 
-export const OrganizerSidebar: React.FC = () => {
+interface OrganizerSidebarProps {
+  onLogout?: () => void;
+}
+
+export const OrganizerSidebar: React.FC<OrganizerSidebarProps> = ({ onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const { user } = useAuth();
 
   const { data: memberOrganizations, isLoading } = useMyMemberOrganizations();
 
@@ -45,6 +52,14 @@ export const OrganizerSidebar: React.FC = () => {
   const handleOrgChange = (org: { slug: string }) => {
     navigate(`/${org.slug}/dashboard`);
   };
+
+  // Transform user for footer
+  const userInfo = user ? {
+    id: user.id,
+    email: user.email,
+    full_name: user.name,
+    avatar_url: undefined,
+  } : null;
 
   return (
     <Sidebar collapsible="offcanvas" className={sidebarStyles.sidebar}>
@@ -75,7 +90,7 @@ export const OrganizerSidebar: React.FC = () => {
         </SidebarHeader>
       )}
 
-      <SidebarContent className="px-2 py-3 space-y-2 overflow-y-auto">
+      <SidebarContent className="px-2 py-3 space-y-2 overflow-y-auto flex-1">
         {/* Organizer Dashboard CTA */}
         <SidebarGroup>
           <SidebarGroupContent>
@@ -240,6 +255,9 @@ export const OrganizerSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {/* User Profile Footer */}
+      <SidebarUserFooter user={userInfo} onLogout={onLogout} />
     </Sidebar>
   );
 };

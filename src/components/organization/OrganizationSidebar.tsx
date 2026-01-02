@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useCurrentOrganization } from './OrganizationContext';
 import { useMyMemberOrganizations } from '@/hooks/useOrganization';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Sidebar,
   SidebarContent,
@@ -21,12 +22,17 @@ import { cn } from '@/lib/utils';
 import {
   MobileSidebarHeader,
   SidebarNavGroup,
+  SidebarUserFooter,
   orgServices,
   adminMenuItems,
   sidebarStyles,
 } from '@/components/sidebar';
 
-export const OrganizationSidebar: React.FC = () => {
+interface OrganizationSidebarProps {
+  onLogout?: () => void;
+}
+
+export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({ onLogout }) => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -34,6 +40,7 @@ export const OrganizationSidebar: React.FC = () => {
   const isCollapsed = state === 'collapsed';
   const organization = useCurrentOrganization();
   const { data: memberOrganizations } = useMyMemberOrganizations();
+  const { user } = useAuth();
 
   const base = `/${orgSlug ?? ''}`.replace(/\/$/, '');
   const currentPath = location.pathname;
@@ -42,6 +49,14 @@ export const OrganizationSidebar: React.FC = () => {
   const handleOrgChange = (org: { slug: string }) => {
     navigate(`/${org.slug}/dashboard`);
   };
+
+  // Transform user for footer
+  const userInfo = user ? {
+    id: user.id,
+    email: user.email,
+    full_name: user.name,
+    avatar_url: undefined,
+  } : null;
 
   return (
     <Sidebar collapsible="offcanvas" className={sidebarStyles.sidebar}>
@@ -91,7 +106,7 @@ export const OrganizationSidebar: React.FC = () => {
         </SidebarHeader>
       )}
 
-      <SidebarContent className="px-2 py-3 space-y-2 overflow-y-auto">
+      <SidebarContent className="px-2 py-3 space-y-2 overflow-y-auto flex-1">
         {/* Back to Organizer Home */}
         <SidebarGroup>
           <SidebarGroupContent>
@@ -248,6 +263,9 @@ export const OrganizationSidebar: React.FC = () => {
           </SidebarGroup>
         )}
       </SidebarContent>
+
+      {/* User Profile Footer */}
+      <SidebarUserFooter user={userInfo} onLogout={onLogout} />
     </Sidebar>
   );
 };

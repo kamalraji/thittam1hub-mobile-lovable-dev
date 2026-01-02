@@ -9,6 +9,7 @@ import { OrganizationAnalyticsDashboard } from './OrganizationAnalyticsDashboard
 import { OrganizationTeamManagement } from './OrganizationTeamManagement';
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { OrganizationSidebar } from './OrganizationSidebar';
+import { SidebarOverlay } from '@/components/sidebar';
 import { ConsoleHeader } from '@/components/routing/ConsoleHeader';
 import { OrgSettingsDashboard } from './OrgSettingsDashboard';
 import { OrgStorySettingsPage } from './OrgStorySettingsPage';
@@ -83,7 +84,8 @@ export const OrgScopedLayout: React.FC = () => {
         <div className="relative min-h-screen w-full bg-gradient-to-br from-background via-background/95 to-background/90 overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.20),_transparent_55%),radial-gradient(circle_at_bottom,_hsl(var(--primary)/0.10),_transparent_55%)]" />
           <div className="relative flex w-full pt-16 items-stretch">
-            <OrganizationSidebar />
+            <SidebarOverlay />
+            <OrganizationSidebar onLogout={handleLogout} />
 
             <SidebarInset className="flex justify-center overflow-hidden w-full">
               <div className="mx-2 sm:mx-4 lg:mx-6 my-4 sm:my-6 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl rounded-2xl sm:rounded-3xl border border-border/60 bg-card/75 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 shadow-lg shadow-primary/20 backdrop-blur-xl animate-fade-in overflow-x-hidden">
