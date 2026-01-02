@@ -5,6 +5,8 @@ import { Event, EventStatus, EventMode, EventTemplate } from '../../../types';
 import { useEventManagementPaths } from '@/hooks/useEventManagementPaths';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
+import { useAuth } from '@/hooks/useAuth';
+import { useCurrentOrganization } from '@/components/organization/OrganizationContext';
 import api from '@/lib/api';
 import {
   PlusIcon,
@@ -20,6 +22,7 @@ interface EventListPageProps {
 
 export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { createPath, eventDetailPath, eventEditPath } = useEventManagementPaths();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'ALL'>('ALL');
@@ -27,17 +30,34 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
 
-  // Load events for the organizer from Supabase (RLS + active organization will scope visibility)
+  // Get organization context if in org scope
+  let organization: { id: string } | null = null;
+  try {
+    organization = useCurrentOrganization();
+  } catch {
+    // Not in org context - will use user-scoped events
+  }
+
+  // Load events scoped by organization or user
   const { data: events = [] } = useQuery<Event[]>({
-    queryKey: ['organizer-events', filterBy],
+    queryKey: ['organizer-events', filterBy, organization?.id ?? 'user', user?.id ?? 'none'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('events')
         .select(
-          'id, name, description, mode, start_date, end_date, capacity, visibility, status, created_at, updated_at, organization_id',
+          'id, name, description, mode, start_date, end_date, capacity, visibility, status, created_at, updated_at, organization_id, owner_id',
         )
         .order('start_date', { ascending: true });
 
+      if (organization?.id) {
+        // Filter by organization
+        query = query.eq('organization_id', organization.id);
+      } else if (user?.id) {
+        // Filter by user's personal events (no org, owned by user)
+        query = query.is('organization_id', null).eq('owner_id', user.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       return (data as any[]).map(
@@ -51,7 +71,7 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
             endDate: row.end_date,
             capacity: row.capacity ?? undefined,
             registrationDeadline: undefined,
-            organizerId: '',
+            organizerId: row.owner_id || '',
             visibility: row.visibility,
             branding: {},
             status: row.status as EventStatus,
@@ -61,7 +81,7 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
           } as Event),
       );
     },
-    enabled: filterBy !== 'templates',
+    enabled: filterBy !== 'templates' && !!(organization?.id || user?.id),
   });
 
   // Load event templates for the gallery view
