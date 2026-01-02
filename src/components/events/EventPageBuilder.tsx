@@ -2,17 +2,20 @@ import React from 'react';
 import 'grapesjs/dist/css/grapes.min.css';
 import { useParams } from 'react-router-dom';
 import { usePageBuilder } from './page-builder/usePageBuilder';
-import { PageBuilderHeader } from './page-builder/PageBuilderHeader';
+import { BuilderToolbar } from './page-builder/BuilderToolbar';
+import { LeftPanel } from './page-builder/LeftPanel';
+import { RightPanel } from './page-builder/RightPanel';
+import { CanvasArea } from './page-builder/CanvasArea';
 
 /**
  * EventPageBuilder
  *
- * Organizer-only GrapesJS-based landing page builder for events.
- * - Initializes a drag-and-drop editor with left blocks panel, center canvas, right styles panel
- * - Provides custom blocks (Hero, Schedule, Registration)
- * - Syncs default branding from the event's organization
- * - Saves HTML/CSS/meta into events.landing_page_data (jsonb)
- * - Manages a unique landing_page_slug per event
+ * Framer-inspired GrapesJS-based landing page builder for events.
+ * - Dark theme with professional design tools layout
+ * - Top toolbar with tools and actions
+ * - Left panel: Pages/Layers/Assets tabs
+ * - Center: Canvas with device/breakpoint controls
+ * - Right panel: Design/Prototype tabs with style management
  */
 export const EventPageBuilder: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
@@ -20,11 +23,9 @@ export const EventPageBuilder: React.FC = () => {
   const {
     containerRef,
     slug,
-    setSlug,
     loading,
     saving,
     device,
-    hasCustomLanding,
     handleDeviceChange,
     handlePreview,
     handleSave,
@@ -32,159 +33,223 @@ export const EventPageBuilder: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-background">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-[hsl(220,13%,6%)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading builder...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background overflow-hidden">
-      <PageBuilderHeader
-        slug={slug}
-        onSlugChange={setSlug}
-        device={device}
-        onDeviceChange={handleDeviceChange}
-        onPreview={handlePreview}
+    <div className="flex h-screen flex-col overflow-hidden bg-[hsl(220,13%,6%)]">
+      {/* Top Toolbar */}
+      <BuilderToolbar
+        projectName={slug || 'Event Page'}
         onSave={handleSave}
+        onPreview={handlePreview}
         saving={saving}
-        hasCustomLanding={hasCustomLanding}
-        eventId={eventId}
       />
 
+      {/* Main Content */}
       <div className="flex flex-1 min-h-0">
-        {/* Left Panel - Blocks */}
-        <aside className="w-56 flex-shrink-0 border-r border-border bg-card flex flex-col">
-          <div className="p-3 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Blocks</h3>
-            <p className="text-xs text-muted-foreground">Drag to add sections</p>
-          </div>
-          <div className="panel-blocks flex-1 overflow-y-auto p-2" />
-        </aside>
+        {/* Left Panel */}
+        <LeftPanel />
 
-        {/* Center - Canvas */}
-        <main className="flex-1 min-w-0 bg-muted/30 overflow-hidden">
-          <div 
-            ref={containerRef}
-            className="h-full w-full gjs-editor-container"
-          />
-        </main>
+        {/* Canvas Area */}
+        <CanvasArea
+          containerRef={containerRef}
+          device={device}
+          onDeviceChange={handleDeviceChange}
+        />
 
-        {/* Right Panel - Styles */}
-        <aside className="w-64 flex-shrink-0 border-l border-border bg-card flex flex-col">
-          <div className="p-3 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Styles</h3>
-            <p className="text-xs text-muted-foreground">Customize selected element</p>
-          </div>
-          <div className="panel-styles flex-1 overflow-y-auto p-2" />
-          <div className="p-3 border-t border-border">
-            <h3 className="text-sm font-semibold text-foreground">Layers</h3>
-            <p className="text-xs text-muted-foreground">Page structure</p>
-          </div>
-          <div className="panel-layers overflow-y-auto max-h-48 p-2" />
-        </aside>
+        {/* Right Panel */}
+        <RightPanel />
       </div>
 
-      {/* GrapesJS Custom Styles */}
+      {/* GrapesJS Custom Styles for dark theme */}
       <style>{`
+        /* Force dark theme on GrapesJS */
         .gjs-editor-container {
           position: relative;
+          background: hsl(220, 13%, 6%);
         }
         .gjs-editor {
           height: 100% !important;
+          background: hsl(220, 13%, 6%) !important;
         }
         .gjs-cv-canvas {
           width: 100% !important;
           height: 100% !important;
           top: 0 !important;
           left: 0 !important;
+          background: hsl(220, 13%, 6%) !important;
         }
         .gjs-frame-wrapper {
-          background-color: hsl(var(--background));
+          background-color: hsl(220, 13%, 12%);
+          border-radius: 8px;
+          overflow: hidden;
         }
-        /* Hide default GrapesJS panels - we use custom ones */
+        
+        /* Hide default GrapesJS panels */
         .gjs-pn-panels {
           display: none !important;
         }
+        
         /* Block styling */
         .gjs-block {
           width: 100%;
           min-height: auto;
-          padding: 0.75rem;
-          margin-bottom: 0.5rem;
-          border-radius: 0.5rem;
-          border: 1px solid hsl(var(--border));
-          background: hsl(var(--background));
+          padding: 10px;
+          margin-bottom: 8px;
+          border-radius: 6px;
+          border: 1px solid hsl(220, 13%, 18%);
+          background: hsl(220, 13%, 12%);
+          color: hsl(210, 40%, 98%);
           transition: all 0.15s ease;
         }
         .gjs-block:hover {
-          border-color: hsl(var(--primary));
-          background: hsl(var(--accent));
+          border-color: hsl(221, 83%, 53%);
+          background: hsl(220, 13%, 15%);
+        }
+        .gjs-block svg {
+          fill: hsl(215, 20%, 65%);
         }
         .gjs-block-label {
-          font-size: 0.75rem;
-          color: hsl(var(--foreground));
+          font-size: 11px;
+          color: hsl(210, 40%, 98%);
         }
+        
         /* Block categories */
         .gjs-block-category {
-          border-bottom: 1px solid hsl(var(--border));
+          border-bottom: 1px solid hsl(220, 13%, 18%);
+          background: transparent !important;
         }
         .gjs-block-category .gjs-title {
-          padding: 0.75rem;
-          font-size: 0.75rem;
+          padding: 10px 8px;
+          font-size: 11px;
           font-weight: 500;
-          color: hsl(var(--muted-foreground));
-          background: transparent;
+          color: hsl(215, 20%, 65%);
+          background: transparent !important;
           border: none;
         }
         .gjs-block-category .gjs-caret-icon {
-          color: hsl(var(--muted-foreground));
+          color: hsl(215, 20%, 65%);
         }
-        /* Style manager styling */
+        
+        /* Style manager */
         .gjs-sm-sector {
-          border-bottom: 1px solid hsl(var(--border));
+          border-bottom: 1px solid hsl(220, 13%, 18%);
+          background: transparent !important;
         }
         .gjs-sm-sector-title {
-          padding: 0.75rem;
-          font-size: 0.75rem;
+          padding: 10px;
+          font-size: 11px;
           font-weight: 500;
-          color: hsl(var(--foreground));
-          background: transparent;
+          color: hsl(210, 40%, 98%);
+          background: transparent !important;
           border: none;
         }
         .gjs-sm-properties {
-          padding: 0.5rem;
+          padding: 8px;
+          background: transparent !important;
         }
         .gjs-sm-property {
-          margin-bottom: 0.5rem;
+          margin-bottom: 8px;
         }
         .gjs-sm-label {
-          font-size: 0.7rem;
-          color: hsl(var(--muted-foreground));
+          font-size: 10px;
+          color: hsl(215, 20%, 65%);
         }
         .gjs-field {
-          background: hsl(var(--background));
-          border: 1px solid hsl(var(--border));
-          border-radius: 0.375rem;
-          color: hsl(var(--foreground));
+          background: hsl(220, 13%, 12%);
+          border: 1px solid hsl(220, 13%, 22%);
+          border-radius: 4px;
+          color: hsl(210, 40%, 98%);
+        }
+        .gjs-field:focus-within {
+          border-color: hsl(221, 83%, 53%);
         }
         .gjs-field input,
         .gjs-field select {
-          color: hsl(var(--foreground));
+          color: hsl(210, 40%, 98%);
+          background: transparent;
         }
-        /* Layer manager styling */
+        .gjs-field input::placeholder {
+          color: hsl(215, 20%, 45%);
+        }
+        
+        /* Color picker */
+        .gjs-sm-colorp-c {
+          background: hsl(220, 13%, 12%);
+          border: 1px solid hsl(220, 13%, 22%);
+          border-radius: 4px;
+        }
+        
+        /* Layer manager */
         .gjs-layer {
           background: transparent;
-          font-size: 0.75rem;
+          font-size: 11px;
+          color: hsl(210, 40%, 98%);
         }
         .gjs-layer-name {
-          color: hsl(var(--foreground));
+          color: hsl(210, 40%, 98%);
         }
         .gjs-layer:hover {
-          background: hsl(var(--accent));
+          background: hsl(220, 13%, 15%);
         }
         .gjs-layer.gjs-selected {
-          background: hsl(var(--primary) / 0.1);
+          background: hsl(221, 83%, 53% / 0.2);
+        }
+        .gjs-layer-title {
+          background: transparent !important;
+        }
+        
+        /* Trait manager */
+        .gjs-trt-trait {
+          padding: 8px 0;
+          border-bottom: 1px solid hsl(220, 13%, 18%);
+        }
+        .gjs-trt-trait .gjs-label {
+          color: hsl(215, 20%, 65%);
+          font-size: 10px;
+        }
+        
+        /* Selection highlight */
+        .gjs-selected {
+          outline: 2px solid hsl(221, 83%, 53%) !important;
+          outline-offset: -2px;
+        }
+        
+        /* Resize handles */
+        .gjs-resizer-h {
+          border-color: hsl(221, 83%, 53%);
+        }
+        
+        /* Toolbar floating */
+        .gjs-toolbar {
+          background: hsl(220, 13%, 15%);
+          border: 1px solid hsl(220, 13%, 22%);
+          border-radius: 6px;
+        }
+        .gjs-toolbar-item {
+          color: hsl(210, 40%, 98%);
+        }
+        .gjs-toolbar-item:hover {
+          color: hsl(221, 83%, 66%);
+        }
+        
+        /* Badge */
+        .gjs-badge {
+          background: hsl(221, 83%, 53%);
+          color: hsl(210, 40%, 98%);
+        }
+        
+        /* Placeholder when dragging */
+        .gjs-placeholder {
+          border-color: hsl(221, 83%, 53%);
+          background: hsl(221, 83%, 53% / 0.1);
         }
       `}</style>
     </div>
