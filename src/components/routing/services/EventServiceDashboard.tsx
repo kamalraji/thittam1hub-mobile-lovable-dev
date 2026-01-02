@@ -6,6 +6,7 @@ import { useEventManagementPaths } from '@/hooks/useEventManagementPaths';
 import { useEventManagementMetrics, DashboardEventRow } from '@/hooks/useEventManagementMetrics';
 import { OrganizerBreadcrumbs } from '@/components/organization/OrganizerBreadcrumbs';
 import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
+import { useOptionalOrganization } from '@/components/organization/OrganizationContext';
 
 /**
  * EventServiceDashboard provides the AWS-style service landing page for Event Management.
@@ -17,6 +18,7 @@ import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
  */
 export const EventServiceDashboard: React.FC = () => {
   const { user } = useAuth();
+  const organization = useOptionalOrganization();
   const { createPath, listPath, eventDetailPath, eventEditPath } = useEventManagementPaths();
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export const EventServiceDashboard: React.FC = () => {
     canonical.setAttribute('href', window.location.href);
   }, []);
 
-  const { events, registrationsByEvent, metrics } = useEventManagementMetrics();
+  const { events, registrationsByEvent, metrics } = useEventManagementMetrics(organization?.id);
 
   const analyticsPath = listPath.startsWith('/dashboard')
     ? '/dashboard/analytics'

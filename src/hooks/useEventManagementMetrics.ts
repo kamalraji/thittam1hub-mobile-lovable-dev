@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
+import { useAuth } from '@/hooks/useAuth';
 
 export type DashboardEventRow = {
   id: string;
@@ -20,23 +21,29 @@ export type EventManagementMetrics = {
 /**
  * Shared data hook for Event Management dashboards.
  *
- * - Fetches recent events (optionally scoped by organization)
+ * - Fetches recent events scoped by organization or user's personal events
  * - Aggregates registrations per event
  * - Exposes summary metrics for tiles / widgets
  */
 export const useEventManagementMetrics = (organizationId?: string) => {
-  // Prefetch recent events
+  const { user } = useAuth();
+
+  // Prefetch recent events - scoped by org or user's personal events
   const { data: events } = useQuery<DashboardEventRow[]>({
-    queryKey: ['event-service-dashboard-events', organizationId ?? 'all'],
+    queryKey: ['event-service-dashboard-events', organizationId ?? 'personal', user?.id],
     queryFn: async () => {
       let query = supabase
         .from('events')
-        .select('id, name, status, start_date, organization_id')
+        .select('id, name, status, start_date, organization_id, owner_id')
         .order('start_date', { ascending: false })
         .limit(10);
 
       if (organizationId) {
+        // Scoped to specific organization
         query = query.eq('organization_id', organizationId);
+      } else {
+        // Personal events: owned by user with no organization
+        query = query.is('organization_id', null).eq('owner_id', user?.id ?? '');
       }
 
       const { data, error } = await query;
@@ -49,13 +56,15 @@ export const useEventManagementMetrics = (organizationId?: string) => {
         start_date: row.start_date,
       })) as DashboardEventRow[];
     },
+    enabled: !!user?.id,
   });
 
   // Registrations grouped by event
   const { data: registrationsByEvent } = useQuery<Record<string, number>>({
     queryKey: [
       'event-service-dashboard-registrations',
-      organizationId ?? 'all',
+      organizationId ?? 'personal',
+      user?.id,
       (events ?? []).map((e) => e.id),
     ],
     enabled: !!events && events.length > 0,

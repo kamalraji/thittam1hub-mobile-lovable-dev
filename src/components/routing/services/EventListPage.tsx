@@ -6,6 +6,8 @@ import { useEventManagementPaths } from '@/hooks/useEventManagementPaths';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
 import api from '@/lib/api';
+import { useOptionalOrganization } from '@/components/organization/OrganizationContext';
+import { useAuth } from '@/hooks/useAuth';
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -20,6 +22,8 @@ interface EventListPageProps {
 
 export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const organization = useOptionalOrganization();
   const { createPath, eventDetailPath, eventEditPath } = useEventManagementPaths();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'ALL'>('ALL');
@@ -27,16 +31,26 @@ export const EventListPage: React.FC<EventListPageProps> = ({ filterBy }) => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
 
-  // Load events for the organizer from Supabase (RLS + active organization will scope visibility)
+  // Load events scoped by organization or user's personal events
   const { data: events = [] } = useQuery<Event[]>({
-    queryKey: ['organizer-events', filterBy],
+    queryKey: ['organizer-events', filterBy, organization?.id ?? 'personal', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('events')
         .select(
-          'id, name, description, mode, start_date, end_date, capacity, visibility, status, created_at, updated_at, organization_id',
+          'id, name, description, mode, start_date, end_date, capacity, visibility, status, created_at, updated_at, organization_id, owner_id',
         )
         .order('start_date', { ascending: true });
+
+      // Filter by organization if in org context, otherwise show user's personal events
+      if (organization?.id) {
+        query = query.eq('organization_id', organization.id);
+      } else {
+        // Personal events: owned by user and no organization
+        query = query.is('organization_id', null).eq('owner_id', user?.id ?? '');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
