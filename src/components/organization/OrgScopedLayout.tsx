@@ -85,8 +85,8 @@ export const OrgScopedLayout: React.FC = () => {
           <div className="relative flex w-full pt-16 items-stretch">
             <OrganizationSidebar />
 
-            <SidebarInset>
-              <div className="mx-4 my-6 w-full rounded-3xl border border-border/60 bg-card/75 px-4 py-6 shadow-lg shadow-primary/20 backdrop-blur-xl animate-fade-in">
+            <SidebarInset className="flex justify-center">
+              <div className="mx-4 my-6 w-full max-w-7xl rounded-3xl border border-border/60 bg-card/75 px-4 py-6 shadow-lg shadow-primary/20 backdrop-blur-xl animate-fade-in">
                 <Routes>
                   <Route path="dashboard" element={<OrganizerDashboard />} />
                   <Route path="settings" element={<Navigate to="settings/dashboard" replace />} />
