@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { AuthProvider, useAuth } from '../../hooks/useAuth';
@@ -33,6 +33,8 @@ import { PublicProfilePage } from '../profile/PublicProfilePage';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 import { OrganizerSpecificDashboard } from '../dashboard/OrganizerSpecificDashboard';
 import { OrganizerDashboardLayout } from '../dashboard/OrganizerDashboardLayout';
+import { ParticipantPortfolioPage } from '../portfolio/ParticipantPortfolioPage';
+import { PortfolioPreviewCard } from '../portfolio/PortfolioPreviewCard';
 import { OrganizationLandingPage } from '../organization/OrganizationLandingPage';
 import { OrganizationProductsLandingPage } from '../organization/OrganizationProductsLandingPage';
 import AttendflowLanding from '@/pages/AttendflowLanding';
@@ -508,6 +510,43 @@ const CommunicationService = () => {
   return <CommunicationPage />;
 };
 
+const EmbedPortfolioRoute: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
+
+  useEffect(() => {
+    document.title = 'Participant Portfolio Preview | Thittam1Hub';
+
+    const description =
+      'Compact public portfolio preview card for embedding participant profiles from Thittam1Hub.';
+
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', description);
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', window.location.origin + window.location.pathname);
+  }, []);
+
+  if (!userId) return null;
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md w-full p-4">
+        <PortfolioPreviewCard userId={userId} />
+      </div>
+    </main>
+  );
+};
+
 export const AppRouter: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -557,6 +596,10 @@ export const AppRouter: React.FC = () => {
             {/* Public participant event listing */}
             <Route path="/events" element={<ParticipantEventsPage />} />
             <Route path="/events/:eventId/*" element={<EventLandingPage />} />
+
+            {/* Public participant portfolio */}
+            <Route path="/portfolio/:userId" element={<ParticipantPortfolioPage />} />
+            <Route path="/embed/portfolio/:userId" element={<EmbedPortfolioRoute />} />
 
             {/* Public organization landing by slug */}
             <Route path="/:orgSlug" element={<OrganizationLandingPage />} />
