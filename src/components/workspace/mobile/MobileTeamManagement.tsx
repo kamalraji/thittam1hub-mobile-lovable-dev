@@ -102,23 +102,15 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
     const roleColors: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'bg-purple-100 text-purple-800',
       [WorkspaceRole.DEPARTMENT_MANAGER]: 'bg-violet-100 text-violet-800',
-      [WorkspaceRole.TEAM_LEAD]: 'bg-blue-100 text-blue-800',
       [WorkspaceRole.EVENT_COORDINATOR]: 'bg-indigo-100 text-indigo-800',
-      [WorkspaceRole.VOLUNTEER_MANAGER]: 'bg-green-100 text-green-800',
-      [WorkspaceRole.TECHNICAL_SPECIALIST]: 'bg-orange-100 text-orange-800',
       [WorkspaceRole.MARKETING_LEAD]: 'bg-pink-100 text-pink-800',
-      [WorkspaceRole.GENERAL_VOLUNTEER]: 'bg-gray-100 text-gray-800',
     };
 
     const roleLabels: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'Owner',
       [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
-      [WorkspaceRole.TEAM_LEAD]: 'Team Lead',
       [WorkspaceRole.EVENT_COORDINATOR]: 'Coordinator',
-      [WorkspaceRole.VOLUNTEER_MANAGER]: 'Vol. Manager',
-      [WorkspaceRole.TECHNICAL_SPECIALIST]: 'Tech Specialist',
       [WorkspaceRole.MARKETING_LEAD]: 'Marketing Lead',
-      [WorkspaceRole.GENERAL_VOLUNTEER]: 'Volunteer',
     };
 
     // Get label with fallback - handle lead roles and coordinator roles
@@ -235,12 +227,11 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
               >
                 <option value="all">All Roles</option>
                 <option value={WorkspaceRole.WORKSPACE_OWNER}>Owner</option>
-                <option value={WorkspaceRole.TEAM_LEAD}>Team Lead</option>
+                <option value={WorkspaceRole.DEPARTMENT_MANAGER}>Manager</option>
+                <option value={WorkspaceRole.EVENT_LEAD}>Event Lead</option>
                 <option value={WorkspaceRole.EVENT_COORDINATOR}>Coordinator</option>
-                <option value={WorkspaceRole.VOLUNTEER_MANAGER}>Vol. Manager</option>
-                <option value={WorkspaceRole.TECHNICAL_SPECIALIST}>Tech Specialist</option>
                 <option value={WorkspaceRole.MARKETING_LEAD}>Marketing Lead</option>
-                <option value={WorkspaceRole.GENERAL_VOLUNTEER}>Volunteer</option>
+                <option value={WorkspaceRole.VOLUNTEER_COORDINATOR}>Vol. Coordinator</option>
               </select>
             </div>
             <div>

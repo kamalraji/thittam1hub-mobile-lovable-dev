@@ -15,12 +15,11 @@ export function BroadcastComposer({ workspace, onSendBroadcast, isSending }: Bro
   const [attachments, setAttachments] = useState<File[]>([]);
 
   const roleOptions = [
-    { value: WorkspaceRole.TEAM_LEAD, label: 'Team Leads' },
+    { value: WorkspaceRole.DEPARTMENT_MANAGER, label: 'Department Managers' },
+    { value: WorkspaceRole.EVENT_LEAD, label: 'Event Leads' },
     { value: WorkspaceRole.EVENT_COORDINATOR, label: 'Event Coordinators' },
-    { value: WorkspaceRole.VOLUNTEER_MANAGER, label: 'Volunteer Managers' },
-    { value: WorkspaceRole.TECHNICAL_SPECIALIST, label: 'Technical Specialists' },
     { value: WorkspaceRole.MARKETING_LEAD, label: 'Marketing Leads' },
-    { value: WorkspaceRole.GENERAL_VOLUNTEER, label: 'General Volunteers' },
+    { value: WorkspaceRole.VOLUNTEER_COORDINATOR, label: 'Volunteer Coordinators' },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {

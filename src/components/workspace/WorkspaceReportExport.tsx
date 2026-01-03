@@ -85,7 +85,7 @@ export function WorkspaceReportExport({ workspace, teamMembers }: WorkspaceRepor
   const currentMember = teamMembers?.find((member) => member.userId === user?.id);
   const managerWorkspaceRoles: WorkspaceRole[] = [
     WorkspaceRole.WORKSPACE_OWNER,
-    WorkspaceRole.TEAM_LEAD,
+    WorkspaceRole.DEPARTMENT_MANAGER,
     WorkspaceRole.EVENT_COORDINATOR,
   ];
   const isWorkspaceManager = currentMember

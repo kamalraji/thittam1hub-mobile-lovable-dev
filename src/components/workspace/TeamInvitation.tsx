@@ -41,7 +41,7 @@ interface BulkInvitationData {
 export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitationSent }: TeamInvitationProps) {
   const [singleInvitation, setSingleInvitation] = useState<InvitationData>({
     email: '',
-    role: WorkspaceRole.GENERAL_VOLUNTEER,
+    role: WorkspaceRole.VOLUNTEER_COORDINATOR,
     customMessage: ''
   });
   
@@ -60,7 +60,7 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
       return response.data;
     },
     onSuccess: () => {
-      setSingleInvitation({ email: '', role: WorkspaceRole.GENERAL_VOLUNTEER, customMessage: '' });
+      setSingleInvitation({ email: '', role: WorkspaceRole.VOLUNTEER_COORDINATOR, customMessage: '' });
       onInvitationSent();
     },
   });
@@ -142,7 +142,7 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
           continue;
         }
 
-        let role = WorkspaceRole.GENERAL_VOLUNTEER;
+        let role = WorkspaceRole.VOLUNTEER_COORDINATOR;
         if (roleStr && Object.values(WorkspaceRole).includes(roleStr as WorkspaceRole)) {
           role = roleStr as WorkspaceRole;
         }
@@ -158,7 +158,7 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
   };
 
   const addManualInvitation = () => {
-    setBulkInvitations([...bulkInvitations, { email: '', role: WorkspaceRole.GENERAL_VOLUNTEER }]);
+    setBulkInvitations([...bulkInvitations, { email: '', role: WorkspaceRole.VOLUNTEER_COORDINATOR }]);
   };
 
   const updateBulkInvitation = (index: number, field: keyof InvitationData, value: string) => {
@@ -175,7 +175,6 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
     // Level 2 - Managers
     { value: WorkspaceRole.DEPARTMENT_MANAGER, label: 'Department Manager', group: 'Managers' },
     // Level 3 - Leads
-    { value: WorkspaceRole.TEAM_LEAD, label: 'Team Lead', group: 'Leads' },
     { value: WorkspaceRole.EVENT_LEAD, label: 'Event Lead', group: 'Leads' },
     { value: WorkspaceRole.CATERING_LEAD, label: 'Catering Lead', group: 'Leads' },
     { value: WorkspaceRole.LOGISTICS_LEAD, label: 'Logistics Lead', group: 'Leads' },
@@ -211,10 +210,6 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
     { value: WorkspaceRole.TECHNICAL_COORDINATOR, label: 'Technical Coordinator', group: 'Coordinators' },
     { value: WorkspaceRole.IT_COORDINATOR, label: 'IT Coordinator', group: 'Coordinators' },
     { value: WorkspaceRole.VOLUNTEER_COORDINATOR, label: 'Volunteer Coordinator', group: 'Coordinators' },
-    // Legacy
-    { value: WorkspaceRole.VOLUNTEER_MANAGER, label: 'Volunteer Manager', group: 'Legacy' },
-    { value: WorkspaceRole.TECHNICAL_SPECIALIST, label: 'Technical Specialist', group: 'Legacy' },
-    { value: WorkspaceRole.GENERAL_VOLUNTEER, label: 'General Volunteer', group: 'Coordinators' },
   ];
 
   const getInvitationStatusBadge = (status: string) => {
