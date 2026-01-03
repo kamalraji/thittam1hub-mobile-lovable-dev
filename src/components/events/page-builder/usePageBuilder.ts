@@ -3,7 +3,15 @@ import grapesjs, { Editor } from 'grapesjs';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { heroBlockHtml, scheduleBlockHtml, registrationBlockHtml } from './pageBuilderBlocks';
+import { 
+  heroBlockHtml, 
+  scheduleBlockHtml, 
+  registrationBlockHtml,
+  speakersBlockHtml,
+  sponsorsBlockHtml,
+  faqBlockHtml,
+  countdownBlockHtml,
+} from './pageBuilderBlocks';
 import { getCanvasStyles } from './pageBuilderStyles';
 import { slugify, extractTitleFromHtml, extractDescriptionFromHtml } from './pageBuilderUtils';
 
@@ -172,6 +180,30 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
       label: 'Registration Form',
       category: 'Sections',
       content: registrationBlockHtml(),
+    });
+
+    blockManager.add('speakers-block', {
+      label: 'Speakers',
+      category: 'Sections',
+      content: speakersBlockHtml(),
+    });
+
+    blockManager.add('sponsors-block', {
+      label: 'Sponsors',
+      category: 'Sections',
+      content: sponsorsBlockHtml(),
+    });
+
+    blockManager.add('faq-block', {
+      label: 'FAQ',
+      category: 'Sections',
+      content: faqBlockHtml(),
+    });
+
+    blockManager.add('countdown-block', {
+      label: 'Countdown Timer',
+      category: 'Sections',
+      content: countdownBlockHtml(),
     });
 
     // Load existing content or seed with defaults

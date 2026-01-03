@@ -87,3 +87,119 @@ export function registrationBlockHtml(): string {
   </section>
   `;
 }
+
+export function speakersBlockHtml(): string {
+  return `
+  <section id="speakers" class="speakers" aria-label="Event speakers">
+    <h2>Meet Our Speakers</h2>
+    <p class="muted">Learn from industry experts and thought leaders.</p>
+    <div class="speakers-grid">
+      <div class="speaker-card">
+        <div class="speaker-avatar">👤</div>
+        <h3>Speaker Name</h3>
+        <p class="speaker-role">CEO, Company</p>
+        <p class="speaker-bio">Brief bio about the speaker and their expertise.</p>
+      </div>
+      <div class="speaker-card">
+        <div class="speaker-avatar">👤</div>
+        <h3>Speaker Name</h3>
+        <p class="speaker-role">CTO, Company</p>
+        <p class="speaker-bio">Brief bio about the speaker and their expertise.</p>
+      </div>
+      <div class="speaker-card">
+        <div class="speaker-avatar">👤</div>
+        <h3>Speaker Name</h3>
+        <p class="speaker-role">Director, Company</p>
+        <p class="speaker-bio">Brief bio about the speaker and their expertise.</p>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+export function sponsorsBlockHtml(): string {
+  return `
+  <section id="sponsors" class="sponsors" aria-label="Event sponsors">
+    <h2>Our Sponsors</h2>
+    <p class="muted">This event is made possible by our generous sponsors.</p>
+    <div class="sponsors-tier">
+      <h3 class="tier-label">Platinum</h3>
+      <div class="sponsors-row">
+        <div class="sponsor-logo">Logo</div>
+        <div class="sponsor-logo">Logo</div>
+      </div>
+    </div>
+    <div class="sponsors-tier">
+      <h3 class="tier-label">Gold</h3>
+      <div class="sponsors-row">
+        <div class="sponsor-logo sponsor-gold">Logo</div>
+        <div class="sponsor-logo sponsor-gold">Logo</div>
+        <div class="sponsor-logo sponsor-gold">Logo</div>
+      </div>
+    </div>
+    <div class="sponsors-tier">
+      <h3 class="tier-label">Silver</h3>
+      <div class="sponsors-row">
+        <div class="sponsor-logo sponsor-silver">Logo</div>
+        <div class="sponsor-logo sponsor-silver">Logo</div>
+        <div class="sponsor-logo sponsor-silver">Logo</div>
+        <div class="sponsor-logo sponsor-silver">Logo</div>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+export function faqBlockHtml(): string {
+  return `
+  <section id="faq" class="faq" aria-label="Frequently asked questions">
+    <h2>Frequently Asked Questions</h2>
+    <p class="muted">Find answers to common questions about the event.</p>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>What is the refund policy?</summary>
+        <p>Full refunds are available up to 7 days before the event. After that, tickets are non-refundable but can be transferred.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Is there parking available?</summary>
+        <p>Yes, free parking is available at the venue. VIP ticket holders get reserved spots near the entrance.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I get a certificate of attendance?</summary>
+        <p>Yes! All registered attendees will receive a digital certificate after completing the event.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Will sessions be recorded?</summary>
+        <p>Select keynote sessions will be recorded and shared with registered attendees after the event.</p>
+      </details>
+    </div>
+  </section>
+  `;
+}
+
+export function countdownBlockHtml(): string {
+  return `
+  <section id="countdown" class="countdown" aria-label="Event countdown">
+    <h2>Event Starts In</h2>
+    <div class="countdown-timer">
+      <div class="countdown-unit">
+        <span class="countdown-value">00</span>
+        <span class="countdown-label">Days</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-value">00</span>
+        <span class="countdown-label">Hours</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-value">00</span>
+        <span class="countdown-label">Minutes</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-value">00</span>
+        <span class="countdown-label">Seconds</span>
+      </div>
+    </div>
+    <p class="muted">Don't miss out – register now to secure your spot!</p>
+  </section>
+  `;
+}
