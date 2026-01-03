@@ -18,8 +18,8 @@ export function getCanvasStyles(primaryColor: string): string[] {
     'header.hero .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }',
     'header.hero .btn-primary { padding: 0.75rem 1.4rem; border-radius: 999px; background: #f9fafb; color: #0f172a; font-weight: 600; font-size: 0.9rem; }',
     'header.hero .btn-secondary { padding: 0.7rem 1.3rem; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.5); background: transparent; color: #e5e7eb; font-size: 0.85rem; }',
-    'section.schedule, section.registration, section.speakers, section.sponsors, section.faq, section.countdown { padding: 2.5rem 1.5rem; max-width: 64rem; margin: 0 auto; }',
-    'section.schedule h2, section.registration h2, section.speakers h2, section.sponsors h2, section.faq h2, section.countdown h2 { font-size: 1.5rem; margin-bottom: 0.75rem; }',
+    'section.schedule, section.registration, section.speakers, section.sponsors, section.faq, section.countdown, section.video-section, section.gallery, section.cta-section, section.venue { padding: 2.5rem 1.5rem; max-width: 64rem; margin: 0 auto; }',
+    'section.schedule h2, section.registration h2, section.speakers h2, section.sponsors h2, section.faq h2, section.countdown h2, section.video-section h2, section.gallery h2, section.cta-section h2, section.venue h2 { font-size: 1.5rem; margin-bottom: 0.75rem; }',
     'section.schedule ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }',
     'section.schedule li { padding: 0.9rem 1rem; border-radius: 0.9rem; border: 1px solid rgba(148, 163, 184, 0.35); background: #f9fafb; }',
     'section.registration form { display: grid; gap: 0.75rem; max-width: 28rem; }',
@@ -52,7 +52,35 @@ export function getCanvasStyles(primaryColor: string): string[] {
     '.countdown-unit { display: flex; flex-direction: column; align-items: center; }',
     '.countdown-value { font-size: 3rem; font-weight: 700; line-height: 1; background: rgba(255,255,255,0.15); padding: 1rem 1.5rem; border-radius: 0.75rem; min-width: 80px; }',
     '.countdown-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; opacity: 0.8; }',
+    // Video section
+    '.video-wrapper { margin-top: 1.5rem; }',
+    '.video-placeholder { aspect-ratio: 16/9; background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed rgba(148, 163, 184, 0.3); }',
+    '.play-button { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #fff; margin-bottom: 1rem; transition: transform 0.2s; }',
+    '.play-button:hover { transform: scale(1.1); }',
+    '.video-placeholder p { color: #94a3b8; font-size: 0.9rem; }',
+    // Gallery section
+    '.gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 150px); gap: 1rem; margin-top: 1.5rem; }',
+    '.gallery-item { border-radius: 0.75rem; overflow: hidden; background: linear-gradient(135deg, #f1f5f9, #e2e8f0); }',
+    '.gallery-item-large { grid-column: span 2; grid-row: span 2; }',
+    '.gallery-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 1.5rem; background: linear-gradient(135deg, #f8fafc, #f1f5f9); }',
+    // CTA section
+    '.cta-section { text-align: center; background: linear-gradient(135deg, var(--th-primary), rgba(37, 99, 235, 0.8)); color: #f9fafb; padding: 4rem 1.5rem !important; }',
+    '.cta-content { max-width: 600px; margin: 0 auto; }',
+    '.cta-section h2 { font-size: 2rem; margin-bottom: 1rem; }',
+    '.cta-section p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 2rem; }',
+    '.cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }',
+    '.btn-large { padding: 1rem 2rem !important; font-size: 1rem !important; }',
+    // Venue section
+    '.venue-content { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem; }',
+    '.venue-map { border-radius: 1rem; overflow: hidden; min-height: 250px; }',
+    '.map-placeholder { width: 100%; height: 100%; min-height: 250px; background: linear-gradient(135deg, #e2e8f0, #cbd5e1); display: flex; align-items: center; justify-content: center; font-size: 3rem; }',
+    '.venue-details { padding: 1rem 0; }',
+    '.venue-details h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }',
+    '.venue-address { color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }',
+    '.venue-features { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }',
+    '.venue-feature { padding: 0.5rem 1rem; background: #f1f5f9; border-radius: 999px; font-size: 0.85rem; color: #475569; }',
+    // Shared
     '.muted { color: #64748b; font-size: 0.9rem; }',
-    '.countdown .muted { color: rgba(255,255,255,0.7); }',
+    '.countdown .muted, .cta-section .muted { color: rgba(255,255,255,0.7); }',
   ];
 }
