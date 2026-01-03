@@ -203,3 +203,84 @@ export function countdownBlockHtml(): string {
   </section>
   `;
 }
+
+export function videoBlockHtml(): string {
+  return `
+  <section id="video" class="video-section" aria-label="Event video">
+    <h2>Watch the Highlights</h2>
+    <p class="muted">Get a glimpse of what to expect at our event.</p>
+    <div class="video-wrapper">
+      <div class="video-placeholder">
+        <div class="play-button">▶</div>
+        <p>Click to add video URL</p>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+export function galleryBlockHtml(): string {
+  return `
+  <section id="gallery" class="gallery" aria-label="Event gallery">
+    <h2>Event Gallery</h2>
+    <p class="muted">Explore photos from our previous events and venue.</p>
+    <div class="gallery-grid">
+      <div class="gallery-item gallery-item-large">
+        <div class="gallery-placeholder">📷 Main Photo</div>
+      </div>
+      <div class="gallery-item">
+        <div class="gallery-placeholder">📷</div>
+      </div>
+      <div class="gallery-item">
+        <div class="gallery-placeholder">📷</div>
+      </div>
+      <div class="gallery-item">
+        <div class="gallery-placeholder">📷</div>
+      </div>
+      <div class="gallery-item">
+        <div class="gallery-placeholder">📷</div>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+export function ctaBlockHtml(): string {
+  return `
+  <section id="cta" class="cta-section" aria-label="Call to action">
+    <div class="cta-content">
+      <h2>Ready to Join Us?</h2>
+      <p>Don't miss this opportunity to connect, learn, and grow with industry leaders.</p>
+      <div class="cta-buttons">
+        <a href="#registration" class="btn-primary btn-large">Register Now</a>
+        <a href="#contact" class="btn-secondary btn-large">Contact Us</a>
+      </div>
+    </div>
+  </section>
+  `;
+}
+
+export function venueBlockHtml(): string {
+  return `
+  <section id="venue" class="venue" aria-label="Event venue">
+    <h2>Event Venue</h2>
+    <p class="muted">Find us at the heart of the city.</p>
+    <div class="venue-content">
+      <div class="venue-map">
+        <div class="map-placeholder">🗺️ Map</div>
+      </div>
+      <div class="venue-details">
+        <h3>Conference Center</h3>
+        <p class="venue-address">123 Event Street<br/>City, State 12345</p>
+        <div class="venue-features">
+          <span class="venue-feature">🅿️ Free Parking</span>
+          <span class="venue-feature">♿ Accessible</span>
+          <span class="venue-feature">🍽️ Catering</span>
+          <span class="venue-feature">📶 Wi-Fi</span>
+        </div>
+        <a href="#" class="btn-secondary">Get Directions</a>
+      </div>
+    </div>
+  </section>
+  `;
+}

@@ -11,6 +11,10 @@ import {
   sponsorsBlockHtml,
   faqBlockHtml,
   countdownBlockHtml,
+  videoBlockHtml,
+  galleryBlockHtml,
+  ctaBlockHtml,
+  venueBlockHtml,
 } from './pageBuilderBlocks';
 import { getCanvasStyles } from './pageBuilderStyles';
 import { slugify, extractTitleFromHtml, extractDescriptionFromHtml } from './pageBuilderUtils';
@@ -129,6 +133,9 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
       layerManager: {
         appendTo: '.panel-layers',
       },
+      traitManager: {
+        appendTo: '.panel-traits',
+      },
       styleManager: {
         appendTo: '.panel-styles',
         sectors: [
@@ -206,6 +213,30 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
       content: countdownBlockHtml(),
     });
 
+    blockManager.add('video-block', {
+      label: 'Video',
+      category: 'Media',
+      content: videoBlockHtml(),
+    });
+
+    blockManager.add('gallery-block', {
+      label: 'Gallery',
+      category: 'Media',
+      content: galleryBlockHtml(),
+    });
+
+    blockManager.add('cta-block', {
+      label: 'CTA Section',
+      category: 'Sections',
+      content: ctaBlockHtml(),
+    });
+
+    blockManager.add('venue-block', {
+      label: 'Venue',
+      category: 'Sections',
+      content: venueBlockHtml(),
+    });
+
     // Load existing content or seed with defaults
     if (existingLanding?.html) {
       editor.setComponents(existingLanding.html);
@@ -220,7 +251,21 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
       `);
     }
 
+    // Setup keyboard shortcuts for undo/redo
+    const handleKeyboard = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        editor.UndoManager.undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        editor.UndoManager.redo();
+      }
+    };
+    document.addEventListener('keydown', handleKeyboard);
+
     return () => {
+      document.removeEventListener('keydown', handleKeyboard);
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
@@ -233,6 +278,14 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
     if (editorRef.current) {
       editorRef.current.setDevice(nextDevice);
     }
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    editorRef.current?.UndoManager.undo();
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    editorRef.current?.UndoManager.redo();
   }, []);
 
   const handlePreview = useCallback(() => {
@@ -285,6 +338,7 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
 
   return {
     containerRef,
+    editorRef,
     slug,
     setSlug,
     loading,
@@ -292,6 +346,8 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
     device,
     hasCustomLanding,
     handleDeviceChange,
+    handleUndo,
+    handleRedo,
     handlePreview,
     handleSave,
   };
