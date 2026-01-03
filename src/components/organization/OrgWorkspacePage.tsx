@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceStatus, UserRole } from '@/types';
+import { WorkspaceStatus, UserRole } from '@/types';
 import { useCurrentOrganization } from './OrganizationContext';
 import { OrganizationBreadcrumbs } from '@/components/organization/OrganizationBreadcrumbs';
 import { WorkspaceDashboard } from '@/components/workspace/WorkspaceDashboard';
@@ -136,6 +136,75 @@ const WORKSPACE_TEMPLATES = [
   },
 ];
 
+// Workspace list item component with sub-workspace support
+interface WorkspaceListItemProps {
+  workspace: any;
+  selectedWorkspaceId?: string;
+  onSelect: (id: string) => void;
+  showEvent?: boolean;
+  isSubWorkspace?: boolean;
+}
+
+const WorkspaceListItem: React.FC<WorkspaceListItemProps> = ({
+  workspace,
+  selectedWorkspaceId,
+  onSelect,
+  showEvent = false,
+  isSubWorkspace = false,
+}) => {
+  const isSelected = selectedWorkspaceId === workspace.id;
+  
+  return (
+    <>
+      <button
+        onClick={() => onSelect(workspace.id)}
+        className={cn(
+          "w-full text-left px-3 py-2.5 rounded-lg transition-colors",
+          "hover:bg-muted/50",
+          isSelected
+            ? "bg-primary/10 border border-primary/20"
+            : "border border-transparent",
+          isSubWorkspace && "ml-4"
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <Squares2X2Icon className={cn(
+            "h-4 w-4 flex-shrink-0",
+            isSelected ? "text-primary" : "text-muted-foreground"
+          )} />
+          <div className="min-w-0 flex-1">
+            <p className={cn(
+              "text-sm font-medium truncate",
+              isSelected ? "text-primary" : "text-foreground"
+            )}>
+              {workspace.name}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {showEvent && workspace.event?.name 
+                ? workspace.event.name 
+                : workspace.status === 'ACTIVE' ? 'Active' : workspace.status}
+            </p>
+          </div>
+          {isSelected && (
+            <CheckIcon className="h-4 w-4 text-primary flex-shrink-0" />
+          )}
+        </div>
+      </button>
+      {/* Render sub-workspaces if any */}
+      {workspace.subWorkspaces?.map((subWorkspace: any) => (
+        <WorkspaceListItem
+          key={subWorkspace.id}
+          workspace={subWorkspace}
+          selectedWorkspaceId={selectedWorkspaceId}
+          onSelect={onSelect}
+          showEvent={showEvent}
+          isSubWorkspace
+        />
+      ))}
+    </>
+  );
+};
+
 /**
  * OrgWorkspacePage
  *
@@ -154,35 +223,33 @@ export const OrgWorkspacePage: React.FC = () => {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(WORKSPACE_TEMPLATES[0]);
 
-  // Load workspaces for this specific event (user & organization scoped)
-  const { data: workspaces, isLoading: workspacesLoading } = useQuery<Workspace[]>({
+  // Load all workspaces for this organization (including sub-workspaces)
+  // Grouped by: user's workspaces (created/member) and organization workspaces
+  const { data: workspacesData, isLoading: workspacesLoading } = useQuery({
     queryKey: ['org-workspaces', organization?.id, eventId, user?.id],
     queryFn: async () => {
-      if (!organization?.id || !eventId) return [] as Workspace[];
+      if (!organization?.id) return { myWorkspaces: [], orgWorkspaces: [] };
 
-      // Fetch workspaces for this event that belong to the organization
-      // Also include workspaces where the user is a team member
-      const { data, error } = await supabase
+      // Build query - if eventId is provided, filter by event
+      let query = supabase
         .from('workspaces')
         .select(`
-          id, name, status, created_at, updated_at, event_id, organizer_id,
+          id, name, status, created_at, updated_at, event_id, organizer_id, parent_workspace_id,
           events!inner(id, name, organization_id),
           workspace_team_members(user_id)
         `)
         .eq('events.organization_id', organization.id)
-        .eq('event_id', eventId)
         .order('created_at', { ascending: false });
+
+      if (eventId) {
+        query = query.eq('event_id', eventId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
-      // Filter to show workspaces the user owns or is a member of
-      const filteredData = (data || []).filter((row: any) => {
-        const isOwner = row.organizer_id === user?.id;
-        const isMember = row.workspace_team_members?.some((m: any) => m.user_id === user?.id);
-        return isOwner || isMember;
-      });
-
-      return filteredData.map((row: any) => ({
+      const allWorkspaces = (data || []).map((row: any) => ({
         id: row.id,
         eventId: row.event_id,
         name: row.name,
@@ -190,20 +257,44 @@ export const OrgWorkspacePage: React.FC = () => {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         organizerId: row.organizer_id,
-        description: undefined,
+        parentWorkspaceId: row.parent_workspace_id,
+        isOwner: row.organizer_id === user?.id,
+        isMember: row.workspace_team_members?.some((m: any) => m.user_id === user?.id),
         event: row.events
           ? {
             id: row.events.id,
             name: row.events.name,
           }
           : undefined,
-        teamMembers: [],
-        taskSummary: undefined,
-        channels: [],
-      })) as Workspace[];
+      }));
+
+      // Separate into my workspaces (created or member) and organization workspaces
+      const myWorkspaces = allWorkspaces.filter((w: any) => w.isOwner || w.isMember);
+      const orgWorkspaces = allWorkspaces.filter((w: any) => !w.isOwner && !w.isMember);
+
+      // Build hierarchy for display (root workspaces with their children)
+      const buildHierarchy = (workspaces: any[]) => {
+        const roots = workspaces.filter((w: any) => !w.parentWorkspaceId);
+        const children = workspaces.filter((w: any) => w.parentWorkspaceId);
+        
+        return roots.map((root: any) => ({
+          ...root,
+          subWorkspaces: children.filter((c: any) => c.parentWorkspaceId === root.id),
+        }));
+      };
+
+      return {
+        myWorkspaces: buildHierarchy(myWorkspaces),
+        orgWorkspaces: buildHierarchy(orgWorkspaces),
+        allFlat: allWorkspaces,
+      };
     },
-    enabled: !!organization?.id && !!eventId && !!user?.id,
+    enabled: !!organization?.id && !!user?.id,
   });
+
+  const workspaces = workspacesData?.allFlat || [];
+  const myWorkspaces = workspacesData?.myWorkspaces || [];
+  const orgWorkspaces = workspacesData?.orgWorkspaces || [];
 
   // Get event details
   const { data: event } = useQuery({
@@ -402,45 +493,42 @@ export const OrgWorkspacePage: React.FC = () => {
                 </p>
               </div>
               <ScrollArea className="h-[420px]">
-                <div className="p-2 space-y-1">
-                  {workspaces?.map((workspace) => (
-                    <button
-                      key={workspace.id}
-                      onClick={() => handleSelectWorkspace(workspace.id)}
-                      className={cn(
-                        "w-full text-left px-3 py-2.5 rounded-lg transition-colors",
-                        "hover:bg-muted/50",
-                        selectedWorkspaceId === workspace.id
-                          ? "bg-primary/10 border border-primary/20"
-                          : "border border-transparent"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Squares2X2Icon className={cn(
-                          "h-4 w-4 flex-shrink-0",
-                          selectedWorkspaceId === workspace.id
-                            ? "text-primary"
-                            : "text-muted-foreground"
-                        )} />
-                        <div className="min-w-0 flex-1">
-                          <p className={cn(
-                            "text-sm font-medium truncate",
-                            selectedWorkspaceId === workspace.id
-                              ? "text-primary"
-                              : "text-foreground"
-                          )}>
-                            {workspace.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {workspace.status === 'ACTIVE' ? 'Active' : workspace.status}
-                          </p>
-                        </div>
-                        {selectedWorkspaceId === workspace.id && (
-                          <CheckIcon className="h-4 w-4 text-primary flex-shrink-0" />
-                        )}
+                <div className="p-2 space-y-3">
+                  {/* My Workspaces Section */}
+                  {myWorkspaces.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground px-2 mb-1.5">My Workspaces</p>
+                      <div className="space-y-1">
+                        {myWorkspaces.map((workspace: any) => (
+                          <WorkspaceListItem
+                            key={workspace.id}
+                            workspace={workspace}
+                            selectedWorkspaceId={selectedWorkspaceId}
+                            onSelect={handleSelectWorkspace}
+                            showEvent={!eventId}
+                          />
+                        ))}
                       </div>
-                    </button>
-                  ))}
+                    </div>
+                  )}
+                  
+                  {/* Organization Workspaces Section */}
+                  {orgWorkspaces.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground px-2 mb-1.5">Organization Workspaces</p>
+                      <div className="space-y-1">
+                        {orgWorkspaces.map((workspace: any) => (
+                          <WorkspaceListItem
+                            key={workspace.id}
+                            workspace={workspace}
+                            selectedWorkspaceId={selectedWorkspaceId}
+                            onSelect={handleSelectWorkspace}
+                            showEvent={!eventId}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </div>
@@ -490,11 +578,30 @@ export const OrgWorkspacePage: React.FC = () => {
             onChange={(e) => handleSelectWorkspace(e.target.value)}
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
           >
-            {workspaces.map((workspace) => (
-              <option key={workspace.id} value={workspace.id}>
-                {workspace.name}
-              </option>
-            ))}
+            {myWorkspaces.length > 0 && (
+              <optgroup label="My Workspaces">
+                {myWorkspaces.map((workspace: any) => (
+                  <React.Fragment key={workspace.id}>
+                    <option value={workspace.id}>{workspace.name}</option>
+                    {workspace.subWorkspaces?.map((sub: any) => (
+                      <option key={sub.id} value={sub.id}>↳ {sub.name}</option>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </optgroup>
+            )}
+            {orgWorkspaces.length > 0 && (
+              <optgroup label="Organization Workspaces">
+                {orgWorkspaces.map((workspace: any) => (
+                  <React.Fragment key={workspace.id}>
+                    <option value={workspace.id}>{workspace.name}</option>
+                    {workspace.subWorkspaces?.map((sub: any) => (
+                      <option key={sub.id} value={sub.id}>↳ {sub.name}</option>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
       )}
