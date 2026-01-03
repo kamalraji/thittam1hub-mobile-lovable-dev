@@ -75,7 +75,6 @@ export function getWorkspaceRoleLevel(role: WorkspaceRole): WorkspaceHierarchyLe
 
   // Level 3 - Leads
   const leadRoles: WorkspaceRole[] = [
-    WorkspaceRole.TEAM_LEAD,
     WorkspaceRole.EVENT_LEAD,
     WorkspaceRole.CATERING_LEAD,
     WorkspaceRole.LOGISTICS_LEAD,
@@ -93,9 +92,6 @@ export function getWorkspaceRoleLevel(role: WorkspaceRole): WorkspaceHierarchyLe
     WorkspaceRole.TECHNICAL_LEAD,
     WorkspaceRole.IT_LEAD,
     WorkspaceRole.VOLUNTEERS_LEAD,
-    // Legacy lead-level roles
-    WorkspaceRole.VOLUNTEER_MANAGER,
-    WorkspaceRole.TECHNICAL_SPECIALIST,
   ];
   
   if (leadRoles.includes(role)) {
@@ -113,7 +109,6 @@ export function getWorkspaceRoleLabel(role: WorkspaceRole): string {
   const labels: Record<WorkspaceRole, string> = {
     [WorkspaceRole.WORKSPACE_OWNER]: 'Workspace Owner',
     [WorkspaceRole.DEPARTMENT_MANAGER]: 'Department Manager',
-    [WorkspaceRole.TEAM_LEAD]: 'Team Lead',
     [WorkspaceRole.EVENT_LEAD]: 'Event Lead',
     [WorkspaceRole.CATERING_LEAD]: 'Catering Lead',
     [WorkspaceRole.LOGISTICS_LEAD]: 'Logistics Lead',
@@ -148,9 +143,6 @@ export function getWorkspaceRoleLabel(role: WorkspaceRole): string {
     [WorkspaceRole.TECHNICAL_COORDINATOR]: 'Technical Coordinator',
     [WorkspaceRole.IT_COORDINATOR]: 'IT Coordinator',
     [WorkspaceRole.VOLUNTEER_COORDINATOR]: 'Volunteer Coordinator',
-    [WorkspaceRole.VOLUNTEER_MANAGER]: 'Volunteer Manager',
-    [WorkspaceRole.TECHNICAL_SPECIALIST]: 'Technical Specialist',
-    [WorkspaceRole.GENERAL_VOLUNTEER]: 'General Volunteer',
   };
 
   return labels[role] || role;

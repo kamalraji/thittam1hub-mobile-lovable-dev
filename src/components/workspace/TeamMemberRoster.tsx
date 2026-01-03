@@ -24,18 +24,12 @@ export function TeamMemberRoster({
     switch (role) {
       case WorkspaceRole.WORKSPACE_OWNER:
         return 'bg-primary/10 text-primary';
-      case WorkspaceRole.TEAM_LEAD:
+      case WorkspaceRole.DEPARTMENT_MANAGER:
         return 'bg-secondary/10 text-secondary-foreground';
       case WorkspaceRole.EVENT_COORDINATOR:
         return 'bg-accent/10 text-accent-foreground';
-      case WorkspaceRole.VOLUNTEER_MANAGER:
-        return 'bg-muted text-foreground';
-      case WorkspaceRole.TECHNICAL_SPECIALIST:
-        return 'bg-primary/10 text-primary-foreground';
       case WorkspaceRole.MARKETING_LEAD:
         return 'bg-accent text-accent-foreground';
-      case WorkspaceRole.GENERAL_VOLUNTEER:
-        return 'bg-muted text-foreground';
       default:
         return 'bg-muted text-foreground';
     }

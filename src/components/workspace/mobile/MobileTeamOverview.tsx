@@ -43,12 +43,8 @@ export function MobileTeamOverview({ workspace, onViewTeam }: MobileTeamOverview
     const colors: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'bg-purple-100 text-purple-800',
       [WorkspaceRole.DEPARTMENT_MANAGER]: 'bg-violet-100 text-violet-800',
-      [WorkspaceRole.TEAM_LEAD]: 'bg-blue-100 text-blue-800',
       [WorkspaceRole.EVENT_COORDINATOR]: 'bg-indigo-100 text-indigo-800',
-      [WorkspaceRole.VOLUNTEER_MANAGER]: 'bg-green-100 text-green-800',
-      [WorkspaceRole.TECHNICAL_SPECIALIST]: 'bg-orange-100 text-orange-800',
       [WorkspaceRole.MARKETING_LEAD]: 'bg-pink-100 text-pink-800',
-      [WorkspaceRole.GENERAL_VOLUNTEER]: 'bg-gray-100 text-gray-800',
     };
     // Fallback based on role pattern
     if (colors[role]) return colors[role];
@@ -61,12 +57,8 @@ export function MobileTeamOverview({ workspace, onViewTeam }: MobileTeamOverview
     const labels: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'Owner',
       [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
-      [WorkspaceRole.TEAM_LEAD]: 'Lead',
       [WorkspaceRole.EVENT_COORDINATOR]: 'Coordinator',
-      [WorkspaceRole.VOLUNTEER_MANAGER]: 'Vol. Manager',
-      [WorkspaceRole.TECHNICAL_SPECIALIST]: 'Tech',
       [WorkspaceRole.MARKETING_LEAD]: 'Marketing',
-      [WorkspaceRole.GENERAL_VOLUNTEER]: 'Volunteer',
     };
     // Fallback based on role pattern
     if (labels[role]) return labels[role];

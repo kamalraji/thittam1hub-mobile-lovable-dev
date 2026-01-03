@@ -19,7 +19,6 @@ const ROLE_DESCRIPTIONS: Partial<Record<WorkspaceRole, string>> = {
   // Level 2
   [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manage department strategy, oversee leads, and create sub-workspaces',
   // Level 3 - Leads
-  [WorkspaceRole.TEAM_LEAD]: 'Manage tasks, invite members, broadcast, and export reports',
   [WorkspaceRole.EVENT_LEAD]: 'Lead event planning, coordinate vendors, and manage event timeline',
   [WorkspaceRole.CATERING_LEAD]: 'Lead catering operations and vendor coordination',
   [WorkspaceRole.LOGISTICS_LEAD]: 'Lead logistics planning and transport coordination',
@@ -55,10 +54,6 @@ const ROLE_DESCRIPTIONS: Partial<Record<WorkspaceRole, string>> = {
   [WorkspaceRole.TECHNICAL_COORDINATOR]: 'Coordinate technical setup and issue resolution',
   [WorkspaceRole.IT_COORDINATOR]: 'Coordinate IT support and systems maintenance',
   [WorkspaceRole.VOLUNTEER_COORDINATOR]: 'Coordinate volunteer tasks and scheduling',
-  // Legacy
-  [WorkspaceRole.VOLUNTEER_MANAGER]: 'Assign tasks, manage volunteers, post messages',
-  [WorkspaceRole.TECHNICAL_SPECIALIST]: 'Handle technical tasks, post updates, view analytics',
-  [WorkspaceRole.GENERAL_VOLUNTEER]: 'View content, post messages, complete assigned tasks',
 };
 
 const getRoleDescription = (role: WorkspaceRole): string => {

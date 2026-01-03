@@ -13,7 +13,6 @@ export function WorkspaceRoleBadge({ role }: WorkspaceRoleBadgeProps) {
     // Level 2
     [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
     // Level 3 - Leads
-    [WorkspaceRole.TEAM_LEAD]: 'Team Lead',
     [WorkspaceRole.EVENT_LEAD]: 'Event Lead',
     [WorkspaceRole.CATERING_LEAD]: 'Catering Lead',
     [WorkspaceRole.LOGISTICS_LEAD]: 'Logistics Lead',
@@ -49,10 +48,6 @@ export function WorkspaceRoleBadge({ role }: WorkspaceRoleBadgeProps) {
     [WorkspaceRole.TECHNICAL_COORDINATOR]: 'Tech Coord',
     [WorkspaceRole.IT_COORDINATOR]: 'IT Coord',
     [WorkspaceRole.VOLUNTEER_COORDINATOR]: 'Vol Coord',
-    // Legacy
-    [WorkspaceRole.VOLUNTEER_MANAGER]: 'Vol. Manager',
-    [WorkspaceRole.TECHNICAL_SPECIALIST]: 'Tech Specialist',
-    [WorkspaceRole.GENERAL_VOLUNTEER]: 'Volunteer',
   };
 
   // Tone based on hierarchy level
@@ -62,8 +57,7 @@ export function WorkspaceRoleBadge({ role }: WorkspaceRoleBadgeProps) {
     // Level 2 - Manager: default (distinct)
     if (r === WorkspaceRole.DEPARTMENT_MANAGER) return 'default';
     // Level 3 - Leads: secondary
-    if (r.endsWith('_LEAD') || r === WorkspaceRole.TEAM_LEAD || 
-        r === WorkspaceRole.VOLUNTEER_MANAGER || r === WorkspaceRole.TECHNICAL_SPECIALIST) {
+    if (r.endsWith('_LEAD')) {
       return 'secondary';
     }
     // Level 4 - Coordinators: outline

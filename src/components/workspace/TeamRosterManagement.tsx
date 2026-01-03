@@ -67,12 +67,11 @@ export function TeamRosterManagement({
   const roleOptions = [
     { value: 'all', label: 'All Roles' },
     { value: WorkspaceRole.WORKSPACE_OWNER, label: 'Workspace Owner' },
-    { value: WorkspaceRole.TEAM_LEAD, label: 'Team Lead' },
-    { value: WorkspaceRole.EVENT_COORDINATOR, label: 'Event Coordinator' },
-    { value: WorkspaceRole.VOLUNTEER_MANAGER, label: 'Volunteer Manager' },
-    { value: WorkspaceRole.TECHNICAL_SPECIALIST, label: 'Technical Specialist' },
+    { value: WorkspaceRole.DEPARTMENT_MANAGER, label: 'Department Manager' },
+    { value: WorkspaceRole.EVENT_LEAD, label: 'Event Lead' },
     { value: WorkspaceRole.MARKETING_LEAD, label: 'Marketing Lead' },
-    { value: WorkspaceRole.GENERAL_VOLUNTEER, label: 'General Volunteer' },
+    { value: WorkspaceRole.EVENT_COORDINATOR, label: 'Event Coordinator' },
+    { value: WorkspaceRole.VOLUNTEER_COORDINATOR, label: 'Volunteer Coordinator' },
   ];
 
   const statusOptions = [
@@ -143,7 +142,6 @@ export function TeamRosterManagement({
       // Level 2 - Manager
       [WorkspaceRole.DEPARTMENT_MANAGER]: ['Manage department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
       // Level 3 - Leads
-      [WorkspaceRole.TEAM_LEAD]: ['Manage team members', 'Create and assign tasks', 'View all workspace data'],
       [WorkspaceRole.EVENT_LEAD]: ['Manage event planning', 'Coordinate with vendors', 'Access participant data'],
       [WorkspaceRole.CATERING_LEAD]: ['Manage catering operations', 'Coordinate vendors', 'Track catering budget'],
       [WorkspaceRole.LOGISTICS_LEAD]: ['Manage logistics', 'Coordinate transport', 'Track logistics timeline'],
@@ -163,9 +161,6 @@ export function TeamRosterManagement({
       [WorkspaceRole.VOLUNTEERS_LEAD]: ['Manage volunteer program', 'Coordinate assignments', 'Track volunteer hours'],
       // Level 4 - Coordinators (default permissions)
       [WorkspaceRole.EVENT_COORDINATOR]: ['Manage event details', 'Coordinate with vendors', 'Access participant data'],
-      [WorkspaceRole.VOLUNTEER_MANAGER]: ['Manage volunteers', 'Assign volunteer tasks', 'Track volunteer hours'],
-      [WorkspaceRole.TECHNICAL_SPECIALIST]: ['Manage technical setup', 'Handle technical issues', 'Access technical resources'],
-      [WorkspaceRole.GENERAL_VOLUNTEER]: ['View assigned tasks', 'Update task progress', 'Participate in discussions'],
     };
 
     // Return permissions for the role, or default coordinator permissions
