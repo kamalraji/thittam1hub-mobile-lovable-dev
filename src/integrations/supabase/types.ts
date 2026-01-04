@@ -898,6 +898,152 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_services: {
+        Row: {
+          availability: Json | null
+          base_price: number | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          inclusions: string[] | null
+          media_urls: string[] | null
+          name: string
+          price_unit: string | null
+          pricing_type: string
+          service_areas: string[] | null
+          status: string | null
+          subcategory: string | null
+          tags: string[] | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          availability?: Json | null
+          base_price?: number | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          inclusions?: string[] | null
+          media_urls?: string[] | null
+          name: string
+          price_unit?: string | null
+          pricing_type?: string
+          service_areas?: string[] | null
+          status?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          availability?: Json | null
+          base_price?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          inclusions?: string[] | null
+          media_urls?: string[] | null
+          name?: string
+          price_unit?: string | null
+          pricing_type?: string
+          service_areas?: string[] | null
+          status?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_services_vendor_fk"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          business_name: string
+          business_type: string
+          categories: string[] | null
+          city: string | null
+          contact_email: string
+          contact_phone: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          documents: Json | null
+          id: string
+          portfolio_urls: string[] | null
+          rejection_reason: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          verification_status:
+            | Database["public"]["Enums"]["vendor_status"]
+            | null
+          verified_at: string | null
+          verified_by: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_name: string
+          business_type?: string
+          categories?: string[] | null
+          city?: string | null
+          contact_email: string
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          portfolio_urls?: string[] | null
+          rejection_reason?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status?:
+            | Database["public"]["Enums"]["vendor_status"]
+            | null
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_name?: string
+          business_type?: string
+          categories?: string[] | null
+          city?: string | null
+          contact_email?: string
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          portfolio_urls?: string[] | null
+          rejection_reason?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?:
+            | Database["public"]["Enums"]["vendor_status"]
+            | null
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       workspace_activities: {
         Row: {
           actor_id: string | null
@@ -1235,6 +1381,7 @@ export type Database = {
         | "VOLUNTEER"
         | "SPEAKER"
       user_status: "PENDING" | "ACTIVE" | "SUSPENDED"
+      vendor_status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED"
       verification_status: "PENDING" | "VERIFIED" | "REJECTED"
       workspace_activity_type: "task" | "communication" | "team" | "template"
     }
@@ -1396,6 +1543,7 @@ export const Constants = {
         "SPEAKER",
       ],
       user_status: ["PENDING", "ACTIVE", "SUSPENDED"],
+      vendor_status: ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED"],
       verification_status: ["PENDING", "VERIFIED", "REJECTED"],
       workspace_activity_type: ["task", "communication", "team", "template"],
     },

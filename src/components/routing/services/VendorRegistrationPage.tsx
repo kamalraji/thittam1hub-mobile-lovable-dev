@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,9 +25,15 @@ import {
   Shield,
   Plus,
   X,
-  ImageIcon
+  ImageIcon,
+  Clock,
+  XCircle,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Service categories
 const SERVICE_CATEGORIES = [
@@ -56,29 +62,96 @@ const PRICING_TYPES = [
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-interface ServiceListing {
+type VendorStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+
+interface Vendor {
   id: string;
-  title: string;
-  description: string;
-  category: string;
-  pricingType: string;
-  basePrice: number;
-  currency: string;
-  inclusions: string[];
-  serviceAreas: string[];
-  availability: Record<string, boolean>;
-  media: { id: string; name: string; preview?: string }[];
+  user_id: string;
+  business_name: string;
+  business_type: string;
+  description: string | null;
+  contact_email: string;
+  contact_phone: string | null;
+  website: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  categories: string[];
+  documents: any[];
+  portfolio_urls: string[];
+  verification_status: VendorStatus;
+  verified_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
 }
+
+interface VendorService {
+  id: string;
+  vendor_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  subcategory: string | null;
+  pricing_type: string;
+  base_price: number | null;
+  price_unit: string | null;
+  availability: Record<string, boolean>;
+  media_urls: string[];
+  tags: string[];
+  inclusions: string[];
+  service_areas: string[];
+  status: string;
+  created_at: string;
+}
+
+const getStatusBadge = (status: VendorStatus) => {
+  switch (status) {
+    case 'PENDING':
+      return (
+        <Badge variant="secondary" className="gap-1.5 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+          <Clock className="w-3 h-3" />
+          Pending Review
+        </Badge>
+      );
+    case 'VERIFIED':
+      return (
+        <Badge variant="secondary" className="gap-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+          <CheckCircle2 className="w-3 h-3" />
+          Verified
+        </Badge>
+      );
+    case 'REJECTED':
+      return (
+        <Badge variant="secondary" className="gap-1.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <XCircle className="w-3 h-3" />
+          Rejected
+        </Badge>
+      );
+    case 'SUSPENDED':
+      return (
+        <Badge variant="secondary" className="gap-1.5 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+          <AlertCircle className="w-3 h-3" />
+          Suspended
+        </Badge>
+      );
+    default:
+      return null;
+  }
+};
 
 export const VendorRegistrationPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'register' | 'dashboard'>('register');
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Registration form state
   const [businessInfo, setBusinessInfo] = useState({
     businessName: '',
+    businessType: 'SERVICE_PROVIDER',
     description: '',
     email: '',
     phone: '',
@@ -98,21 +171,198 @@ export const VendorRegistrationPage: React.FC = () => {
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
 
   // Service listing form state
-  const [services, setServices] = useState<ServiceListing[]>([]);
   const [showServiceForm, setShowServiceForm] = useState(false);
-  const [editingService, setEditingService] = useState<ServiceListing | null>(null);
-  const [serviceForm, setServiceForm] = useState<Omit<ServiceListing, 'id'>>({
-    title: '',
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [serviceForm, setServiceForm] = useState({
+    name: '',
     description: '',
     category: '',
     pricingType: 'FIXED',
     basePrice: 0,
-    currency: 'USD',
+    priceUnit: 'USD',
     inclusions: [''],
     serviceAreas: [''],
-    availability: DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: true }), {}),
-    media: [],
+    availability: DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: true }), {} as Record<string, boolean>),
+    tags: [] as string[],
   });
+
+  // Get current user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
+
+  // Fetch vendor profile
+  const { data: vendor, isLoading: vendorLoading } = useQuery({
+    queryKey: ['vendor', currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return null;
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Vendor | null;
+    },
+    enabled: !!currentUserId,
+  });
+
+  // Fetch vendor services
+  const { data: services = [], isLoading: servicesLoading } = useQuery({
+    queryKey: ['vendor-services', vendor?.id],
+    queryFn: async () => {
+      if (!vendor?.id) return [];
+      const { data, error } = await supabase
+        .from('vendor_services')
+        .select('*')
+        .eq('vendor_id', vendor.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as VendorService[];
+    },
+    enabled: !!vendor?.id,
+  });
+
+  // Create vendor mutation
+  const createVendorMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserId) throw new Error('Must be logged in');
+      
+      const { data, error } = await supabase
+        .from('vendors')
+        .insert({
+          user_id: currentUserId,
+          business_name: businessInfo.businessName,
+          business_type: businessInfo.businessType,
+          description: businessInfo.description,
+          contact_email: businessInfo.email,
+          contact_phone: businessInfo.phone,
+          website: businessInfo.website,
+          address: businessInfo.street,
+          city: businessInfo.city,
+          state: businessInfo.state,
+          country: businessInfo.country,
+          categories: selectedCategories,
+          documents: [],
+          portfolio_urls: [],
+          verification_status: 'PENDING',
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendor', currentUserId] });
+      toast.success('Vendor registration submitted! Your application is pending review.');
+      setActiveTab('dashboard');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit registration');
+    },
+  });
+
+  // Create service mutation
+  const createServiceMutation = useMutation({
+    mutationFn: async () => {
+      if (!vendor?.id) throw new Error('No vendor profile');
+      
+      const { data, error } = await supabase
+        .from('vendor_services')
+        .insert({
+          vendor_id: vendor.id,
+          name: serviceForm.name,
+          description: serviceForm.description,
+          category: serviceForm.category,
+          pricing_type: serviceForm.pricingType,
+          base_price: serviceForm.basePrice,
+          price_unit: serviceForm.priceUnit,
+          availability: serviceForm.availability,
+          inclusions: serviceForm.inclusions.filter(Boolean),
+          service_areas: serviceForm.serviceAreas.filter(Boolean),
+          tags: serviceForm.tags,
+          status: 'ACTIVE',
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendor-services', vendor?.id] });
+      toast.success('Service added successfully!');
+      resetServiceForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to add service');
+    },
+  });
+
+  // Update service mutation
+  const updateServiceMutation = useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { data, error } = await supabase
+        .from('vendor_services')
+        .update({
+          name: serviceForm.name,
+          description: serviceForm.description,
+          category: serviceForm.category,
+          pricing_type: serviceForm.pricingType,
+          base_price: serviceForm.basePrice,
+          price_unit: serviceForm.priceUnit,
+          availability: serviceForm.availability,
+          inclusions: serviceForm.inclusions.filter(Boolean),
+          service_areas: serviceForm.serviceAreas.filter(Boolean),
+          tags: serviceForm.tags,
+        })
+        .eq('id', serviceId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendor-services', vendor?.id] });
+      toast.success('Service updated successfully!');
+      resetServiceForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update service');
+    },
+  });
+
+  // Delete service mutation
+  const deleteServiceMutation = useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { error } = await supabase
+        .from('vendor_services')
+        .delete()
+        .eq('id', serviceId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendor-services', vendor?.id] });
+      toast.success('Service deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete service');
+    },
+  });
+
+  // Switch to dashboard if vendor exists
+  useEffect(() => {
+    if (vendor) {
+      setActiveTab('dashboard');
+    }
+  }, [vendor]);
 
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
@@ -173,6 +423,11 @@ export const VendorRegistrationPage: React.FC = () => {
   };
 
   const handleRegistrationSubmit = async () => {
+    if (!currentUserId) {
+      toast.error('Please log in to register as a vendor');
+      return;
+    }
+    
     if (!validateStep(currentStep)) {
       toast.error('Please complete all required fields');
       return;
@@ -180,12 +435,7 @@ export const VendorRegistrationPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('Vendor registration submitted successfully!');
-      setActiveTab('dashboard');
-    } catch (error) {
-      toast.error('Failed to submit registration');
+      await createVendorMutation.mutateAsync();
     } finally {
       setIsSubmitting(false);
     }
@@ -239,72 +489,54 @@ export const VendorRegistrationPage: React.FC = () => {
     }));
   };
 
-  const handleServiceMediaUpload = (files: FileList | null) => {
-    if (files) {
-      const newMedia = Array.from(files).map((file, index) => ({
-        id: `media-${Date.now()}-${index}`,
-        name: file.name,
-        preview: URL.createObjectURL(file),
-      }));
-      setServiceForm(prev => ({ ...prev, media: [...prev.media, ...newMedia] }));
-    }
-  };
-
-  const removeServiceMedia = (id: string) => {
-    setServiceForm(prev => ({
-      ...prev,
-      media: prev.media.filter(m => m.id !== id),
-    }));
-  };
-
   const saveService = () => {
-    if (!serviceForm.title || !serviceForm.category) {
+    if (!serviceForm.name || !serviceForm.category) {
       toast.error('Please fill in required fields');
       return;
     }
 
-    if (editingService) {
-      setServices(prev =>
-        prev.map(s => (s.id === editingService.id ? { ...serviceForm, id: s.id } : s))
-      );
-      toast.success('Service updated successfully');
+    if (editingServiceId) {
+      updateServiceMutation.mutate(editingServiceId);
     } else {
-      const newService: ServiceListing = {
-        ...serviceForm,
-        id: `service-${Date.now()}`,
-      };
-      setServices(prev => [...prev, newService]);
-      toast.success('Service added successfully');
+      createServiceMutation.mutate();
     }
-
-    resetServiceForm();
   };
 
-  const editService = (service: ServiceListing) => {
-    setEditingService(service);
-    setServiceForm(service);
+  const editService = (service: VendorService) => {
+    setEditingServiceId(service.id);
+    setServiceForm({
+      name: service.name,
+      description: service.description || '',
+      category: service.category,
+      pricingType: service.pricing_type,
+      basePrice: service.base_price || 0,
+      priceUnit: service.price_unit || 'USD',
+      inclusions: service.inclusions?.length ? service.inclusions : [''],
+      serviceAreas: service.service_areas?.length ? service.service_areas : [''],
+      availability: service.availability || DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: true }), {}),
+      tags: service.tags || [],
+    });
     setShowServiceForm(true);
   };
 
   const deleteService = (id: string) => {
-    setServices(prev => prev.filter(s => s.id !== id));
-    toast.success('Service deleted');
+    deleteServiceMutation.mutate(id);
   };
 
   const resetServiceForm = () => {
     setServiceForm({
-      title: '',
+      name: '',
       description: '',
       category: '',
       pricingType: 'FIXED',
       basePrice: 0,
-      currency: 'USD',
+      priceUnit: 'USD',
       inclusions: [''],
       serviceAreas: [''],
       availability: DAYS_OF_WEEK.reduce((acc, day) => ({ ...acc, [day]: true }), {}),
-      media: [],
+      tags: [],
     });
-    setEditingService(null);
+    setEditingServiceId(null);
     setShowServiceForm(false);
   };
 
@@ -624,7 +856,7 @@ export const VendorRegistrationPage: React.FC = () => {
   const renderServiceListingForm = () => (
     <Card>
       <CardHeader>
-        <CardTitle>{editingService ? 'Edit Service' : 'Add New Service'}</CardTitle>
+        <CardTitle>{editingServiceId ? 'Edit Service' : 'Add New Service'}</CardTitle>
         <CardDescription>
           Fill in the details of your service offering
         </CardDescription>
@@ -633,11 +865,11 @@ export const VendorRegistrationPage: React.FC = () => {
         {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="serviceTitle">Service Title *</Label>
+            <Label htmlFor="serviceName">Service Title *</Label>
             <Input
-              id="serviceTitle"
-              value={serviceForm.title}
-              onChange={e => handleServiceFormChange('title', e.target.value)}
+              id="serviceName"
+              value={serviceForm.name}
+              onChange={e => handleServiceFormChange('name', e.target.value)}
               placeholder="e.g., Wedding Photography Package"
               className="mt-1"
             />
@@ -716,8 +948,8 @@ export const VendorRegistrationPage: React.FC = () => {
                 <div>
                   <Label>Currency</Label>
                   <Select
-                    value={serviceForm.currency}
-                    onValueChange={value => handleServiceFormChange('currency', value)}
+                    value={serviceForm.priceUnit}
+                    onValueChange={value => handleServiceFormChange('priceUnit', value)}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
@@ -814,76 +1046,124 @@ export const VendorRegistrationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Portfolio Media */}
-        <div className="border-t pt-6">
-          <h4 className="font-medium text-foreground mb-4 flex items-center gap-2">
-            <Camera className="w-4 h-4" /> Portfolio / Media
-          </h4>
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-            <input
-              type="file"
-              id="serviceMedia"
-              accept="image/*"
-              multiple
-              onChange={e => handleServiceMediaUpload(e.target.files)}
-              className="hidden"
-            />
-            <label htmlFor="serviceMedia" className="cursor-pointer">
-              <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Upload images for this service</p>
-            </label>
-          </div>
-          {serviceForm.media.length > 0 && (
-            <div className="grid grid-cols-4 gap-2 mt-4">
-              {serviceForm.media.map(media => (
-                <div key={media.id} className="relative group">
-                  <div className="aspect-square bg-muted rounded overflow-hidden">
-                    {media.preview && (
-                      <img src={media.preview} alt="" className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeServiceMedia(media.id)}
-                    className="absolute -top-1 -right-1 p-0.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Actions */}
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button type="button" variant="outline" onClick={resetServiceForm}>
             Cancel
           </Button>
-          <Button onClick={saveService}>
-            {editingService ? 'Update Service' : 'Add Service'}
+          <Button 
+            onClick={saveService}
+            disabled={createServiceMutation.isPending || updateServiceMutation.isPending}
+          >
+            {(createServiceMutation.isPending || updateServiceMutation.isPending) && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
+            {editingServiceId ? 'Update Service' : 'Add Service'}
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 
+  const renderVendorStatusCard = () => {
+    if (!vendor) return null;
+
+    return (
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">{vendor.business_name}</h3>
+                <p className="text-sm text-muted-foreground">{vendor.contact_email}</p>
+              </div>
+            </div>
+            {getStatusBadge(vendor.verification_status)}
+          </div>
+          
+          {vendor.verification_status === 'PENDING' && (
+            <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-3">
+                <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Application Under Review</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    Your vendor application is being reviewed by our team. This usually takes 1-2 business days.
+                    You can still add services while waiting for approval.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {vendor.verification_status === 'REJECTED' && vendor.rejection_reason && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="flex items-start gap-3">
+                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">Application Rejected</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    Reason: {vendor.rejection_reason}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {vendor.verification_status === 'VERIFIED' && (
+            <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Verified Vendor</p>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
+                    Your business is verified! Your services are now visible to event organizers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderDashboard = () => (
     <div className="space-y-6">
+      {renderVendorStatusCard()}
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Your Services</h2>
           <p className="text-muted-foreground">Manage your service listings</p>
         </div>
-        {!showServiceForm && (
+        {!showServiceForm && vendor && (
           <Button onClick={() => setShowServiceForm(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Service
           </Button>
         )}
       </div>
 
-      {showServiceForm ? (
+      {!vendor ? (
+        <Card className="p-12 text-center">
+          <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">Complete Registration First</h3>
+          <p className="text-muted-foreground mb-4">
+            Please complete your vendor registration before adding services.
+          </p>
+          <Button onClick={() => setActiveTab('register')}>
+            Go to Registration
+          </Button>
+        </Card>
+      ) : showServiceForm ? (
         renderServiceListingForm()
+      ) : servicesLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
       ) : services.length === 0 ? (
         <Card className="p-12 text-center">
           <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -907,17 +1187,24 @@ export const VendorRegistrationPage: React.FC = () => {
                         {SERVICE_CATEGORIES.find(c => c.value === service.category)?.label || service.category}
                       </Badge>
                       <Badge variant="outline">
-                        {service.pricingType === 'CUSTOM_QUOTE'
+                        {service.pricing_type === 'CUSTOM_QUOTE'
                           ? 'Custom Quote'
-                          : `${service.currency} ${service.basePrice}`}
+                          : `${service.price_unit || 'USD'} ${service.base_price}`}
                       </Badge>
+                      {service.status === 'ACTIVE' ? (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Inactive</Badge>
+                      )}
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground">{service.title}</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{service.name}</h3>
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                       {service.description}
                     </p>
                     <div className="flex flex-wrap gap-1 mt-3">
-                      {service.serviceAreas.filter(Boolean).map((area, i) => (
+                      {service.service_areas?.filter(Boolean).map((area, i) => (
                         <Badge key={i} variant="outline" className="text-xs">
                           {area}
                         </Badge>
@@ -933,6 +1220,7 @@ export const VendorRegistrationPage: React.FC = () => {
                       size="sm"
                       className="text-destructive hover:text-destructive"
                       onClick={() => deleteService(service.id)}
+                      disabled={deleteServiceMutation.isPending}
                     >
                       Delete
                     </Button>
@@ -945,6 +1233,14 @@ export const VendorRegistrationPage: React.FC = () => {
       )}
     </div>
   );
+
+  if (vendorLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -982,8 +1278,8 @@ export const VendorRegistrationPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'register' | 'dashboard')}>
           <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="register" className="gap-2">
-              <Building2 className="w-4 h-4" /> Register as Vendor
+            <TabsTrigger value="register" className="gap-2" disabled={!!vendor}>
+              <Building2 className="w-4 h-4" /> {vendor ? 'Registered' : 'Register as Vendor'}
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="gap-2">
               <Star className="w-4 h-4" /> Manage Services
@@ -991,42 +1287,56 @@ export const VendorRegistrationPage: React.FC = () => {
           </TabsList>
 
           <TabsContent value="register">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vendor Registration</CardTitle>
-                <CardDescription>
-                  Complete your business profile to start listing services
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {renderStepIndicator()}
+            {vendor ? (
+              <Card className="p-12 text-center">
+                <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-500 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Already Registered!</h3>
+                <p className="text-muted-foreground mb-4">
+                  You have already completed vendor registration. Go to the dashboard to manage your services.
+                </p>
+                <Button onClick={() => setActiveTab('dashboard')}>
+                  Go to Dashboard
+                </Button>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Vendor Registration</CardTitle>
+                  <CardDescription>
+                    Complete your business profile to start listing services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {renderStepIndicator()}
 
-                {currentStep === 1 && renderStep1()}
-                {currentStep === 2 && renderStep2()}
-                {currentStep === 3 && renderStep3()}
-                {currentStep === 4 && renderStep4()}
-                {currentStep === 5 && renderStep5()}
+                  {currentStep === 1 && renderStep1()}
+                  {currentStep === 2 && renderStep2()}
+                  {currentStep === 3 && renderStep3()}
+                  {currentStep === 4 && renderStep4()}
+                  {currentStep === 5 && renderStep5()}
 
-                <div className="flex justify-between mt-8 pt-6 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Previous
-                  </Button>
-                  {currentStep < totalSteps ? (
-                    <Button onClick={nextStep}>
-                      Next <ArrowRight className="w-4 h-4 ml-2" />
+                  <div className="flex justify-between mt-8 pt-6 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={currentStep === 1}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> Previous
                     </Button>
-                  ) : (
-                    <Button onClick={handleRegistrationSubmit} disabled={isSubmitting}>
-                      {isSubmitting ? 'Submitting...' : 'Complete Registration'}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    {currentStep < totalSteps ? (
+                      <Button onClick={nextStep}>
+                        Next <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button onClick={handleRegistrationSubmit} disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        {isSubmitting ? 'Submitting...' : 'Complete Registration'}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="dashboard">{renderDashboard()}</TabsContent>
