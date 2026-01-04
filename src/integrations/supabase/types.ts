@@ -663,30 +663,6 @@ export type Database = {
         }
         Relationships: []
       }
-      organizer_approvals: {
-        Row: {
-          approved_by: string
-          created_at: string
-          id: string
-          organization_id: string | null
-          user_id: string
-        }
-        Insert: {
-          approved_by: string
-          created_at?: string
-          id?: string
-          organization_id?: string | null
-          user_id: string
-        }
-        Update: {
-          approved_by?: string
-          created_at?: string
-          id?: string
-          organization_id?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       registrations: {
         Row: {
           created_at: string
