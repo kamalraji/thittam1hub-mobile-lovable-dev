@@ -37,7 +37,6 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
     error,
     activeTab,
     activeRoleSpace,
-    roleSpaces,
     showSubWorkspaceModal,
     taskIdFromUrl,
   } = state;
@@ -91,24 +90,6 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
         />
       )}
 
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 space-y-3 sm:space-y-4">
-        {/* Role-based sub workspace selector */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0">
-          {roleSpaces.map((roleSpace) => (
-            <button
-              key={roleSpace}
-              onClick={() => actions.setActiveRoleSpace(roleSpace)}
-              className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium border transition-colors whitespace-nowrap shrink-0 ${
-                activeRoleSpace === roleSpace
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-muted-foreground border-border hover:bg-muted'
-              }`}
-            >
-              {roleSpace === 'ALL' ? 'All teams' : roleSpace.replace(/_/g, ' ').toLowerCase()}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <WorkspaceNavigation
         workspace={workspace}
