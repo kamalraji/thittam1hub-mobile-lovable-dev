@@ -20,6 +20,8 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminUserRolesPage } from '@/components/admin/AdminUserRolesPage';
 import { RolesDiagramPage } from '@/components/admin/RolesDiagramPage';
 import { UserRole } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileAppShell } from '@/components/mobile/MobileAppShell';
 
 /**
  * Thin wrapper that reuses the global ConsoleHeader but
@@ -53,6 +55,7 @@ export const OrgScopedLayout: React.FC = () => {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { data: memberOrganizations, isLoading: orgsLoading } = useMyMemberOrganizations();
   const { data: organization, isLoading: orgLoading } = useOrganizationBySlug(orgSlug || '');
+  const isMobile = useIsMobile();
 
   const isLoadingAny = isLoading || orgsLoading || orgLoading;
 
@@ -102,6 +105,23 @@ export const OrgScopedLayout: React.FC = () => {
         <Routes>
           <Route path="eventmanagement/:eventId/page-builder" element={<EventPageBuilder />} />
         </Routes>
+      </OrganizationProvider>
+    );
+  }
+
+  // Render mobile layout on small screens
+  if (isMobile) {
+    return (
+      <OrganizationProvider value={{ organization }}>
+        <MobileAppShell
+          organization={organization}
+          user={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            avatarUrl: (user as any).avatarUrl || (user as any).avatar_url,
+          }}
+        />
       </OrganizationProvider>
     );
   }
