@@ -195,35 +195,35 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
       label: 'Overview',
       component: () => (
         <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Workspace Information</h3>
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-lg font-medium text-foreground mb-4">Workspace Information</h3>
             <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
               <div>
-                <dt className="text-sm font-medium text-gray-500">Name</dt>
-                <dd className="mt-1 text-sm text-gray-900">{workspace?.name}</dd>
+                <dt className="text-sm font-medium text-muted-foreground">Name</dt>
+                <dd className="mt-1 text-sm text-foreground">{workspace?.name}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                <dt className="text-sm font-medium text-muted-foreground">Status</dt>
                 <dd className="mt-1">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${workspace?.status === WorkspaceStatus.ACTIVE
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                       : workspace?.status === WorkspaceStatus.PROVISIONING
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                         : workspace?.status === WorkspaceStatus.WINDING_DOWN
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400'
+                          : 'bg-muted text-muted-foreground'
                     }`}>
                     {workspace?.status}
                   </span>
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Associated Event</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+                <dt className="text-sm font-medium text-muted-foreground">Associated Event</dt>
+                <dd className="mt-1 text-sm text-foreground">
                   {workspace?.event ? (
                     <Link
                       to={`/console/events/${workspace.event.id}`}
-                      className="text-blue-600 hover:text-blue-500"
+                      className="text-primary hover:text-primary/80"
                     >
                       {workspace.event.name}
                     </Link>
@@ -233,16 +233,16 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Created</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+                <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                <dd className="mt-1 text-sm text-foreground">
                   {workspace?.createdAt
                     ? new Date(workspace.createdAt).toLocaleDateString()
                     : 'Unknown'}
                 </dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-sm font-medium text-gray-500">Description</dt>
-                <dd className="mt-1 text-sm text-gray-900">
+                <dt className="text-sm font-medium text-muted-foreground">Description</dt>
+                <dd className="mt-1 text-sm text-foreground">
                   {workspace?.description || 'No description provided'}
                 </dd>
               </div>
@@ -251,48 +251,48 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
 
           {/* Quick Stats - collapsible on mobile for better spacing */}
           <div className="sm:hidden">
-            <details className="bg-white rounded-lg border border-gray-200 p-4">
-              <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-gray-700">
+            <details className="bg-card rounded-lg border border-border p-4">
+              <summary className="flex items-center justify-between cursor-pointer text-sm font-medium text-foreground">
                 Workspace stats
-                <span className="text-xs text-gray-400">Tap to expand</span>
+                <span className="text-xs text-muted-foreground">Tap to expand</span>
               </summary>
               <div className="mt-4 grid grid-cols-1 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <span className="text-2xl">📋</span>
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                      <p className="text-2xl font-bold text-foreground">
                         {workspace?.taskSummary?.total || 0}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <span className="text-2xl">👥</span>
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Team Members</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-muted-foreground">Team Members</p>
+                      <p className="text-2xl font-bold text-foreground">
                         {workspace?.teamMembers?.length || 0}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <span className="text-2xl">📈</span>
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Progress</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm font-medium text-muted-foreground">Progress</p>
+                      <p className="text-2xl font-bold text-foreground">
                         {Math.round(
                           ((workspace?.taskSummary?.completed || 0) /
                             Math.max(workspace?.taskSummary?.total || 1, 1)) *
@@ -308,42 +308,42 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
 
           {/* Desktop / tablet stats layout */}
           <div className="hidden sm:grid sm:grid-cols-3 sm:gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-card rounded-lg border border-border p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <span className="text-2xl">📋</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {workspace?.taskSummary?.total || 0}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-card rounded-lg border border-border p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <span className="text-2xl">👥</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Team Members</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Team Members</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {workspace?.teamMembers?.length || 0}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-card rounded-lg border border-border p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <span className="text-2xl">📈</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-muted-foreground">Progress</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {Math.round(
                       ((workspace?.taskSummary?.completed || 0) /
                         Math.max(workspace?.taskSummary?.total || 1, 1)) *
@@ -462,9 +462,9 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="bg-gray-200 rounded-lg h-64"></div>
+            <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
+            <div className="bg-muted rounded-lg h-64"></div>
           </div>
         </div>
       </div>
@@ -476,13 +476,13 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Workspace Not Found</h2>
-            <p className="text-gray-600 mb-4">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Workspace Not Found</h2>
+            <p className="text-muted-foreground mb-4">
               The workspace you're looking for doesn't exist or you don't have access to it.
             </p>
             <Link
               to="/console/workspaces"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
             >
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Workspaces
@@ -500,7 +500,7 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
         <button
           type="button"
           onClick={() => navigate(baseWorkspacePath)}
-          className="mt-3 mb-3 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 sm:hidden"
+          className="mt-3 mb-3 inline-flex items-center text-sm text-muted-foreground hover:text-foreground sm:hidden"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-1" />
           Back to workspaces
@@ -523,33 +523,33 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
 
         {/* Linked event + status header */}
         {workspace.event && (
-          <section className="mt-4 sm:mt-6 rounded-lg border border-gray-200 bg-white px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <section className="mt-4 sm:mt-6 rounded-lg border border-border bg-card px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Linked event</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Linked event</p>
               <Link
                 to={`${eventManagementBase}/${workspace.event.id}`}
-                className="mt-0.5 block text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="mt-0.5 block text-sm font-medium text-primary hover:text-primary/80"
               >
                 {workspace.event.name}
               </Link>
-              <p className="mt-0.5 text-xs text-gray-500">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {workspace.event.startDate && workspace.event.endDate
                   ? `${new Date(workspace.event.startDate).toLocaleDateString()} – ${new Date(workspace.event.endDate).toLocaleDateString()}`
                   : null}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 Workspace status: {workspace.status}
               </span>
               {workspace.event.status && (
-                <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   Event status: {workspace.event.status}
                 </span>
               )}
               <Link
                 to={`${eventManagementBase}/${workspace.event.id}`}
-                className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10"
               >
                 <ArrowLeftIcon className="w-4 h-4 mr-1" />
                 Open event console
@@ -569,7 +569,7 @@ export const WorkspaceDetailPage: React.FC<WorkspaceDetailPageProps> = ({ defaul
         <button
           type="button"
           onClick={() => createTaskMutation.mutate()}
-          className="fixed bottom-20 right-4 sm:hidden inline-flex items-center px-4 py-3 rounded-full shadow-lg bg-indigo-600 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="fixed bottom-20 right-4 sm:hidden inline-flex items-center px-4 py-3 rounded-full shadow-lg bg-primary text-primary-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           <span className="mr-2 text-xl leading-none">＋</span>
           <span className="text-sm font-medium">New Task</span>
