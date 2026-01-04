@@ -89,6 +89,11 @@ const getEventQuickActions = (base: string): EventQuickAction[] => [
     description: 'Review registrations',
     path: `${base}/eventmanagement/registrations`,
   },
+  {
+    title: 'Analytics',
+    description: 'Event performance metrics',
+    path: `${base}/analytics`,
+  },
 ];
 
 export const OrganizationSidebar: React.FC = () => {
