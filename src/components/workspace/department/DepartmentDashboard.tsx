@@ -1,0 +1,128 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Workspace, WorkspaceType, WorkspaceStatus } from '@/types';
+import { BudgetTracker } from './BudgetTracker';
+import { ResourceManager } from './ResourceManager';
+import { CommitteeGrid } from './CommitteeOverviewCard';
+import { TaskSummaryCards } from '../TaskSummaryCards';
+import { TeamMemberRoster } from '../TeamMemberRoster';
+import { Building2, Users, LayoutGrid } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { WORKSPACE_DEPARTMENTS } from '@/lib/workspaceHierarchy';
+
+interface DepartmentDashboardProps {
+  workspace: Workspace;
+  orgSlug?: string;
+  onViewTasks?: () => void;
+}
+
+export function DepartmentDashboard({ workspace, orgSlug, onViewTasks }: DepartmentDashboardProps) {
+  const navigate = useNavigate();
+
+  // Fetch child committees for this department
+  const { data: committees = [] } = useQuery({
+    queryKey: ['department-committees', workspace.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('workspaces')
+        .select('id, name, status, created_at, updated_at, event_id, parent_workspace_id, workspace_type, department_id')
+        .eq('parent_workspace_id', workspace.id)
+        .eq('workspace_type', 'COMMITTEE')
+        .order('name');
+
+      if (error) throw error;
+
+      return (data || []).map((row) => ({
+        id: row.id,
+        eventId: row.event_id,
+        name: row.name,
+        status: row.status as WorkspaceStatus,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        parentWorkspaceId: row.parent_workspace_id,
+        workspaceType: row.workspace_type as WorkspaceType,
+        departmentId: row.department_id || undefined,
+      })) as unknown as Workspace[];
+    },
+    enabled: !!workspace.id,
+  });
+
+  // Get department info
+  const departmentInfo = WORKSPACE_DEPARTMENTS.find(d => d.id === workspace.departmentId);
+
+  // Mock budget data - in production, this would come from workspace_resources table
+  const budgetData = {
+    allocated: 500000,
+    used: 325000,
+  };
+
+  const handleCommitteeClick = (committee: Workspace) => {
+    const basePath = orgSlug ? `/${orgSlug}/workspaces` : '/workspaces';
+    navigate(`${basePath}/${workspace.eventId}?workspaceId=${committee.id}`);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Department Header Card */}
+      <div className="bg-card rounded-xl border border-border shadow-sm p-4 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-primary/10">
+            <Building2 className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-semibold text-foreground">{workspace.name}</h2>
+              <span className="px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground rounded-full">
+                Department
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {departmentInfo?.description || 'Manage department operations, budgets, and committees'}
+            </p>
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <LayoutGrid className="h-4 w-4" />
+                <span>{committees.length} Committees</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>{workspace.teamMembers?.length || 0} Members</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Task Summary */}
+      <TaskSummaryCards workspace={workspace} onViewTasks={onViewTasks} />
+
+      {/* Budget & Resources Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BudgetTracker 
+          allocated={budgetData.allocated} 
+          used={budgetData.used} 
+          showBreakdown={true}
+        />
+        <ResourceManager departmentId={workspace.departmentId} />
+      </div>
+
+      {/* Committees Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-foreground">Committees Overview</h3>
+          <span className="text-sm text-muted-foreground">
+            {committees.length} {committees.length === 1 ? 'committee' : 'committees'}
+          </span>
+        </div>
+        <CommitteeGrid 
+          committees={committees} 
+          onCommitteeClick={handleCommitteeClick}
+          emptyMessage="No committees created yet"
+        />
+      </div>
+
+      {/* Team Members */}
+      <TeamMemberRoster workspace={workspace} showActions={false} maxMembers={8} />
+    </div>
+  );
+}
