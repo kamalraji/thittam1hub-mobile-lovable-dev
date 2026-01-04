@@ -9,8 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useApiHealth } from '@/hooks/useApiHealth';
 import { useEventCreatePath } from '@/hooks/useEventCreatePath';
 import { OrgRoleAccessBanner } from '@/components/organization/OrgRoleAccessBanner';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { MobileOrganizerDashboard } from './MobileOrganizerDashboard';
 
 import { OrganizerBreadcrumbs } from '@/components/organization/OrganizerBreadcrumbs';
 import { OrgPageWrapper } from '@/components/organization/OrgPageWrapper';
@@ -35,7 +33,6 @@ interface WorkspaceSummary {
   } | null;
 }
 export function OrganizerDashboard() {
-  const isMobile = useIsMobile();
   const {
     user
   } = useAuth();
@@ -46,11 +43,6 @@ export function OrganizerDashboard() {
   const {
     isHealthy
   } = useApiHealth();
-
-  // Show mobile layout on small screens
-  if (isMobile) {
-    return <MobileOrganizerDashboard />;
-  }
 
   // Check if profile completion is needed (Requirements 2.4, 2.5)
   const isProfileIncomplete = !user?.profileCompleted || !user?.bio || !user?.organization;
