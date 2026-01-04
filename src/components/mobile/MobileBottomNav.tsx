@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Calendar, Mail, BarChart3, Search } from 'lucide-react';
+import { Home, Calendar, Briefcase, BarChart3, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MobileTab } from './MobileAppShell';
 
@@ -11,7 +11,7 @@ interface MobileBottomNavProps {
 const tabs: { id: MobileTab; label: string; icon: React.ElementType }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'events', label: 'Events', icon: Calendar },
-  { id: 'email', label: 'Email', icon: Mail },
+  { id: 'workspaces', label: 'Workspaces', icon: Briefcase },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'search', label: 'Search', icon: Search },
 ];

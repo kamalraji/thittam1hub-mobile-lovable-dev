@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, Users, Calendar, TrendingUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { PullToRefresh } from '../shared/PullToRefresh';
+import { GridSkeleton } from '../shared/MobileSkeleton';
 
 interface MobileAnalyticsViewProps {
   organization: {
@@ -12,7 +14,7 @@ interface MobileAnalyticsViewProps {
 
 export const MobileAnalyticsView: React.FC<MobileAnalyticsViewProps> = ({ organization }) => {
   // Fetch basic stats
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ['mobile-analytics', organization.id],
     queryFn: async () => {
       const [eventsRes, registrationsRes, checkinsRes] = await Promise.all([
@@ -37,6 +39,10 @@ export const MobileAnalyticsView: React.FC<MobileAnalyticsViewProps> = ({ organi
       };
     },
   });
+
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   const statCards = [
     {
@@ -68,46 +74,52 @@ export const MobileAnalyticsView: React.FC<MobileAnalyticsViewProps> = ({ organi
   ];
 
   return (
-    <div className="px-4 py-4 space-y-4">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Overview of your organization's performance
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="bg-card border border-border rounded-2xl p-4 shadow-sm"
-            >
-              <div className={`inline-flex p-2 rounded-xl ${stat.color} mb-3`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Placeholder for Charts */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          <h2 className="font-semibold text-foreground">Activity Overview</h2>
-        </div>
-        <div className="flex items-center justify-center h-40 bg-muted/30 rounded-xl">
-          <p className="text-sm text-muted-foreground">
-            Charts coming soon
+    <PullToRefresh onRefresh={handleRefresh} className="h-full">
+      <div className="px-4 py-4 space-y-4">
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Analytics</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Overview of your organization's performance
           </p>
         </div>
+
+        {/* Stats Grid */}
+        {isLoading ? (
+          <GridSkeleton />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {statCards.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="bg-card border border-border rounded-2xl p-4 shadow-sm"
+                >
+                  <div className={`inline-flex p-2 rounded-xl ${stat.color} mb-3`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Placeholder for Charts */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground">Activity Overview</h2>
+          </div>
+          <div className="flex items-center justify-center h-40 bg-muted/30 rounded-xl">
+            <p className="text-sm text-muted-foreground">
+              Charts coming soon
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
   );
 };

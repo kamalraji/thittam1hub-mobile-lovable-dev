@@ -5,6 +5,7 @@ export { MobileFAB } from './MobileFAB';
 export { MobileQuickActionsSheet } from './MobileQuickActionsSheet';
 export { MobileHomeView } from './views/MobileHomeView';
 export { MobileEventsView } from './views/MobileEventsView';
-export { MobileEmailView } from './views/MobileEmailView';
+export { MobileWorkspacesView } from './views/MobileWorkspacesView';
+export { MobileWorkspaceDetailView } from './views/MobileWorkspaceDetailView';
 export { MobileAnalyticsView } from './views/MobileAnalyticsView';
 export { MobileSearchView } from './views/MobileSearchView';
