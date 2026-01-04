@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -29,13 +28,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -48,24 +40,8 @@ import {
   Eye,
   Loader2,
   Users,
-  Plus,
-  X,
-  Shield,
-  CheckSquare,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-
-// Available roles from the app_role enum
-const AVAILABLE_ROLES: readonly string[] = [
-  'admin',
-  'moderator',
-  'user',
-  'organizer',
-  'participant',
-  'judge',
-  'volunteer',
-  'speaker',
-];
 
 interface UserProfile {
   id: string;
@@ -92,13 +68,7 @@ export const AdminUserManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
-  const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [showBulkRoleDialog, setShowBulkRoleDialog] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
-  const [selectedRoleToAdd, setSelectedRoleToAdd] = useState<string>('');
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
-  const [bulkRoleAction, setBulkRoleAction] = useState<'add' | 'remove'>('add');
-  const [bulkRoleToApply, setBulkRoleToApply] = useState<string>('');
 
   // Fetch user profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<UserProfile[]>({
@@ -210,150 +180,6 @@ export const AdminUserManagement: React.FC = () => {
     },
   });
 
-  // Add role mutation
-  const addRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      // Log the action
-      await (supabase as any).from('admin_audit_logs').insert({
-        admin_id: currentUser?.id,
-        admin_email: currentUser?.email,
-        action: 'ROLE_GRANTED',
-        target_type: 'user',
-        target_id: userId,
-        details: { role },
-      });
-
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: role as any });
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-roles-list'] });
-      toast.success(`Role "${variables.role}" granted successfully`);
-      setSelectedRoleToAdd('');
-      // Update selectedUser's roles locally
-      if (selectedUser) {
-        setSelectedUser({
-          ...selectedUser,
-          roles: [...selectedUser.roles, variables.role],
-        });
-      }
-    },
-    onError: (error: any) => {
-      if (error.code === '23505') {
-        toast.error('User already has this role');
-      } else {
-        toast.error(error.message || 'Failed to grant role');
-      }
-    },
-  });
-
-  // Remove role mutation
-  const removeRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      // Log the action
-      await (supabase as any).from('admin_audit_logs').insert({
-        admin_id: currentUser?.id,
-        admin_email: currentUser?.email,
-        action: 'ROLE_REVOKED',
-        target_type: 'user',
-        target_id: userId,
-        details: { role },
-      });
-
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', role as any);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-roles-list'] });
-      toast.success(`Role "${variables.role}" revoked successfully`);
-      // Update selectedUser's roles locally
-      if (selectedUser) {
-        setSelectedUser({
-          ...selectedUser,
-          roles: selectedUser.roles.filter(r => r !== variables.role),
-        });
-      }
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to revoke role');
-    },
-  });
-
-  // Bulk add role mutation
-  const bulkAddRoleMutation = useMutation({
-    mutationFn: async ({ userIds, role }: { userIds: string[]; role: string }) => {
-      // Log the bulk action
-      await (supabase as any).from('admin_audit_logs').insert({
-        admin_id: currentUser?.id,
-        admin_email: currentUser?.email,
-        action: 'BULK_ROLE_GRANTED',
-        target_type: 'users',
-        target_id: userIds.join(','),
-        details: { role, count: userIds.length },
-      });
-
-      // Insert roles for all selected users (ignoring duplicates)
-      const inserts = userIds.map(userId => ({ user_id: userId, role: role as any }));
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert(inserts, { onConflict: 'user_id,role', ignoreDuplicates: true });
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-roles-list'] });
-      toast.success(`Role "${variables.role}" granted to ${variables.userIds.length} users`);
-      setShowBulkRoleDialog(false);
-      setBulkRoleToApply('');
-      setSelectedUserIds(new Set());
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to grant roles');
-    },
-  });
-
-  // Bulk remove role mutation
-  const bulkRemoveRoleMutation = useMutation({
-    mutationFn: async ({ userIds, role }: { userIds: string[]; role: string }) => {
-      // Log the bulk action
-      await (supabase as any).from('admin_audit_logs').insert({
-        admin_id: currentUser?.id,
-        admin_email: currentUser?.email,
-        action: 'BULK_ROLE_REVOKED',
-        target_type: 'users',
-        target_id: userIds.join(','),
-        details: { role, count: userIds.length },
-      });
-
-      // Remove roles from all selected users
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .in('user_id', userIds)
-        .eq('role', role as any);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-user-roles-list'] });
-      toast.success(`Role "${variables.role}" revoked from ${variables.userIds.length} users`);
-      setShowBulkRoleDialog(false);
-      setBulkRoleToApply('');
-      setSelectedUserIds(new Set());
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to revoke roles');
-    },
-  });
-
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin':
@@ -377,12 +203,6 @@ export const AdminUserManagement: React.FC = () => {
     setShowSuspendDialog(true);
   };
 
-  const openRoleDialog = (user: UserWithRoles) => {
-    setSelectedUser(user);
-    setSelectedRoleToAdd('');
-    setShowRoleDialog(true);
-  };
-
   const handleSuspend = () => {
     if (!selectedUser || !suspendReason.trim()) {
       toast.error('Please provide a reason for suspension');
@@ -391,73 +211,7 @@ export const AdminUserManagement: React.FC = () => {
     suspendMutation.mutate({ userId: selectedUser.id, reason: suspendReason });
   };
 
-  const handleAddRole = () => {
-    if (!selectedUser || !selectedRoleToAdd) {
-      toast.error('Please select a role to add');
-      return;
-    }
-    addRoleMutation.mutate({ userId: selectedUser.id, role: selectedRoleToAdd });
-  };
-
-  const handleRemoveRole = (role: string) => {
-    if (!selectedUser) return;
-    
-    // Prevent removing the last role
-    if (selectedUser.roles.length === 1) {
-      toast.error('Cannot remove the last role. User must have at least one role.');
-      return;
-    }
-    
-    removeRoleMutation.mutate({ userId: selectedUser.id, role });
-  };
-
-  const handleBulkRoleAction = () => {
-    if (!bulkRoleToApply || selectedUserIds.size === 0) {
-      toast.error('Please select users and a role');
-      return;
-    }
-    const userIds = Array.from(selectedUserIds);
-    if (bulkRoleAction === 'add') {
-      bulkAddRoleMutation.mutate({ userIds, role: bulkRoleToApply });
-    } else {
-      bulkRemoveRoleMutation.mutate({ userIds, role: bulkRoleToApply });
-    }
-  };
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUserIds(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  };
-
-  const toggleAllUsers = () => {
-    if (selectedUserIds.size === filteredUsers.length) {
-      setSelectedUserIds(new Set());
-    } else {
-      setSelectedUserIds(new Set(filteredUsers.map(u => u.id)));
-    }
-  };
-
-  const openBulkRoleDialog = (action: 'add' | 'remove') => {
-    setBulkRoleAction(action);
-    setBulkRoleToApply('');
-    setShowBulkRoleDialog(true);
-  };
-
-  // Get available roles that the user doesn't already have
-  const availableRolesToAdd = useMemo(() => {
-    if (!selectedUser) return AVAILABLE_ROLES;
-    return AVAILABLE_ROLES.filter(role => !selectedUser.roles.includes(role));
-  }, [selectedUser]);
-
   const isLoading = profilesLoading || rolesLoading;
-  const isBulkPending = bulkAddRoleMutation.isPending || bulkRemoveRoleMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -482,47 +236,6 @@ export const AdminUserManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Bulk Action Bar */}
-      {selectedUserIds.size > 0 && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckSquare className="h-5 w-5 text-primary" />
-                <span className="font-medium text-foreground">
-                  {selectedUserIds.size} user{selectedUserIds.size > 1 ? 's' : ''} selected
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openBulkRoleDialog('add')}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Role
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openBulkRoleDialog('remove')}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Remove Role
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedUserIds(new Set())}
-                >
-                  Clear Selection
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
@@ -543,13 +256,6 @@ export const AdminUserManagement: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={selectedUserIds.size === filteredUsers.length && filteredUsers.length > 0}
-                        onCheckedChange={toggleAllUsers}
-                        aria-label="Select all users"
-                      />
-                    </TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Organization</TableHead>
@@ -559,14 +265,7 @@ export const AdminUserManagement: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => (
-                    <TableRow key={user.id} className={selectedUserIds.has(user.id) ? 'bg-muted/50' : ''}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedUserIds.has(user.id)}
-                          onCheckedChange={() => toggleUserSelection(user.id)}
-                          aria-label={`Select ${user.full_name || 'user'}`}
-                        />
-                      </TableCell>
+                    <TableRow key={user.id}>
                       <TableCell>
                         <div>
                           <p className="font-medium text-foreground">
@@ -615,10 +314,6 @@ export const AdminUserManagement: React.FC = () => {
                             <DropdownMenuItem onClick={() => openUserDetails(user)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openRoleDialog(user)}>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Manage Roles
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {user.roles.includes('admin') ? null : (
@@ -745,149 +440,6 @@ export const AdminUserManagement: React.FC = () => {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Suspend User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Manage Roles Dialog */}
-      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Manage Roles
-            </DialogTitle>
-            <DialogDescription>
-              Grant or revoke roles for {selectedUser?.full_name || 'this user'}.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-6">
-              {/* Current Roles */}
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Current Roles
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedUser.roles.length > 0 ? (
-                    selectedUser.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        variant={getRoleBadgeVariant(role)}
-                        className="flex items-center gap-1 pr-1"
-                      >
-                        {role}
-                        <button
-                          onClick={() => handleRemoveRole(role)}
-                          disabled={removeRoleMutation.isPending || selectedUser.roles.length === 1}
-                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={selectedUser.roles.length === 1 ? 'Cannot remove last role' : `Remove ${role}`}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-muted-foreground text-sm">No roles assigned</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Add New Role */}
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">
-                  Add New Role
-                </label>
-                <div className="flex gap-2">
-                  <Select
-                    value={selectedRoleToAdd}
-                    onValueChange={setSelectedRoleToAdd}
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select a role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRolesToAdd.length > 0 ? (
-                        availableRolesToAdd.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                          User has all available roles
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handleAddRole}
-                    disabled={!selectedRoleToAdd || addRoleMutation.isPending}
-                    size="icon"
-                  >
-                    {addRoleMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Role Management Dialog */}
-      <Dialog open={showBulkRoleDialog} onOpenChange={setShowBulkRoleDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              {bulkRoleAction === 'add' ? 'Add Role to Selected Users' : 'Remove Role from Selected Users'}
-            </DialogTitle>
-            <DialogDescription>
-              This action will apply to {selectedUserIds.size} selected user{selectedUserIds.size > 1 ? 's' : ''}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Select Role
-              </label>
-              <Select value={bulkRoleToApply} onValueChange={setBulkRoleToApply}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a role..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {AVAILABLE_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBulkRoleDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleBulkRoleAction}
-              disabled={!bulkRoleToApply || isBulkPending}
-              variant={bulkRoleAction === 'remove' ? 'destructive' : 'default'}
-            >
-              {isBulkPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              {bulkRoleAction === 'add' ? 'Add Role' : 'Remove Role'}
             </Button>
           </DialogFooter>
         </DialogContent>

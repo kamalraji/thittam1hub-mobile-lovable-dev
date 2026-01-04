@@ -26,50 +26,41 @@ interface PlatformStats {
   completedEvents: number;
 }
 
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  description,
-  trend,
-  loading,
-}: {
+const StatCard: React.FC<{
   title: string;
   value: number | string;
   icon: React.ElementType;
   description?: string;
   trend?: string;
   loading?: boolean;
-}) {
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className="h-8 w-24" />
-        ) : (
-          <>
-            <div className="text-2xl font-bold text-foreground">{value}</div>
-            {description && (
-              <p className="text-xs text-muted-foreground mt-1">{description}</p>
-            )}
-            {trend && (
-              <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
-                <TrendingUp className="h-3 w-3" />
-                {trend}
-              </p>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+}> = ({ title, value, icon: Icon, description, trend, loading }) => (
+  <Card className="relative overflow-hidden">
+    <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-sm font-medium text-muted-foreground">
+        {title}
+      </CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      {loading ? (
+        <Skeleton className="h-8 w-24" />
+      ) : (
+        <>
+          <div className="text-2xl font-bold text-foreground">{value}</div>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+          {trend && (
+            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
+              <TrendingUp className="h-3 w-3" />
+              {trend}
+            </p>
+          )}
+        </>
+      )}
+    </CardContent>
+  </Card>
+);
 
 export const AdminStatisticsPanel: React.FC = () => {
   const { data: stats, isLoading } = useQuery({
