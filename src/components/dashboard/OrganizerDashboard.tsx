@@ -34,8 +34,7 @@ interface WorkspaceSummary {
 }
 export function OrganizerDashboard() {
   const {
-    user,
-    logout
+    user
   } = useAuth();
   const organization = useCurrentOrganization();
   const [activeTab, setActiveTab] = useState<'events' | 'analytics'>('events');
@@ -262,14 +261,6 @@ export function OrganizerDashboard() {
                                 </p>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
-                                <Link to={eventCreatePath} className="w-full sm:flex-1 min-w-0 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-sm">
-                                    Create Event
-                                </Link>
-                                <button onClick={logout} className="w-full sm:flex-1 min-w-0 inline-flex items-center justify-center rounded-full border-2 border-border/70 bg-background/80 backdrop-blur px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-foreground hover:bg-muted/80 transition-all">
-                                    Logout
-                                </button>
-                            </div>
 
                             <div className="flex flex-wrap items-center gap-2 justify-center xs:justify-end text-[11px] sm:text-xs text-muted-foreground">
                                 <span className="hidden sm:inline">Shortcuts:</span>
