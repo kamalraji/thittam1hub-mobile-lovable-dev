@@ -210,20 +210,6 @@ export const WorkspaceServiceDashboard: React.FC = () => {
     : [];
 
 
-  const getStatusColor = (status: WorkspaceStatus) => {
-    switch (status) {
-      case WorkspaceStatus.ACTIVE:
-        return 'bg-emerald-100 text-emerald-800';
-      case WorkspaceStatus.PROVISIONING:
-        return 'bg-amber-100 text-amber-800';
-      case WorkspaceStatus.WINDING_DOWN:
-        return 'bg-sky-100 text-sky-800';
-      case WorkspaceStatus.DISSOLVED:
-        return 'bg-muted text-muted-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
 
   const isWorkspacesLoading = isLoading;
 
@@ -468,88 +454,96 @@ export const WorkspaceServiceDashboard: React.FC = () => {
           )}
         </section>
 
-        {/* Recent Workspaces */}
+        {/* Recent Workspaces - Innovative Card Design */}
         {dashboardData && dashboardData.recentWorkspaces.length > 0 && (
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
-              <h3 className="text-base sm:text-lg font-medium text-foreground">Recent Workspaces</h3>
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 bg-gradient-to-b from-primary to-primary/30 rounded-full" />
+                <h3 className="text-lg sm:text-xl font-semibold text-foreground tracking-tight">
+                  Recent Workspaces
+                </h3>
+              </div>
               <Link
                 to={`${baseWorkspacePath}/list${eventId ? `?eventId=${eventId}` : ''}`}
-                className="text-xs sm:text-sm text-primary hover:text-primary/80 font-medium"
+                className="group flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                View all workspaces →
+                <span>View all</span>
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
             
-            <div className="bg-card rounded-lg border border-border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Workspace Name
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Event
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Team Size
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Last Updated
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-[11px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-background divide-y divide-border">
-                    {dashboardData.recentWorkspaces.map((workspace) => (
-                      <tr key={workspace.id} className="hover:bg-muted/60">
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-foreground">{workspace.name}</div>
-                          {workspace.description && (
-                            <div className="text-xs sm:text-sm text-muted-foreground truncate max-w-xs">
-                              {workspace.description}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-full ${getStatusColor(workspace.status)}`}>
-                            {workspace.status}
-                          </span>
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-foreground">
-                          {workspace.event ? workspace.event.name : 'No event'}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-foreground">
-                          {workspace.teamMembers?.length || 0} members
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-foreground">
-                          {new Date(workspace.updatedAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
-                          <Link
-                            to={`${baseWorkspacePath}/${workspace.id}`}
-                            className="text-primary hover:text-primary/80 mr-3 sm:mr-4"
-                          >
-                            View
-                          </Link>
-                          <Link
-                            to={`${baseWorkspacePath}/${workspace.id}/tasks`}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            Tasks
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {dashboardData.recentWorkspaces.map((workspace, index) => (
+                <Link
+                  key={workspace.id}
+                  to={`${baseWorkspacePath}/${workspace.id}`}
+                  className="group relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-muted/20 p-5 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  {/* Status indicator bar */}
+                  <div className={cn(
+                    "absolute top-0 left-0 right-0 h-1 transition-all duration-300",
+                    workspace.status === WorkspaceStatus.ACTIVE && "bg-gradient-to-r from-emerald-500 to-emerald-400",
+                    workspace.status === WorkspaceStatus.PROVISIONING && "bg-gradient-to-r from-amber-500 to-amber-400",
+                    workspace.status === WorkspaceStatus.WINDING_DOWN && "bg-gradient-to-r from-sky-500 to-sky-400",
+                    workspace.status === WorkspaceStatus.DISSOLVED && "bg-gradient-to-r from-muted-foreground/50 to-muted-foreground/30"
+                  )} />
+                  
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          {workspace.name}
+                        </h4>
+                        {workspace.event && (
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {workspace.event.name}
+                          </p>
+                        )}
+                      </div>
+                      <span className={cn(
+                        "shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide",
+                        workspace.status === WorkspaceStatus.ACTIVE && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                        workspace.status === WorkspaceStatus.PROVISIONING && "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                        workspace.status === WorkspaceStatus.WINDING_DOWN && "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+                        workspace.status === WorkspaceStatus.DISSOLVED && "bg-muted text-muted-foreground"
+                      )}>
+                        {workspace.status}
+                      </span>
+                    </div>
+                    
+                    {/* Description */}
+                    {workspace.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {workspace.description}
+                      </p>
+                    )}
+                    
+                    {/* Footer stats */}
+                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" />
+                          <span>{workspace.teamMembers?.length || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground/60">Updated</span>
+                          <span>{new Date(workspace.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-xs font-medium">Open</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Hover glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                </Link>
+              ))}
             </div>
           </div>
         )}
