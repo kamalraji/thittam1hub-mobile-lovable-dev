@@ -23,7 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export const WorkspaceServiceDashboard: React.FC = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const organization = useCurrentOrganization();
  
   const currentPath = location.pathname;
@@ -390,40 +390,6 @@ export const WorkspaceServiceDashboard: React.FC = () => {
         )}
 
  
-        {/* Event Filter (org-scoped) */}
-        {dashboardData && (
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            <span className="text-xs sm:text-sm font-medium text-muted-foreground">Filter by event:</span>
-            <select
-              className="border border-border rounded-md px-3 py-1.5 text-xs sm:text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              value={eventId || ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                const params = new URLSearchParams(searchParams);
-                if (value) {
-                  params.set('eventId', value);
-                } else {
-                  params.delete('eventId');
-                }
-                setSearchParams(params);
-              }}
-            >
-              <option value="">All events</option>
-              {workspaces &&
-                Array.from(
-                  new Map(
-                    workspaces
-                      .filter((w) => w.event)
-                      .map((w) => [w.event!.id, w.event!.name] as [string, string])
-                  ).entries()
-                ).map(([id, name]) => (
-                  <option key={id} value={id}>
-                    {name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        )}
 
         {/* Service Overview / Empty state */}
         <section>
@@ -496,82 +462,7 @@ export const WorkspaceServiceDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
-                    {/* existing metric cards unchanged */}
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">🏗️</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Workspaces</p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.totalWorkspaces}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">🟢</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Workspaces</p>
-                          <p className="text-xl sm:text-2xl font-bold text-primary">{dashboardData.metrics.activeWorkspaces}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">📝</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Provisioning</p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.provisioningWorkspaces}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">⏳</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Winding Down</p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.windingDownWorkspaces}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">📋</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Tasks</p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.totalTasks}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-card rounded-lg border border-border p-4 sm:p-6">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <span className="text-xl sm:text-2xl">👥</span>
-                        </div>
-                        <div className="ml-3 sm:ml-4">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">Team Members</p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.totalTeamMembers}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </>
             )
           )}
