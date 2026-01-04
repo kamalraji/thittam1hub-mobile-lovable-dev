@@ -16,9 +16,9 @@ import { OrgMarketplacePage } from '@/components/routing/services/OrgMarketplace
 import { EventPageBuilder } from '@/components/events/EventPageBuilder';
 import { OrgScopedBreadcrumbs } from './OrgScopedBreadcrumbs';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminUserRolesPage } from '@/components/admin/AdminUserRolesPage';
 import { RolesDiagramPage } from '@/components/admin/RolesDiagramPage';
-import { AdminActivityDashboard } from '@/components/admin/AdminActivityDashboard';
 import { UserRole } from '@/types';
 
 /**
@@ -135,9 +135,9 @@ export const OrgScopedLayout: React.FC = () => {
                   {/* Admin routes - only for SUPER_ADMIN */}
                   {isSuperAdmin && (
                     <Route path="admin" element={<AdminLayout />}>
+                      <Route index element={<AdminDashboard />} />
                       <Route path="users" element={<AdminUserRolesPage />} />
                       <Route path="roles-diagram" element={<RolesDiagramPage />} />
-                      <Route path="activity" element={<AdminActivityDashboard />} />
                     </Route>
                   )}
                   <Route path="*" element={<Navigate to="dashboard" replace />} />
