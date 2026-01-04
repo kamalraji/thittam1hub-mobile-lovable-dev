@@ -34,6 +34,8 @@ export const PendingOrganizersAdminPage: React.FC = () => {
     },
   });
 
+  // Note: AdminLayout already enforces SUPER_ADMIN role verification and thittam1hub org membership
+  // This effect is kept as a fallback safety measure but shouldn't be triggered under normal flow
   useEffect(() => {
     if (!user || user.role !== 'SUPER_ADMIN') return;
     if (orgsLoading) return;

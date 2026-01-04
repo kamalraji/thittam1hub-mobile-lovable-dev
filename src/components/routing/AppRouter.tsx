@@ -27,6 +27,7 @@ import { OrganizerOnboardingPage } from '../organization/OrganizerOnboardingPage
 import { AdminUserRolesPage } from '../admin/AdminUserRolesPage';
 import { PendingOrganizersAdminPage } from '../admin/PendingOrganizersAdminPage';
 import { RolesDiagramPage } from '../admin/RolesDiagramPage';
+import { AdminLayout } from '../admin/AdminLayout';
 import { ProfilePage } from '../profile/ProfilePage';
 import { ProfileSettingsPage } from '../profile/ProfileSettingsPage';
 import { PublicProfilePage } from '../profile/PublicProfilePage';
@@ -715,30 +716,19 @@ export const AppRouter: React.FC = () => {
                   </ConsoleRoute>
                 }
               />
+              {/* Admin routes - wrapped in AdminLayout for server-side verification */}
               <Route
-                path="admin/users"
+                path="admin"
                 element={
                   <ConsoleRoute requiredRoles={[UserRole.SUPER_ADMIN]}>
-                    <AdminUserRolesPage />
+                    <AdminLayout />
                   </ConsoleRoute>
                 }
-              />
-              <Route
-                path="admin/roles-diagram"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.SUPER_ADMIN]}>
-                    <RolesDiagramPage />
-                  </ConsoleRoute>
-                }
-              />
-              <Route
-                path="admin/organizers"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.SUPER_ADMIN]}>
-                    <PendingOrganizersAdminPage />
-                  </ConsoleRoute>
-                }
-              />
+              >
+                <Route path="users" element={<AdminUserRolesPage />} />
+                <Route path="roles-diagram" element={<RolesDiagramPage />} />
+                <Route path="organizers" element={<PendingOrganizersAdminPage />} />
+              </Route>
               <Route
                 path="profile/*"
                 element={
