@@ -49,40 +49,6 @@ export const EventServiceDashboard: React.FC = () => {
 
   const { events, registrationsByEvent, metrics } = useEventManagementMetrics(organization?.id, onlyMine);
 
-  const analyticsPath = listPath.startsWith('/dashboard')
-    ? '/dashboard/analytics'
-    : listPath.startsWith('/') && listPath.split('/').length > 2
-      ? `/${listPath.split('/')[1]}/analytics`
-      : '/dashboard/analytics';
-
-  const quickActions = [
-    {
-      title: 'Create New Event',
-      description: 'Start planning your next event',
-      href: createPath,
-      primary: true,
-    },
-    {
-      title: 'Browse Templates',
-      description: 'Use pre-built event templates',
-      href: listPath.replace(/\/list$/, '/templates'),
-    },
-    {
-      title: 'View All Events',
-      description: 'Manage your existing events',
-      href: listPath,
-    },
-    {
-      title: 'Registrations Overview',
-      description: 'Review and manage event registrations',
-      href: listPath.replace(/\/list$/, '/registrations'),
-    },
-    {
-      title: 'Analytics Dashboard',
-      description: 'View event performance metrics',
-      href: analyticsPath,
-    },
-  ];
 
   const pageActions = [
     {
@@ -204,43 +170,6 @@ export const EventServiceDashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
-
-          {/* Quick Actions */}
-          <section aria-labelledby="event-service-quick-actions-heading">
-            <h2 id="event-service-quick-actions-heading" className="text-base sm:text-lg font-medium text-foreground mb-2 sm:mb-3">
-              Quick Actions
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {quickActions.map((action, index) => (
-                <Link
-                  key={index}
-                  to={action.href}
-                  className={`block p-4 sm:p-6 rounded-lg border transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${{
-                    true: action.primary
-                      ? 'border-primary/20 bg-primary/5 hover:bg-primary/10'
-                      : 'border-border bg-card hover:bg-muted',
-                  }.true}`}
-                >
-                  <div className="flex items-center mb-2 sm:mb-3">
-                    <h3
-                      className={`text-sm sm:text-base font-medium ${
-                        action.primary ? 'text-primary' : 'text-foreground'
-                      }`}
-                    >
-                      {action.title}
-                    </h3>
-                  </div>
-                  <p
-                    className={`text-xs sm:text-sm ${
-                      action.primary ? 'text-primary' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {action.description}
-                  </p>
-                </Link>
-              ))}
             </div>
           </section>
 

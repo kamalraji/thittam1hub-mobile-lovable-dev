@@ -28,14 +28,18 @@ import {
   Store,
   LineChart,
   Users,
-  ExternalLink,
   Building2,
-  Shield,
   ChevronDown,
   ChevronRight,
   Folder,
   FolderOpen,
   Plus,
+  PlusCircle,
+  LayoutTemplate,
+  List,
+  ClipboardList,
+  ExternalLink,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkspaceStatus } from '@/types';
@@ -49,11 +53,42 @@ interface OrgMenuItem {
 
 const orgServices: OrgMenuItem[] = [
   { title: 'Dashboard', icon: LayoutDashboard, path: 'dashboard', description: 'Overview & metrics' },
-  { title: 'Event Management', icon: CalendarDays, path: 'eventmanagement', description: 'Manage events' },
+  // Event Management is now a separate expandable section
   // Workspace is now a separate expandable section
   { title: 'Marketplace', icon: Store, path: 'marketplace', description: 'Products & services' },
   { title: 'Analytics', icon: LineChart, path: 'analytics', description: 'Performance insights' },
   { title: 'Team', icon: Users, path: 'team', description: 'Members & roles' },
+];
+
+interface EventQuickAction {
+  title: string;
+  description: string;
+  path: string;
+  primary?: boolean;
+}
+
+const getEventQuickActions = (base: string): EventQuickAction[] => [
+  {
+    title: 'Create New Event',
+    description: 'Start planning your next event',
+    path: `${base}/eventmanagement/create`,
+    primary: true,
+  },
+  {
+    title: 'Browse Templates',
+    description: 'Use pre-built event templates',
+    path: `${base}/eventmanagement/templates`,
+  },
+  {
+    title: 'View All Events',
+    description: 'Manage your existing events',
+    path: `${base}/eventmanagement`,
+  },
+  {
+    title: 'Registrations',
+    description: 'Review registrations',
+    path: `${base}/eventmanagement/registrations`,
+  },
 ];
 
 export const OrganizationSidebar: React.FC = () => {
@@ -66,6 +101,7 @@ export const OrganizationSidebar: React.FC = () => {
   const organization = useCurrentOrganization();
   const { user } = useAuth();
 
+  const [eventManagementExpanded, setEventManagementExpanded] = useState(true);
   const [workspacesExpanded, setWorkspacesExpanded] = useState(true);
   const [myWorkspacesExpanded, setMyWorkspacesExpanded] = useState(true);
   const [orgWorkspacesExpanded, setOrgWorkspacesExpanded] = useState(false);
@@ -73,8 +109,11 @@ export const OrganizationSidebar: React.FC = () => {
   const base = `/${orgSlug ?? ''}`.replace(/\/$/, '');
   const currentPath = location.pathname;
   const isThittamHubOrg = orgSlug === 'thittam1hub';
+  const isEventManagementActive = currentPath.includes('/eventmanagement');
   const isWorkspacesActive = currentPath.includes('/workspaces');
   const selectedWorkspaceId = searchParams.get('workspaceId');
+  
+  const eventQuickActions = getEventQuickActions(base);
 
   // Fetch workspaces for sidebar
   const { data: workspacesData } = useQuery({
@@ -313,6 +352,89 @@ export const OrganizationSidebar: React.FC = () => {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Event Management Section */}
+        <SidebarGroup>
+          <button
+            onClick={() => setEventManagementExpanded(!eventManagementExpanded)}
+            className={cn(
+              'w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200',
+              'hover:bg-primary/10',
+              isEventManagementActive && 'bg-primary/15'
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-200',
+                  isEventManagementActive
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'bg-muted/60 text-muted-foreground'
+                )}
+              >
+                <CalendarDays className="h-4 w-4" />
+              </span>
+              {!isCollapsed && (
+                <span className="flex flex-col items-start">
+                  <span className={cn("text-sm font-medium", isEventManagementActive && "text-primary")}>
+                    Event Management
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Manage events
+                  </span>
+                </span>
+              )}
+            </div>
+            {!isCollapsed && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`${base}/eventmanagement/create`);
+                  }}
+                  className="p-1 hover:bg-muted rounded"
+                  title="Create event"
+                >
+                  <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                {eventManagementExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            )}
+          </button>
+
+          {eventManagementExpanded && !isCollapsed && (
+            <div className="mt-2 ml-3 border-l border-border/50 pl-2 space-y-0.5">
+              {eventQuickActions.map((action, index) => {
+                const isActive = currentPath === action.path;
+                const ActionIcon = action.primary ? PlusCircle : 
+                  action.title.includes('Template') ? LayoutTemplate :
+                  action.title.includes('View') ? List : ClipboardList;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => navigate(action.path)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md hover:bg-muted/70 transition-colors text-left",
+                      isActive ? "bg-primary/10 text-primary" : "text-foreground",
+                      action.primary && "text-primary font-medium"
+                    )}
+                  >
+                    <ActionIcon className={cn(
+                      "h-3.5 w-3.5 flex-shrink-0",
+                      action.primary ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span className="truncate flex-1">{action.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </SidebarGroup>
 
         {/* Workspaces Section */}
