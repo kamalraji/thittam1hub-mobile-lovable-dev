@@ -11,16 +11,19 @@ import {
   Store, 
   Package, 
   Star, 
-  Clock, 
   CheckCircle, 
   AlertCircle,
   Plus,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  CalendarCheck,
+  Settings
 } from 'lucide-react';
 import VendorRegistration from './VendorRegistration';
 import VendorServiceManager from './VendorServiceManager';
 import VendorReviewsManager from './VendorReviewsManager';
+import VendorBookingManager from './VendorBookingManager';
+import VendorProfileEditor from './VendorProfileEditor';
 
 interface VendorDashboardProps {
   userId?: string;
@@ -93,6 +96,29 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
         count: data?.length || 0,
         averageRating: avgRating,
         pendingResponses,
+      };
+    },
+    enabled: !!vendor?.id,
+  });
+
+  // Fetch booking stats
+  const { data: bookingsData } = useQuery({
+    queryKey: ['vendor-bookings-stats', vendor?.id],
+    queryFn: async () => {
+      if (!vendor?.id) return { total: 0, pending: 0 };
+      
+      const { data, error } = await supabase
+        .from('vendor_bookings')
+        .select('status')
+        .eq('vendor_id', vendor.id);
+
+      if (error) throw error;
+      
+      const pending = data?.filter(b => ['PENDING', 'REVIEWING'].includes(b.status)).length || 0;
+      
+      return {
+        total: data?.length || 0,
+        pending,
       };
     },
     enabled: !!vendor?.id,
@@ -222,12 +248,12 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-purple-600" />
+                <CalendarCheck className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Pending Responses</p>
+                <p className="text-sm text-muted-foreground">Pending Bookings</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {reviewsData?.pendingResponses || 0}
+                  {bookingsData?.pending || 0}
                 </p>
               </div>
             </div>
@@ -241,7 +267,19 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
           <CardTitle className="text-lg">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Button 
+              variant="outline" 
+              className="h-auto p-4 flex flex-col items-start gap-2"
+              onClick={() => setActiveTab('bookings')}
+            >
+              <CalendarCheck className="h-5 w-5 text-primary" />
+              <div className="text-left">
+                <p className="font-medium">View Bookings</p>
+                <p className="text-xs text-muted-foreground">Manage incoming requests</p>
+              </div>
+            </Button>
+
             <Button 
               variant="outline" 
               className="h-auto p-4 flex flex-col items-start gap-2"
@@ -250,7 +288,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
               <Package className="h-5 w-5 text-primary" />
               <div className="text-left">
                 <p className="font-medium">Manage Services</p>
-                <p className="text-xs text-muted-foreground">Add or edit your service listings</p>
+                <p className="text-xs text-muted-foreground">Add or edit your listings</p>
               </div>
             </Button>
 
@@ -262,19 +300,19 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
               <Star className="h-5 w-5 text-primary" />
               <div className="text-left">
                 <p className="font-medium">View Reviews</p>
-                <p className="text-xs text-muted-foreground">Respond to customer feedback</p>
+                <p className="text-xs text-muted-foreground">Respond to feedback</p>
               </div>
             </Button>
 
             <Button 
               variant="outline" 
               className="h-auto p-4 flex flex-col items-start gap-2"
-              onClick={() => window.open(`/vendor/${vendor.id}`, '_blank')}
+              onClick={() => setActiveTab('profile')}
             >
-              <Store className="h-5 w-5 text-primary" />
+              <Settings className="h-5 w-5 text-primary" />
               <div className="text-left">
-                <p className="font-medium">View Public Profile</p>
-                <p className="text-xs text-muted-foreground">See how customers see you</p>
+                <p className="font-medium">Edit Profile</p>
+                <p className="text-xs text-muted-foreground">Update business info</p>
               </div>
             </Button>
           </div>
@@ -315,10 +353,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="bookings" className="gap-2">
+            <CalendarCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Bookings</span>
           </TabsTrigger>
           <TabsTrigger value="services" className="gap-2">
             <Package className="h-4 w-4" />
@@ -328,10 +370,18 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
             <Star className="h-4 w-4" />
             <span className="hidden sm:inline">Reviews</span>
           </TabsTrigger>
+          <TabsTrigger value="profile" className="gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Profile</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
           {renderOverview()}
+        </TabsContent>
+
+        <TabsContent value="bookings" className="mt-6">
+          <VendorBookingManager vendorId={vendor.id} />
         </TabsContent>
 
         <TabsContent value="services" className="mt-6">
@@ -340,6 +390,10 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ userId }) => {
 
         <TabsContent value="reviews" className="mt-6">
           <VendorReviewsManager vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="profile" className="mt-6">
+          <VendorProfileEditor vendor={vendor} onUpdate={() => refetchVendor()} />
         </TabsContent>
       </Tabs>
     </div>

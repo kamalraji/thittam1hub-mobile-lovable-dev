@@ -898,6 +898,100 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_bookings: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          created_at: string
+          event_date: string
+          event_id: string | null
+          event_location: string | null
+          event_name: string
+          final_price: number | null
+          guest_count: number | null
+          id: string
+          organizer_email: string
+          organizer_id: string
+          organizer_name: string
+          organizer_phone: string | null
+          quoted_price: number | null
+          requirements: string | null
+          service_id: string | null
+          status: string
+          updated_at: string
+          vendor_id: string
+          vendor_notes: string | null
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          event_date: string
+          event_id?: string | null
+          event_location?: string | null
+          event_name: string
+          final_price?: number | null
+          guest_count?: number | null
+          id?: string
+          organizer_email: string
+          organizer_id: string
+          organizer_name: string
+          organizer_phone?: string | null
+          quoted_price?: number | null
+          requirements?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id: string
+          vendor_notes?: string | null
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          event_date?: string
+          event_id?: string | null
+          event_location?: string | null
+          event_name?: string
+          final_price?: number | null
+          guest_count?: number | null
+          id?: string
+          organizer_email?: string
+          organizer_id?: string
+          organizer_name?: string
+          organizer_phone?: string | null
+          quoted_price?: number | null
+          requirements?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+          vendor_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bookings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_reviews: {
         Row: {
           created_at: string
