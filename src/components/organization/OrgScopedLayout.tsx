@@ -121,7 +121,29 @@ export const OrgScopedLayout: React.FC = () => {
             email: user.email,
             avatarUrl: (user as any).avatarUrl || (user as any).avatar_url,
           }}
-        />
+        >
+          {/* Mobile renders the same routes as desktop, just wrapped in mobile shell */}
+          <Routes>
+            <Route path="dashboard" element={<OrganizerDashboard />} />
+            <Route path="settings" element={<Navigate to="settings/dashboard" replace />} />
+            <Route path="settings/dashboard" element={<OrgSettingsDashboard />} />
+            <Route path="settings/story" element={<OrgStorySettingsPage />} />
+            <Route path="eventmanagement/*" element={<EventService />} />
+            <Route path="workspaces/*" element={<WorkspaceService />} />
+            <Route path="marketplace" element={<OrgMarketplacePage />} />
+            <Route path="organizations/*" element={<OrganizationService />} />
+            <Route path="analytics" element={<OrganizationAnalyticsDashboard />} />
+            <Route path="team" element={<OrganizationTeamManagement />} />
+            {isSuperAdmin && (
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<AdminUserRolesPage />} />
+                <Route path="roles-diagram" element={<RolesDiagramPage />} />
+              </Route>
+            )}
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
+          </Routes>
+        </MobileAppShell>
       </OrganizationProvider>
     );
   }
