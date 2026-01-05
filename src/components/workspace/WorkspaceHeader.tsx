@@ -122,6 +122,7 @@ export function WorkspaceHeader({
                 <WorkspaceBreadcrumbs
                   workspaceId={workspace.id}
                   eventId={workspace.eventId}
+                  orgSlug={orgSlug}
                 />
               </div>
             </div>
