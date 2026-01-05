@@ -1,67 +1,58 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, MapPin, Users, Coffee, Sun, Moon } from 'lucide-react';
+import { Clock, MapPin, Users, Coffee, Sun, Moon, Loader2 } from 'lucide-react';
+import { useCateringMealSchedule } from '@/hooks/useCateringData';
 
 interface MealScheduleProps {
   workspaceId: string;
 }
 
-export function MealSchedule({ workspaceId: _workspaceId }: MealScheduleProps) {
-  // Mock data - would be fetched from database
-  const mealSchedule = [
-    {
-      id: '1',
-      name: 'Breakfast',
-      time: '07:30 - 09:00',
-      location: 'Main Ballroom Foyer',
-      expectedGuests: 380,
-      icon: Coffee,
-      status: 'upcoming',
-      notes: 'Setup starts 06:30',
-    },
-    {
-      id: '2',
-      name: 'Morning Tea',
-      time: '10:30 - 11:00',
-      location: 'Exhibition Hall',
-      expectedGuests: 450,
-      icon: Coffee,
-      status: 'upcoming',
-      notes: 'Coffee stations x4',
-    },
-    {
-      id: '3',
-      name: 'Lunch',
-      time: '12:30 - 14:00',
-      location: 'Garden Terrace',
-      expectedGuests: 450,
-      icon: Sun,
-      status: 'upcoming',
-      notes: 'Buffet style, outdoor seating available',
-    },
-    {
-      id: '4',
-      name: 'Afternoon Tea',
-      time: '15:30 - 16:00',
-      location: 'Exhibition Hall',
-      expectedGuests: 400,
-      icon: Coffee,
-      status: 'upcoming',
-      notes: 'Light snacks and refreshments',
-    },
-    {
-      id: '5',
-      name: 'Gala Dinner',
-      time: '19:00 - 22:00',
-      location: 'Grand Ballroom',
-      expectedGuests: 380,
-      icon: Moon,
-      status: 'upcoming',
-      notes: 'Formal seated dinner, 3 courses',
-    },
-  ];
+export function MealSchedule({ workspaceId }: MealScheduleProps) {
+  const { data: mealSchedule = [], isLoading } = useCateringMealSchedule(workspaceId);
 
-  const totalServings = mealSchedule.reduce((acc, meal) => acc + meal.expectedGuests, 0);
+  const mealTypeIcons = {
+    breakfast: Coffee,
+    lunch: Sun,
+    dinner: Moon,
+    snack: Coffee,
+    tea: Coffee,
+  };
+
+  const totalServings = mealSchedule.reduce((acc, meal) => acc + meal.expected_guests, 0);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-500" />
+            Meal Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (mealSchedule.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-500" />
+            Meal Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground py-8">
+            No meals scheduled yet. Add meals from the database.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -84,7 +75,7 @@ export function MealSchedule({ workspaceId: _workspaceId }: MealScheduleProps) {
           
           <div className="space-y-4">
             {mealSchedule.map((meal) => {
-              const Icon = meal.icon;
+              const Icon = mealTypeIcons[meal.meal_type] || Coffee;
               return (
                 <div key={meal.id} className="relative flex gap-4">
                   {/* Timeline dot */}
@@ -101,17 +92,19 @@ export function MealSchedule({ workspaceId: _workspaceId }: MealScheduleProps) {
                           <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3.5 w-3.5" />
-                              {meal.time}
+                              {meal.scheduled_time}
                             </span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {meal.location}
-                            </span>
+                            {meal.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3.5 w-3.5" />
+                                {meal.location}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <Badge variant="outline" className="text-xs">
                           <Users className="h-3 w-3 mr-1" />
-                          {meal.expectedGuests}
+                          {meal.expected_guests}
                         </Badge>
                       </div>
                       {meal.notes && (

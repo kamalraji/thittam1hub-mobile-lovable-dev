@@ -1,20 +1,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Utensils, Users, AlertTriangle, Clock, ChefHat, Truck } from 'lucide-react';
+import { useCateringStats } from '@/hooks/useCateringData';
 
 interface CateringStatsCardsProps {
   workspaceId: string;
 }
 
-export function CateringStatsCards({ workspaceId: _workspaceId }: CateringStatsCardsProps) {
-  // Mock data - would be fetched from database in production
-  const stats = {
-    totalHeadCount: 450,
-    mealsPlanned: 6,
-    dietaryRequests: 42,
-    vendorsConfirmed: 3,
-    menuItems: 28,
-    pendingDeliveries: 2,
-  };
+export function CateringStatsCards({ workspaceId }: CateringStatsCardsProps) {
+  const stats = useCateringStats(workspaceId);
 
   const statCards = [
     {
@@ -32,25 +25,25 @@ export function CateringStatsCards({ workspaceId: _workspaceId }: CateringStatsC
       bgColor: 'bg-orange-500/10',
     },
     {
-      label: 'Dietary Requests',
-      value: stats.dietaryRequests,
-      icon: AlertTriangle,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10',
-    },
-    {
-      label: 'Vendors',
-      value: stats.vendorsConfirmed,
-      icon: ChefHat,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10',
-    },
-    {
       label: 'Menu Items',
       value: stats.menuItems,
       icon: Clock,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
+    },
+    {
+      label: 'Vendors',
+      value: `${stats.vendorsConfirmed}/${stats.totalVendors}`,
+      icon: ChefHat,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
+    },
+    {
+      label: 'Low Stock Items',
+      value: stats.criticalInventory,
+      icon: AlertTriangle,
+      color: stats.criticalInventory > 0 ? 'text-red-500' : 'text-amber-500',
+      bgColor: stats.criticalInventory > 0 ? 'bg-red-500/10' : 'bg-amber-500/10',
     },
     {
       label: 'Pending Deliveries',

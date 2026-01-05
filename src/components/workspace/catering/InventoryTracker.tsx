@@ -9,7 +9,8 @@ import {
   Package, 
   AlertTriangle, 
   Check, 
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import {
   Dialog,
@@ -19,87 +20,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: 'food' | 'beverage' | 'equipment' | 'supplies';
-  currentStock: number;
-  requiredStock: number;
-  unit: string;
-  status: 'adequate' | 'low' | 'critical' | 'ordered';
-  supplier?: string;
-  lastUpdated: Date;
-}
+import { useCateringInventory, useCateringInventoryMutations, CateringInventoryItem } from '@/hooks/useCateringData';
 
 interface InventoryTrackerProps {
   workspaceId: string;
 }
 
-export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTrackerProps) {
-  const [items, setItems] = useState<InventoryItem[]>([
-    {
-      id: '1',
-      name: 'Coffee Beans',
-      category: 'beverage',
-      currentStock: 25,
-      requiredStock: 30,
-      unit: 'kg',
-      status: 'adequate',
-      supplier: 'Premium Beverages Inc.',
-      lastUpdated: new Date(),
-    },
-    {
-      id: '2',
-      name: 'Bottled Water',
-      category: 'beverage',
-      currentStock: 200,
-      requiredStock: 500,
-      unit: 'bottles',
-      status: 'low',
-      supplier: 'Local Distributor',
-      lastUpdated: new Date(),
-    },
-    {
-      id: '3',
-      name: 'Napkins',
-      category: 'supplies',
-      currentStock: 100,
-      requiredStock: 1000,
-      unit: 'packs',
-      status: 'critical',
-      lastUpdated: new Date(),
-    },
-    {
-      id: '4',
-      name: 'Serving Plates',
-      category: 'equipment',
-      currentStock: 500,
-      requiredStock: 500,
-      unit: 'pcs',
-      status: 'adequate',
-      lastUpdated: new Date(),
-    },
-    {
-      id: '5',
-      name: 'Fresh Vegetables',
-      category: 'food',
-      currentStock: 0,
-      requiredStock: 50,
-      unit: 'kg',
-      status: 'ordered',
-      supplier: 'Farm Fresh',
-      lastUpdated: new Date(),
-    },
-  ]);
+export function InventoryTracker({ workspaceId }: InventoryTrackerProps) {
+  const { data: items = [], isLoading } = useCateringInventory(workspaceId);
+  const { createItem, updateItem } = useCateringInventoryMutations(workspaceId);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    category: 'food' as InventoryItem['category'],
-    currentStock: 0,
-    requiredStock: 0,
+    category: 'food' as CateringInventoryItem['category'],
+    current_stock: 0,
+    required_stock: 0,
     unit: 'pcs',
     supplier: '',
   });
@@ -118,31 +54,29 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
     ordered: { label: 'Ordered', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: RefreshCw },
   };
 
-  const handleSubmit = () => {
-    if (!formData.name.trim()) {
-      toast.error('Please enter item name');
-      return;
-    }
+  const calculateStatus = (current: number, required: number): CateringInventoryItem['status'] => {
+    if (required === 0) return 'adequate';
+    const ratio = current / required;
+    if (ratio < 0.2) return 'critical';
+    if (ratio < 0.5) return 'low';
+    return 'adequate';
+  };
 
-    const stockRatio = formData.currentStock / formData.requiredStock;
-    let status: InventoryItem['status'] = 'adequate';
-    if (stockRatio < 0.2) status = 'critical';
-    else if (stockRatio < 0.5) status = 'low';
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) return;
 
-    const newItem: InventoryItem = {
-      id: Date.now().toString(),
+    const status = calculateStatus(formData.current_stock, formData.required_stock);
+
+    await createItem.mutateAsync({
       name: formData.name,
       category: formData.category,
-      currentStock: formData.currentStock,
-      requiredStock: formData.requiredStock,
+      current_stock: formData.current_stock,
+      required_stock: formData.required_stock,
       unit: formData.unit,
       status,
-      supplier: formData.supplier || undefined,
-      lastUpdated: new Date(),
-    };
+      supplier: formData.supplier || null,
+    });
 
-    setItems(i => [...i, newItem]);
-    toast.success('Item added to inventory');
     resetForm();
   };
 
@@ -150,8 +84,8 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
     setFormData({
       name: '',
       category: 'food',
-      currentStock: 0,
-      requiredStock: 0,
+      current_stock: 0,
+      required_stock: 0,
       unit: 'pcs',
       supplier: '',
     });
@@ -159,14 +93,27 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
   };
 
   const markAsOrdered = (id: string) => {
-    setItems(i => i.map(item => 
-      item.id === id ? { ...item, status: 'ordered' as const, lastUpdated: new Date() } : item
-    ));
-    toast.success('Marked as ordered');
+    updateItem.mutate({ id, status: 'ordered' });
   };
 
   const criticalItems = items.filter(i => i.status === 'critical').length;
   const lowItems = items.filter(i => i.status === 'low').length;
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-purple-500" />
+            Inventory Tracker
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -215,7 +162,7 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
                   <select 
                     className="w-full p-2 border rounded-md bg-background"
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as InventoryItem['category'] })}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as CateringInventoryItem['category'] })}
                   >
                     <option value="food">Food</option>
                     <option value="beverage">Beverage</option>
@@ -229,16 +176,16 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
                   <Label>Current Stock</Label>
                   <Input
                     type="number"
-                    value={formData.currentStock}
-                    onChange={(e) => setFormData({ ...formData, currentStock: parseInt(e.target.value) || 0 })}
+                    value={formData.current_stock}
+                    onChange={(e) => setFormData({ ...formData, current_stock: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Required Stock</Label>
                   <Input
                     type="number"
-                    value={formData.requiredStock}
-                    onChange={(e) => setFormData({ ...formData, requiredStock: parseInt(e.target.value) || 0 })}
+                    value={formData.required_stock}
+                    onChange={(e) => setFormData({ ...formData, required_stock: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -260,7 +207,10 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={resetForm}>Cancel</Button>
-                <Button onClick={handleSubmit}>Add Item</Button>
+                <Button onClick={handleSubmit} disabled={createItem.isPending}>
+                  {createItem.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Add Item
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -271,7 +221,9 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
           const catConfig = categoryConfig[item.category];
           const statConfig = statusConfig[item.status];
           const StatusIcon = statConfig.icon;
-          const stockPercentage = Math.min((item.currentStock / item.requiredStock) * 100, 100);
+          const stockPercentage = item.required_stock > 0 
+            ? Math.min((item.current_stock / item.required_stock) * 100, 100) 
+            : 100;
 
           return (
             <div
@@ -294,14 +246,20 @@ export function InventoryTracker({ workspaceId: _workspaceId }: InventoryTracker
               <div className="flex items-center gap-3">
                 <Progress value={stockPercentage} className="flex-1 h-2" />
                 <span className="text-sm font-medium min-w-[80px] text-right">
-                  {item.currentStock} / {item.requiredStock} {item.unit}
+                  {item.current_stock} / {item.required_stock} {item.unit}
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{item.supplier || 'No supplier assigned'}</span>
                 {(item.status === 'low' || item.status === 'critical') && (
-                  <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => markAsOrdered(item.id)}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-6 text-xs" 
+                    onClick={() => markAsOrdered(item.id)}
+                    disabled={updateItem.isPending}
+                  >
                     Mark Ordered
                   </Button>
                 )}

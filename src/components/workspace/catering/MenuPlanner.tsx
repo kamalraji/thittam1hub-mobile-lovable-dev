@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Check,
   Edit2,
-  Trash2 
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import {
   Dialog,
@@ -26,86 +27,25 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-  isVegetarian: boolean;
-  isVegan: boolean;
-  isGlutenFree: boolean;
-  allergens: string[];
-  servings: number;
-  status: 'draft' | 'confirmed' | 'prepared';
-}
+import { useCateringMenuItems, useCateringMenuMutations, CateringMenuItem } from '@/hooks/useCateringData';
 
 interface MenuPlannerProps {
   workspaceId: string;
 }
 
-export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    {
-      id: '1',
-      name: 'Continental Breakfast',
-      description: 'Fresh pastries, fruits, yogurt, and hot beverages',
-      mealType: 'breakfast',
-      isVegetarian: true,
-      isVegan: false,
-      isGlutenFree: false,
-      allergens: ['Gluten', 'Dairy'],
-      servings: 450,
-      status: 'confirmed',
-    },
-    {
-      id: '2',
-      name: 'Mediterranean Lunch',
-      description: 'Grilled chicken/halloumi, fresh salads, hummus, pita',
-      mealType: 'lunch',
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
-      allergens: ['Gluten', 'Dairy', 'Sesame'],
-      servings: 450,
-      status: 'confirmed',
-    },
-    {
-      id: '3',
-      name: 'Evening Gala Dinner',
-      description: 'Three-course dinner with choice of main',
-      mealType: 'dinner',
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
-      allergens: ['Various'],
-      servings: 380,
-      status: 'draft',
-    },
-    {
-      id: '4',
-      name: 'Afternoon Tea & Snacks',
-      description: 'Coffee, tea, cookies, and light refreshments',
-      mealType: 'snack',
-      isVegetarian: true,
-      isVegan: false,
-      isGlutenFree: false,
-      allergens: ['Gluten', 'Dairy'],
-      servings: 450,
-      status: 'confirmed',
-    },
-  ]);
+export function MenuPlanner({ workspaceId }: MenuPlannerProps) {
+  const { data: menuItems = [], isLoading } = useCateringMenuItems(workspaceId);
+  const { createMenuItem, updateMenuItem, deleteMenuItem } = useCateringMenuMutations(workspaceId);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [editingItem, setEditingItem] = useState<CateringMenuItem | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    mealType: 'lunch' as MenuItem['mealType'],
-    isVegetarian: false,
-    isVegan: false,
-    isGlutenFree: false,
+    meal_type: 'lunch' as CateringMenuItem['meal_type'],
+    is_vegetarian: false,
+    is_vegan: false,
+    is_gluten_free: false,
     allergens: '',
     servings: 450,
   });
@@ -117,31 +57,25 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
     snack: { icon: Utensils, label: 'Snack', color: 'text-green-500' },
   };
 
-  const handleSubmit = () => {
-    if (!formData.name.trim()) {
-      toast.error('Please enter a menu item name');
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) return;
 
-    const newItem: MenuItem = {
-      id: editingItem?.id || Date.now().toString(),
+    const itemData = {
       name: formData.name,
-      description: formData.description,
-      mealType: formData.mealType,
-      isVegetarian: formData.isVegetarian,
-      isVegan: formData.isVegan,
-      isGlutenFree: formData.isGlutenFree,
+      description: formData.description || null,
+      meal_type: formData.meal_type,
+      is_vegetarian: formData.is_vegetarian,
+      is_vegan: formData.is_vegan,
+      is_gluten_free: formData.is_gluten_free,
       allergens: formData.allergens.split(',').map(a => a.trim()).filter(Boolean),
       servings: formData.servings,
-      status: 'draft',
+      status: 'draft' as const,
     };
 
     if (editingItem) {
-      setMenuItems(items => items.map(i => i.id === editingItem.id ? newItem : i));
-      toast.success('Menu item updated');
+      await updateMenuItem.mutateAsync({ id: editingItem.id, ...itemData });
     } else {
-      setMenuItems(items => [...items, newItem]);
-      toast.success('Menu item added');
+      await createMenuItem.mutateAsync(itemData);
     }
 
     resetForm();
@@ -151,10 +85,10 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
     setFormData({
       name: '',
       description: '',
-      mealType: 'lunch',
-      isVegetarian: false,
-      isVegan: false,
-      isGlutenFree: false,
+      meal_type: 'lunch',
+      is_vegetarian: false,
+      is_vegan: false,
+      is_gluten_free: false,
       allergens: '',
       servings: 450,
     });
@@ -162,15 +96,15 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
     setIsDialogOpen(false);
   };
 
-  const handleEdit = (item: MenuItem) => {
+  const handleEdit = (item: CateringMenuItem) => {
     setEditingItem(item);
     setFormData({
       name: item.name,
-      description: item.description,
-      mealType: item.mealType,
-      isVegetarian: item.isVegetarian,
-      isVegan: item.isVegan,
-      isGlutenFree: item.isGlutenFree,
+      description: item.description || '',
+      meal_type: item.meal_type,
+      is_vegetarian: item.is_vegetarian,
+      is_vegan: item.is_vegan,
+      is_gluten_free: item.is_gluten_free,
       allergens: item.allergens.join(', '),
       servings: item.servings,
     });
@@ -178,18 +112,30 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
   };
 
   const handleDelete = (id: string) => {
-    setMenuItems(items => items.filter(i => i.id !== id));
-    toast.success('Menu item removed');
+    deleteMenuItem.mutate(id);
   };
 
   const confirmItem = (id: string) => {
-    setMenuItems(items => items.map(i => 
-      i.id === id ? { ...i, status: 'confirmed' as const } : i
-    ));
-    toast.success('Menu item confirmed');
+    updateMenuItem.mutate({ id, status: 'confirmed' });
   };
 
-  const getMealItems = (type: MenuItem['mealType']) => menuItems.filter(i => i.mealType === type);
+  const getMealItems = (type: CateringMenuItem['meal_type']) => menuItems.filter(i => i.meal_type === type);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Utensils className="h-5 w-5 text-orange-500" />
+            Menu Planner
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -231,8 +177,8 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
                   <Label>Meal Type</Label>
                   <select 
                     className="w-full p-2 border rounded-md bg-background"
-                    value={formData.mealType}
-                    onChange={(e) => setFormData({ ...formData, mealType: e.target.value as MenuItem['mealType'] })}
+                    value={formData.meal_type}
+                    onChange={(e) => setFormData({ ...formData, meal_type: e.target.value as CateringMenuItem['meal_type'] })}
                   >
                     <option value="breakfast">Breakfast</option>
                     <option value="lunch">Lunch</option>
@@ -261,31 +207,39 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="vegetarian"
-                    checked={formData.isVegetarian}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isVegetarian: !!checked })}
+                    checked={formData.is_vegetarian}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_vegetarian: !!checked })}
                   />
                   <Label htmlFor="vegetarian">Vegetarian</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="vegan"
-                    checked={formData.isVegan}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isVegan: !!checked })}
+                    checked={formData.is_vegan}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_vegan: !!checked })}
                   />
                   <Label htmlFor="vegan">Vegan</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="glutenFree"
-                    checked={formData.isGlutenFree}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isGlutenFree: !!checked })}
+                    checked={formData.is_gluten_free}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_gluten_free: !!checked })}
                   />
                   <Label htmlFor="glutenFree">Gluten-Free</Label>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={resetForm}>Cancel</Button>
-                <Button onClick={handleSubmit}>{editingItem ? 'Update' : 'Add'}</Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={createMenuItem.isPending || updateMenuItem.isPending}
+                >
+                  {(createMenuItem.isPending || updateMenuItem.isPending) && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  {editingItem ? 'Update' : 'Add'}
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -303,8 +257,8 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
 
           {['all', 'breakfast', 'lunch', 'dinner', 'snack'].map((tab) => (
             <TabsContent key={tab} value={tab} className="space-y-3">
-              {(tab === 'all' ? menuItems : getMealItems(tab as MenuItem['mealType'])).map((item) => {
-                const config = mealTypeConfig[item.mealType];
+              {(tab === 'all' ? menuItems : getMealItems(tab as CateringMenuItem['meal_type'])).map((item) => {
+                const config = mealTypeConfig[item.meal_type];
                 const Icon = config.icon;
                 return (
                   <div
@@ -324,18 +278,18 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
                         </div>
                         <p className="text-sm text-muted-foreground">{item.description}</p>
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {item.isVegetarian && (
+                          {item.is_vegetarian && (
                             <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                               <Leaf className="h-3 w-3 mr-1" />
                               Vegetarian
                             </Badge>
                           )}
-                          {item.isVegan && (
+                          {item.is_vegan && (
                             <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
                               Vegan
                             </Badge>
                           )}
-                          {item.isGlutenFree && (
+                          {item.is_gluten_free && (
                             <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">
                               GF
                             </Badge>
@@ -366,7 +320,7 @@ export function MenuPlanner({ workspaceId: _workspaceId }: MenuPlannerProps) {
                   </div>
                 );
               })}
-              {(tab === 'all' ? menuItems : getMealItems(tab as MenuItem['mealType'])).length === 0 && (
+              {(tab === 'all' ? menuItems : getMealItems(tab as CateringMenuItem['meal_type'])).length === 0 && (
                 <p className="text-center text-muted-foreground py-8">No menu items yet</p>
               )}
             </TabsContent>
