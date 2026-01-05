@@ -7,6 +7,7 @@ export { ContentPipelineDragDrop } from './ContentPipelineDragDrop';
 export { SpeakerScheduleWidget } from './SpeakerScheduleWidget';
 export { SpeakerScheduleConnected } from './SpeakerScheduleConnected';
 export { JudgingOverview } from './JudgingOverview';
+export { JudgingOverviewConnected } from './JudgingOverviewConnected';
 export { MediaAssetsWidget } from './MediaAssetsWidget';
 export { MediaAssetsConnected } from './MediaAssetsConnected';
 export { ContentQuickActions } from './ContentQuickActions';

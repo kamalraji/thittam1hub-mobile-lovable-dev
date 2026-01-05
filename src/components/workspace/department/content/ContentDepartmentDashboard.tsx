@@ -15,7 +15,7 @@ import { ContentStatsConnected } from './ContentStatsConnected';
 import { ContentCommitteeHub } from './ContentCommitteeHub';
 import { ContentPipelineDragDrop } from './ContentPipelineDragDrop';
 import { SpeakerScheduleConnected } from './SpeakerScheduleConnected';
-import { JudgingOverview } from './JudgingOverview';
+import { JudgingOverviewConnected } from './JudgingOverviewConnected';
 import { MediaAssetsConnected } from './MediaAssetsConnected';
 import { ContentQuickActions } from './ContentQuickActions';
 
@@ -152,8 +152,8 @@ export function ContentDepartmentDashboard({
       {/* Content Pipeline with Drag & Drop */}
       <ContentPipelineDragDrop workspaceId={workspace.id} />
 
-      {/* Judging Overview */}
-      <JudgingOverview />
+      {/* Judging Overview - Connected to real data */}
+      <JudgingOverviewConnected eventId={workspace.eventId} />
 
       {/* Speaker & Media Row - Connected to real data */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
