@@ -35,7 +35,7 @@ import { PortfolioPreviewCard } from '../portfolio/PortfolioPreviewCard';
 import { OrganizationLandingPage } from '../organization/OrganizationLandingPage';
 import { OrganizationProductsLandingPage } from '../organization/OrganizationProductsLandingPage';
 import { VendorPublicProfilePage } from './services/VendorPublicProfilePage';
-import { OrgScopedRedirect } from './OrgScopedRedirect';
+
 import AttendflowLanding from '@/pages/AttendflowLanding';
 import PricingPage from '@/pages/PricingPage';
 
@@ -596,44 +596,11 @@ export const AppRouter: React.FC = () => {
                   </ConsoleRoute>
                 }
               />
-              {/* Redirect organizer routes to org-scoped equivalents */}
-              <Route
-                path="eventmanagement/*"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.ORGANIZER, UserRole.SUPER_ADMIN]}>
-                    <OrgScopedRedirect servicePath="eventmanagement" fallbackPath="/dashboard" />
-                  </ConsoleRoute>
-                }
-              />
-              <Route
-                path="workspaces/*"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.ORGANIZER, UserRole.SUPER_ADMIN]}>
-                    <OrgScopedRedirect servicePath="workspaces" fallbackPath="/dashboard" />
-                  </ConsoleRoute>
-                }
-              />
-              <Route
-                path="marketplace/*"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.ORGANIZER, UserRole.SUPER_ADMIN]}>
-                    <OrgScopedRedirect servicePath="marketplace" fallbackPath="/marketplace" />
-                  </ConsoleRoute>
-                }
-              />
               <Route
                 path="organizations/*"
                 element={
                   <ConsoleRoute requiredRoles={[UserRole.ORGANIZER, UserRole.SUPER_ADMIN]}>
                     <OrganizationServiceComponent />
-                  </ConsoleRoute>
-                }
-              />
-              <Route
-                path="analytics/*"
-                element={
-                  <ConsoleRoute requiredRoles={[UserRole.ORGANIZER, UserRole.SUPER_ADMIN]}>
-                    <OrgScopedRedirect servicePath="analytics" fallbackPath="/dashboard" />
                   </ConsoleRoute>
                 }
               />
