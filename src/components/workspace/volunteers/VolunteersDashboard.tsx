@@ -1,22 +1,22 @@
+import { Workspace, WorkspaceRole } from '@/types';
+import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
+import { RoleBasedActions } from '../RoleBasedActions';
+import { TaskSummaryCards } from '../TaskSummaryCards';
+import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
+import { TeamMemberRoster } from '../TeamMemberRoster';
+import { MilestoneTimeline } from '../committee/MilestoneTimeline';
+import { GoalTracker } from '../committee/GoalTracker';
+import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
+import { BudgetRequestForm } from '../committee/BudgetRequestForm';
+import { VolunteerShiftScheduler } from './VolunteerShiftScheduler';
+import { VolunteerRoster } from './VolunteerRoster';
+import { VolunteerCheckInStats } from './VolunteerCheckInStats';
+import { VolunteerQuickActions } from './VolunteerQuickActions';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceRole } from '@/types';
-import { MilestoneTimeline } from './MilestoneTimeline';
-import { GoalTracker } from './GoalTracker';
-import { CommitteeChecklist } from './CommitteeChecklist';
-import { CommitteeHeaderCard } from './CommitteeHeaderCard';
-import { BudgetRequestForm } from './BudgetRequestForm';
-import { ResourceRequestForm } from './ResourceRequestForm';
-import { ResourceRequestsList } from './ResourceRequestsList';
-import { TaskSummaryCards } from '../TaskSummaryCards';
-import { TeamMemberRoster } from '../TeamMemberRoster';
-import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
-import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
-import { VolunteersDashboard } from '../volunteers';
 
-interface CommitteeDashboardProps {
+interface VolunteersDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
   userRole?: WorkspaceRole | null;
@@ -27,46 +27,21 @@ interface CommitteeDashboardProps {
   onRequestResource?: () => void;
 }
 
-export function CommitteeDashboard({ 
-  workspace, 
-  orgSlug, 
+export function VolunteersDashboard({
+  workspace,
+  orgSlug,
   userRole,
   onViewTasks,
   onDelegateRole,
   onInviteMember,
   onRequestBudget,
   onRequestResource,
-}: CommitteeDashboardProps) {
+}: VolunteersDashboardProps) {
   const { isLoading: isBudgetLoading } = useWorkspaceBudget(workspace.id);
-
-  // Extract committee type from workspace name
-  const committeeType = workspace.name
-    .toLowerCase()
-    .replace(/\s+committee$/i, '')
-    .trim();
-
-  // Check if this is a volunteers committee - render specialized dashboard
-  const isVolunteersCommittee = committeeType === 'volunteers' || 
-    workspace.name.toLowerCase().includes('volunteer');
-
-  if (isVolunteersCommittee) {
-    return (
-      <VolunteersDashboard
-        workspace={workspace}
-        orgSlug={orgSlug}
-        userRole={userRole}
-        onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
-    );
-  }
 
   // Fetch team members count
   const { data: teamMembers = [] } = useQuery({
-    queryKey: ['committee-team-members', workspace.id],
+    queryKey: ['volunteers-team-members', workspace.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workspace_team_members')
@@ -80,7 +55,7 @@ export function CommitteeDashboard({
 
   // Fetch tasks for progress
   const { data: tasks = [] } = useQuery({
-    queryKey: ['committee-tasks', workspace.id],
+    queryKey: ['volunteers-tasks', workspace.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workspace_tasks')
@@ -93,7 +68,7 @@ export function CommitteeDashboard({
 
   // Fetch child teams count
   const { data: teams = [] } = useQuery({
-    queryKey: ['committee-teams', workspace.id],
+    queryKey: ['volunteers-teams', workspace.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workspaces')
@@ -109,7 +84,7 @@ export function CommitteeDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Committee Header */}
+      {/* Volunteers Header */}
       <CommitteeHeaderCard
         workspaceName={workspace.name}
         memberCount={teamMembers.length}
@@ -142,42 +117,41 @@ export function CommitteeDashboard({
         />
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column */}
-        <div className="space-y-6">
-          <MilestoneTimeline workspaceId={workspace.id} />
-          <GoalTracker workspaceId={workspace.id} />
+      {/* Volunteer-Specific Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Shift Scheduler */}
+        <div className="lg:col-span-2">
+          <VolunteerShiftScheduler workspaceId={workspace.id} />
         </div>
 
-        {/* Right Column */}
+        {/* Right Column - Check-In Stats & Quick Actions */}
         <div className="space-y-6">
-          <CommitteeChecklist workspaceId={workspace.id} committeeType={committeeType} />
-          
-          {/* Budget Section */}
-          {!isBudgetLoading && (
-            <BudgetTrackerConnected
-              workspaceId={workspace.id}
-              showBreakdown={false}
-            />
-          )}
-          
-          <BudgetRequestForm
-            workspaceId={workspace.id}
-            parentWorkspaceId={workspace.parentWorkspaceId || null}
-          />
+          <VolunteerCheckInStats workspaceId={workspace.id} />
+          <VolunteerQuickActions workspaceId={workspace.id} />
         </div>
       </div>
 
-      {/* Resource Requests Section */}
+      {/* Volunteer Roster Section */}
+      <VolunteerRoster workspaceId={workspace.id} />
+
+      {/* Goals & Milestones */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <ResourceRequestForm 
-            workspaceId={workspace.id} 
-            parentWorkspaceId={workspace.parentWorkspaceId || null}
+        <MilestoneTimeline workspaceId={workspace.id} />
+        <GoalTracker workspaceId={workspace.id} />
+      </div>
+
+      {/* Budget Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {!isBudgetLoading && (
+          <BudgetTrackerConnected
+            workspaceId={workspace.id}
+            showBreakdown={false}
           />
-        </div>
-        <ResourceRequestsList workspaceId={workspace.id} />
+        )}
+        <BudgetRequestForm
+          workspaceId={workspace.id}
+          parentWorkspaceId={workspace.parentWorkspaceId || null}
+        />
       </div>
 
       {/* Team Members */}
