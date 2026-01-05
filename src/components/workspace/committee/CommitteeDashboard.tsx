@@ -30,6 +30,7 @@ import { FacilityDashboard } from '../facility';
 import { MarketingDashboard } from '../marketing';
 import { SponsorshipDashboard } from '../sponsorship';
 import { CommunicationDashboard } from '../communication';
+import { SocialMediaDashboard } from '../social-media';
 
 interface CommitteeDashboardProps {
   workspace: Workspace;
@@ -84,10 +85,18 @@ export function CommitteeDashboard({
     workspace.name.toLowerCase().startsWith('it ') ||
     workspace.name.toLowerCase().endsWith(' it');
 
-  // Check if this is a content/social media committee (but NOT photography/videography media, NOT communications)
+  // Check if this is a dedicated social media committee (separate from content)
+  const isSocialMediaCommittee = 
+    workspace.name.toLowerCase().includes('social media') ||
+    workspace.name.toLowerCase().includes('social-media') ||
+    committeeType === 'social media' ||
+    committeeType === 'social-media';
+
+  // Check if this is a content committee (but NOT social media, NOT photography/videography media, NOT communications)
   const isContentCommittee = (committeeType === 'content' ||
-    workspace.name.toLowerCase().includes('content') ||
-    workspace.name.toLowerCase().includes('social media')) &&
+    workspace.name.toLowerCase().includes('content')) &&
+    !workspace.name.toLowerCase().includes('social media') &&
+    !workspace.name.toLowerCase().includes('social-media') &&
     !workspace.name.toLowerCase().includes('communication');
 
   // Check if this is a media/photography/video committee
@@ -99,7 +108,8 @@ export function CommitteeDashboard({
     workspace.name.toLowerCase().includes('photo') ||
     workspace.name.toLowerCase().includes('video') ||
     (workspace.name.toLowerCase().includes('media') && 
-      !workspace.name.toLowerCase().includes('social media'));
+      !workspace.name.toLowerCase().includes('social media') &&
+      !workspace.name.toLowerCase().includes('social-media'));
 
   // Check if this is a speaker liaison committee
   const isSpeakerLiaisonCommittee = committeeType === 'speaker liaison' ||
@@ -224,6 +234,21 @@ export function CommitteeDashboard({
   if (isITCommittee) {
     return (
       <ITDashboard
+        workspace={workspace}
+        orgSlug={orgSlug}
+        userRole={userRole}
+        onViewTasks={onViewTasks}
+        onDelegateRole={onDelegateRole}
+        onInviteMember={onInviteMember}
+        onRequestBudget={onRequestBudget}
+        onRequestResource={onRequestResource}
+      />
+    );
+  }
+
+  if (isSocialMediaCommittee) {
+    return (
+      <SocialMediaDashboard
         workspace={workspace}
         orgSlug={orgSlug}
         userRole={userRole}
