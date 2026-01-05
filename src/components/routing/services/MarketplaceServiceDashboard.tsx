@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { PageHeader } from '../PageHeader';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * MarketplaceServiceDashboard provides the AWS-style service landing page for Marketplace Management.
@@ -15,78 +17,133 @@ import { PageHeader } from '../PageHeader';
 export const MarketplaceServiceDashboard: React.FC = () => {
   const { user } = useAuth();
 
-  // Mock data - in real implementation, this would come from API
-  const dashboardData = {
-    metrics: {
-      totalServices: 156,
-      activeVendors: 42,
-      pendingBookings: 8,
-      completedBookings: 234,
-      totalRevenue: 125000,
+  // Fetch real metrics from Supabase
+  const { data: metrics } = useQuery({
+    queryKey: ['marketplace-metrics'],
+    queryFn: async () => {
+      const [servicesResult, vendorsResult, pendingBookingsResult, completedBookingsResult, revenueResult] = await Promise.all([
+        supabase.from('vendor_services').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('vendors').select('id', { count: 'exact', head: true }).eq('verification_status', 'VERIFIED'),
+        supabase.from('vendor_bookings').select('id', { count: 'exact', head: true }).in('status', ['pending', 'quote_sent']),
+        supabase.from('vendor_bookings').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('vendor_bookings').select('final_price').eq('status', 'completed'),
+      ]);
+
+      const totalRevenue = revenueResult.data?.reduce((sum, b) => sum + (b.final_price || 0), 0) || 0;
+
+      return {
+        totalServices: servicesResult.count || 0,
+        activeVendors: vendorsResult.count || 0,
+        pendingBookings: pendingBookingsResult.count || 0,
+        completedBookings: completedBookingsResult.count || 0,
+        totalRevenue,
+      };
     },
-    recentBookings: [
-      {
-        id: '1',
-        serviceName: 'Professional Photography Package',
-        vendorName: 'Capture Moments Studio',
-        eventName: 'Tech Innovation Summit 2024',
-        status: 'CONFIRMED',
-        serviceDate: '2024-03-15',
-        amount: 2500,
-      },
-      {
-        id: '2',
-        serviceName: 'Premium Catering Service',
-        vendorName: 'Gourmet Events Co.',
-        eventName: 'AI Workshop Series',
-        status: 'QUOTE_SENT',
-        serviceDate: '2024-03-20',
-        amount: 4200,
-      },
-      {
-        id: '3',
-        serviceName: 'Audio Visual Equipment',
-        vendorName: 'TechSound Solutions',
-        eventName: 'Startup Pitch Competition',
-        status: 'IN_PROGRESS',
-        serviceDate: '2024-02-28',
-        amount: 1800,
-      },
-    ],
-    topCategories: [
-      { category: 'CATERING', count: 28, revenue: 45000 },
-      { category: 'PHOTOGRAPHY', count: 22, revenue: 38000 },
-      { category: 'VENUE', count: 18, revenue: 52000 },
-      { category: 'AUDIO_VISUAL', count: 15, revenue: 22000 },
-    ],
-    quickActions: [
-      {
-        title: 'Browse Public Marketplace',
-        description: 'Visit the customer-facing marketplace to discover services',
-        href: '/marketplace',
-        icon: '🏪',
-        primary: true,
-      },
-      {
-        title: 'Vendor Dashboard',
-        description: 'Comprehensive vendor management and analytics',
-        href: '/marketplace/vendor',
-        icon: '🏢',
-      },
-      {
-        title: 'Manage Bookings',
-        description: 'View and manage your service bookings',
-        href: '/marketplace/bookings',
-        icon: '📋',
-      },
-      {
-        title: 'Analytics & Reports',
-        description: 'View marketplace performance metrics',
-        href: '/marketplace/analytics',
-        icon: '📈',
-      },
-    ],
-  };
+  });
+
+  // Fetch recent bookings
+  const { data: recentBookings } = useQuery({
+    queryKey: ['marketplace-recent-bookings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('vendor_bookings')
+        .select(`
+          id,
+          event_name,
+          status,
+          event_date,
+          final_price,
+          quoted_price,
+          vendor_id,
+          service_id,
+          vendors(business_name),
+          vendor_services(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      return data?.map((booking) => ({
+        id: booking.id,
+        serviceName: (booking.vendor_services as any)?.name || 'Service',
+        vendorName: (booking.vendors as any)?.business_name || 'Vendor',
+        eventName: booking.event_name,
+        status: booking.status?.toUpperCase().replace(' ', '_') || 'PENDING',
+        serviceDate: booking.event_date,
+        amount: booking.final_price || booking.quoted_price || 0,
+      })) || [];
+    },
+  });
+
+  // Fetch top categories
+  const { data: topCategories } = useQuery({
+    queryKey: ['marketplace-top-categories'],
+    queryFn: async () => {
+      const { data: services } = await supabase
+        .from('vendor_services')
+        .select('category')
+        .eq('status', 'active');
+
+      const { data: bookings } = await supabase
+        .from('vendor_bookings')
+        .select('service_id, final_price, vendor_services(category)')
+        .eq('status', 'completed');
+
+      // Count services per category
+      const categoryCounts: Record<string, number> = {};
+      services?.forEach((s) => {
+        categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
+      });
+
+      // Sum revenue per category
+      const categoryRevenue: Record<string, number> = {};
+      bookings?.forEach((b) => {
+        const cat = (b.vendor_services as any)?.category;
+        if (cat) {
+          categoryRevenue[cat] = (categoryRevenue[cat] || 0) + (b.final_price || 0);
+        }
+      });
+
+      // Combine and sort by count
+      const categories = Object.entries(categoryCounts)
+        .map(([category, count]) => ({
+          category,
+          count,
+          revenue: categoryRevenue[category] || 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4);
+
+      return categories;
+    },
+  });
+
+  const quickActions = [
+    {
+      title: 'Browse Public Marketplace',
+      description: 'Visit the customer-facing marketplace to discover services',
+      href: '/marketplace',
+      icon: '🏪',
+      primary: true,
+    },
+    {
+      title: 'Vendor Dashboard',
+      description: 'Comprehensive vendor management and analytics',
+      href: '/marketplace/vendor',
+      icon: '🏢',
+    },
+    {
+      title: 'Manage Bookings',
+      description: 'View and manage your service bookings',
+      href: '/marketplace/bookings',
+      icon: '📋',
+    },
+    {
+      title: 'Analytics & Reports',
+      description: 'View marketplace performance metrics',
+      href: '/marketplace/analytics',
+      icon: '📈',
+    },
+  ];
 
   const pageActions = [
     {
@@ -117,7 +174,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
   };
 
   const getStatusText = (status: string) => {
-    return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace('_', ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase());
   };
 
   return (
@@ -150,7 +207,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
                 </div>
                 <div className="ml-3 sm:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Services</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{dashboardData.metrics.totalServices}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{metrics?.totalServices || 0}</p>
                 </div>
               </div>
             </div>
@@ -162,7 +219,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
                 </div>
                 <div className="ml-3 sm:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Active Vendors</p>
-                  <p className="text-xl sm:text-2xl font-bold text-primary">{dashboardData.metrics.activeVendors}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-primary">{metrics?.activeVendors || 0}</p>
                 </div>
               </div>
             </div>
@@ -174,7 +231,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
                 </div>
                 <div className="ml-3 sm:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Pending Bookings</p>
-                  <p className="text-xl sm:text-2xl font-bold text-amber-500">{dashboardData.metrics.pendingBookings}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-500">{metrics?.pendingBookings || 0}</p>
                 </div>
               </div>
             </div>
@@ -186,7 +243,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
                 </div>
                 <div className="ml-3 sm:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Completed Bookings</p>
-                  <p className="text-xl sm:text-2xl font-bold text-emerald-500">{dashboardData.metrics.completedBookings}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-500">{metrics?.completedBookings || 0}</p>
                 </div>
               </div>
             </div>
@@ -199,7 +256,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
                 <div className="ml-3 sm:ml-4">
                   <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Revenue</p>
                   <p className="text-xl sm:text-2xl font-bold text-violet-500">
-                    ${dashboardData.metrics.totalRevenue.toLocaleString()}
+                    ${(metrics?.totalRevenue || 0).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -211,7 +268,7 @@ export const MarketplaceServiceDashboard: React.FC = () => {
         <div className="space-y-3 sm:space-y-4">
           <h3 className="text-base sm:text-lg font-medium text-foreground">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {dashboardData.quickActions.map((action, index) => (
+            {quickActions.map((action, index) => (
               <Link
                 key={index}
                 to={action.href}
@@ -258,34 +315,40 @@ export const MarketplaceServiceDashboard: React.FC = () => {
  
             <div className="bg-card rounded-lg border border-border overflow-hidden">
               <div className="divide-y divide-border">
-                {dashboardData.recentBookings.map((booking) => (
-                  <div key={booking.id} className="p-4 sm:p-5 hover:bg-muted/60">
-                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                      <h4 className="text-sm font-medium text-foreground">{booking.serviceName}</h4>
-                      <span
-                        className={`inline-flex px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-full ${getStatusColor(
-                          booking.status,
-                        )}`}
-                      >
-                        {getStatusText(booking.status)}
-                      </span>
+                {recentBookings && recentBookings.length > 0 ? (
+                  recentBookings.map((booking) => (
+                    <div key={booking.id} className="p-4 sm:p-5 hover:bg-muted/60">
+                      <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                        <h4 className="text-sm font-medium text-foreground">{booking.serviceName}</h4>
+                        <span
+                          className={`inline-flex px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-full ${getStatusColor(
+                            booking.status,
+                          )}`}
+                        >
+                          {getStatusText(booking.status)}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                        {booking.vendorName}
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                        Event: {booking.eventName}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs sm:text-sm text-muted-foreground">
+                          {new Date(booking.serviceDate).toLocaleDateString()}
+                        </span>
+                        <span className="text-sm font-medium text-foreground">
+                          ${booking.amount.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                      {booking.vendorName}
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                      Event: {booking.eventName}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs sm:text-sm text-muted-foreground">
-                        {new Date(booking.serviceDate).toLocaleDateString()}
-                      </span>
-                      <span className="text-sm font-medium text-foreground">
-                        ${booking.amount.toLocaleString()}
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 sm:p-5 text-center text-muted-foreground text-sm">
+                    No bookings yet
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -304,27 +367,33 @@ export const MarketplaceServiceDashboard: React.FC = () => {
  
             <div className="bg-card rounded-lg border border-border overflow-hidden">
               <div className="divide-y divide-border">
-                {dashboardData.topCategories.map((category, index) => (
-                  <div key={category.category} className="p-4 sm:p-5 hover:bg-muted/60">
-                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                      <h4 className="text-sm font-medium text-foreground">
-                        {category.category
-                          .replace('_', ' ')
-                          .toLowerCase()
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </h4>
-                      <span className="text-xs sm:text-sm text-muted-foreground">#{index + 1}</span>
+                {topCategories && topCategories.length > 0 ? (
+                  topCategories.map((category, index) => (
+                    <div key={category.category} className="p-4 sm:p-5 hover:bg-muted/60">
+                      <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                        <h4 className="text-sm font-medium text-foreground">
+                          {category.category
+                            .replace('_', ' ')
+                            .toLowerCase()
+                            .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                        </h4>
+                        <span className="text-xs sm:text-sm text-muted-foreground">#{index + 1}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs sm:text-sm text-muted-foreground">
+                          {category.count} services
+                        </span>
+                        <span className="text-xs sm:text-sm font-medium text-foreground">
+                          ${category.revenue.toLocaleString()} revenue
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs sm:text-sm text-muted-foreground">
-                        {category.count} services
-                      </span>
-                      <span className="text-xs sm:text-sm font-medium text-foreground">
-                        ${category.revenue.toLocaleString()} revenue
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 sm:p-5 text-center text-muted-foreground text-sm">
+                    No services yet
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
