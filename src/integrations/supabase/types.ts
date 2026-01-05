@@ -104,6 +104,266 @@ export type Database = {
           },
         ]
       }
+      catering_dietary_requirements: {
+        Row: {
+          count: number
+          event_id: string
+          id: string
+          requirement_type: string
+          special_requests: Json | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          count?: number
+          event_id: string
+          id?: string
+          requirement_type: string
+          special_requests?: Json | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          count?: number
+          event_id?: string
+          id?: string
+          requirement_type?: string
+          special_requests?: Json | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_dietary_requirements_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_dietary_requirements_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catering_inventory: {
+        Row: {
+          category: string
+          created_at: string
+          current_stock: number
+          id: string
+          name: string
+          required_stock: number
+          status: string
+          supplier: string | null
+          unit: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_stock?: number
+          id?: string
+          name: string
+          required_stock?: number
+          status?: string
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_stock?: number
+          id?: string
+          name?: string
+          required_stock?: number
+          status?: string
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_inventory_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catering_meal_schedule: {
+        Row: {
+          created_at: string
+          expected_guests: number
+          id: string
+          location: string | null
+          meal_type: string
+          name: string
+          notes: string | null
+          scheduled_time: string
+          sort_order: number | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          expected_guests?: number
+          id?: string
+          location?: string | null
+          meal_type: string
+          name: string
+          notes?: string | null
+          scheduled_time: string
+          sort_order?: number | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          expected_guests?: number
+          id?: string
+          location?: string | null
+          meal_type?: string
+          name?: string
+          notes?: string | null
+          scheduled_time?: string
+          sort_order?: number | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_meal_schedule_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catering_menu_items: {
+        Row: {
+          allergens: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          is_gluten_free: boolean
+          is_vegan: boolean
+          is_vegetarian: boolean
+          meal_type: string
+          name: string
+          servings: number
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_gluten_free?: boolean
+          is_vegan?: boolean
+          is_vegetarian?: boolean
+          meal_type: string
+          name: string
+          servings?: number
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          allergens?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_gluten_free?: boolean
+          is_vegan?: boolean
+          is_vegetarian?: boolean
+          meal_type?: string
+          name?: string
+          servings?: number
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_menu_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catering_vendors: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          contract_value: number | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          rating: number | null
+          status: string
+          updated_at: string
+          vendor_type: string
+          workspace_id: string
+        }
+        Insert: {
+          address?: string | null
+          contact_name?: string | null
+          contract_value?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          status?: string
+          updated_at?: string
+          vendor_type: string
+          workspace_id: string
+        }
+        Update: {
+          address?: string | null
+          contact_name?: string | null
+          contract_value?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          status?: string
+          updated_at?: string
+          vendor_type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_vendors_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_criteria: {
         Row: {
           conditions: Json
