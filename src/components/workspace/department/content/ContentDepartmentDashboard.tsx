@@ -11,12 +11,12 @@ import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
 import { RoleBasedActions } from '../../RoleBasedActions';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 
-import { ContentStatsCards } from './ContentStatsCards';
+import { ContentStatsConnected } from './ContentStatsConnected';
 import { ContentCommitteeHub } from './ContentCommitteeHub';
-import { ContentPipelineOverview } from './ContentPipelineOverview';
-import { SpeakerScheduleWidget } from './SpeakerScheduleWidget';
+import { ContentPipelineDragDrop } from './ContentPipelineDragDrop';
+import { SpeakerScheduleConnected } from './SpeakerScheduleConnected';
 import { JudgingOverview } from './JudgingOverview';
-import { MediaAssetsWidget } from './MediaAssetsWidget';
+import { MediaAssetsConnected } from './MediaAssetsConnected';
 import { ContentQuickActions } from './ContentQuickActions';
 
 interface ContentDepartmentDashboardProps {
@@ -114,8 +114,8 @@ export function ContentDepartmentDashboard({
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <ContentStatsCards />
+      {/* Stats Overview - Connected to real data */}
+      <ContentStatsConnected workspaceId={workspace.id} />
 
       {/* Role-Based Actions */}
       <RoleBasedActions
@@ -149,16 +149,16 @@ export function ContentDepartmentDashboard({
         </div>
       </div>
 
-      {/* Content & Judging Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ContentPipelineOverview />
-        <JudgingOverview />
-      </div>
+      {/* Content Pipeline with Drag & Drop */}
+      <ContentPipelineDragDrop workspaceId={workspace.id} />
 
-      {/* Speaker & Media Row */}
+      {/* Judging Overview */}
+      <JudgingOverview />
+
+      {/* Speaker & Media Row - Connected to real data */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SpeakerScheduleWidget />
-        <MediaAssetsWidget />
+        <SpeakerScheduleConnected workspaceId={workspace.id} />
+        <MediaAssetsConnected workspaceId={workspace.id} />
       </div>
 
       {/* Budget Section */}

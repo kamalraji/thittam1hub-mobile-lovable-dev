@@ -1459,6 +1459,65 @@ export type Database = {
           },
         ]
       }
+      workspace_content_items: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          content_url: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          metadata: Json | null
+          priority: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_content_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_goals: {
         Row: {
           category: string | null
@@ -1505,6 +1564,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workspace_goals_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_media_assets: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          name: string
+          status: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          type: string
+          updated_at: string
+          uploaded_by: string | null
+          uploader_name: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          name: string
+          status?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          uploader_name?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          name?: string
+          status?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          uploader_name?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_media_assets_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1790,6 +1914,77 @@ export type Database = {
             foreignKeyName: "workspace_settings_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_speakers: {
+        Row: {
+          accommodation_arranged: boolean | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string | null
+          id: string
+          location: string | null
+          metadata: Json | null
+          name: string
+          notes: string | null
+          phone: string | null
+          role: string | null
+          session_time: string | null
+          session_title: string | null
+          status: string
+          travel_arranged: boolean | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          accommodation_arranged?: boolean | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          session_time?: string | null
+          session_title?: string | null
+          status?: string
+          travel_arranged?: boolean | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          accommodation_arranged?: boolean | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          role?: string | null
+          session_time?: string | null
+          session_title?: string | null
+          status?: string
+          travel_arranged?: boolean | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_speakers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
