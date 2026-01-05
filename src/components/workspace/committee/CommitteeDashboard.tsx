@@ -26,6 +26,7 @@ import { MediaDashboard } from '../media';
 import { EventDashboard } from '../event';
 import { CateringDashboard } from '../catering';
 import { LogisticsDashboard } from '../logistics';
+import { FacilityDashboard } from '../facility';
 
 interface CommitteeDashboardProps {
   workspace: Workspace;
@@ -129,6 +130,13 @@ export function CommitteeDashboard({
     workspace.name.toLowerCase().includes('logistics') ||
     workspace.name.toLowerCase().includes('transport') ||
     workspace.name.toLowerCase().includes('shipping');
+
+  // Check if this is a facility committee
+  const isFacilityCommittee = committeeType === 'facility' ||
+    workspace.name.toLowerCase().includes('facility') ||
+    workspace.name.toLowerCase().includes('facilities') ||
+    workspace.name.toLowerCase().includes('venue management') ||
+    workspace.name.toLowerCase().includes('building');
 
   if (isVolunteersCommittee) {
     return (
@@ -298,6 +306,21 @@ export function CommitteeDashboard({
   if (isLogisticsCommittee) {
     return (
       <LogisticsDashboard
+        workspace={workspace}
+        orgSlug={orgSlug}
+        userRole={userRole}
+        onViewTasks={onViewTasks}
+        onDelegateRole={onDelegateRole}
+        onInviteMember={onInviteMember}
+        onRequestBudget={onRequestBudget}
+        onRequestResource={onRequestResource}
+      />
+    );
+  }
+
+  if (isFacilityCommittee) {
+    return (
+      <FacilityDashboard
         workspace={workspace}
         orgSlug={orgSlug}
         userRole={userRole}
