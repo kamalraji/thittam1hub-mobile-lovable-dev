@@ -427,11 +427,17 @@ export const VendorRegistrationPage: React.FC = () => {
     );
   };
 
-  const handleDocumentUpload = (type: 'businessLicense' | 'insurance', file: File | null) => {
+  const handleDocumentUpload = (type: 'businessLicense' | 'insurance', e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.target.files?.[0] || null;
     setDocuments(prev => ({ ...prev, [type]: file }));
   };
 
-  const handlePortfolioUpload = (files: FileList | null) => {
+  const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.target.files;
     if (files) {
       setPortfolioFiles(prev => [...prev, ...Array.from(files)]);
     }
@@ -789,7 +795,7 @@ export const VendorRegistrationPage: React.FC = () => {
               type="file"
               id="businessLicense"
               accept=".pdf,.jpg,.jpeg,.png"
-              onChange={e => handleDocumentUpload('businessLicense', e.target.files?.[0] || null)}
+              onChange={e => handleDocumentUpload('businessLicense', e)}
               className="hidden"
             />
             <label htmlFor="businessLicense" className="cursor-pointer">
@@ -817,7 +823,7 @@ export const VendorRegistrationPage: React.FC = () => {
               type="file"
               id="insurance"
               accept=".pdf,.jpg,.jpeg,.png"
-              onChange={e => handleDocumentUpload('insurance', e.target.files?.[0] || null)}
+              onChange={e => handleDocumentUpload('insurance', e)}
               className="hidden"
             />
             <label htmlFor="insurance" className="cursor-pointer">
@@ -855,7 +861,7 @@ export const VendorRegistrationPage: React.FC = () => {
           id="portfolio"
           accept="image/*,video/*"
           multiple
-          onChange={e => handlePortfolioUpload(e.target.files)}
+          onChange={e => handlePortfolioUpload(e)}
           className="hidden"
         />
         <label htmlFor="portfolio" className="cursor-pointer">
