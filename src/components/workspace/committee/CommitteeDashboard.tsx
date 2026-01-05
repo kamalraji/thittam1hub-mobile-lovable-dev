@@ -23,6 +23,7 @@ import { ContentDashboard } from '../content';
 import { SpeakerLiaisonDashboard } from '../speaker-liaison';
 import { JudgeDashboard } from '../judge';
 import { MediaDashboard } from '../media';
+import { EventDashboard } from '../event';
 
 interface CommitteeDashboardProps {
   workspace: Workspace;
@@ -106,6 +107,14 @@ export function CommitteeDashboard({
     workspace.name.toLowerCase().includes('judge') ||
     workspace.name.toLowerCase().includes('judging') ||
     workspace.name.toLowerCase().includes('evaluation');
+
+  // Check if this is an event/coordination committee
+  const isEventCommittee = committeeType === 'event' ||
+    committeeType === 'coordination' ||
+    workspace.name.toLowerCase().includes('event committee') ||
+    workspace.name.toLowerCase().includes('coordination') ||
+    workspace.name.toLowerCase().includes('day-of') ||
+    workspace.name.toLowerCase().includes('run of show');
 
   if (isVolunteersCommittee) {
     return (
@@ -230,6 +239,21 @@ export function CommitteeDashboard({
   if (isMediaCommittee) {
     return (
       <MediaDashboard
+        workspace={workspace}
+        orgSlug={orgSlug}
+        userRole={userRole}
+        onViewTasks={onViewTasks}
+        onDelegateRole={onDelegateRole}
+        onInviteMember={onInviteMember}
+        onRequestBudget={onRequestBudget}
+        onRequestResource={onRequestResource}
+      />
+    );
+  }
+
+  if (isEventCommittee) {
+    return (
+      <EventDashboard
         workspace={workspace}
         orgSlug={orgSlug}
         userRole={userRole}
