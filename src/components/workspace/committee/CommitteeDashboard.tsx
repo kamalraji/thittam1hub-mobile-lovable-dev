@@ -17,6 +17,7 @@ import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
 import { VolunteersDashboard } from '../volunteers';
 import { FinanceDashboard } from '../finance';
 import { RegistrationDashboard } from '../registration';
+import { TechnicalDashboard } from '../technical';
 
 interface CommitteeDashboardProps {
   workspace: Workspace;
@@ -59,6 +60,13 @@ export function CommitteeDashboard({
   const isRegistrationCommittee = committeeType === 'registration' || 
     workspace.name.toLowerCase().includes('registration');
 
+  // Check if this is a technical/IT committee - render specialized dashboard
+  const isTechnicalCommittee = committeeType === 'technical' || 
+    committeeType === 'it' ||
+    workspace.name.toLowerCase().includes('technical') ||
+    workspace.name.toLowerCase().includes('av') ||
+    workspace.name.toLowerCase().includes('technology');
+
   if (isVolunteersCommittee) {
     return (
       <VolunteersDashboard
@@ -92,6 +100,21 @@ export function CommitteeDashboard({
   if (isRegistrationCommittee) {
     return (
       <RegistrationDashboard
+        workspace={workspace}
+        orgSlug={orgSlug}
+        userRole={userRole}
+        onViewTasks={onViewTasks}
+        onDelegateRole={onDelegateRole}
+        onInviteMember={onInviteMember}
+        onRequestBudget={onRequestBudget}
+        onRequestResource={onRequestResource}
+      />
+    );
+  }
+
+  if (isTechnicalCommittee) {
+    return (
+      <TechnicalDashboard
         workspace={workspace}
         orgSlug={orgSlug}
         userRole={userRole}
