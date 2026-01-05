@@ -19,11 +19,11 @@ export enum WorkspaceHierarchyLevel {
  * Department definitions for Level 2 sub-workspaces
  */
 export const WORKSPACE_DEPARTMENTS = [
-  { id: 'operations', name: 'Operations', description: 'Event logistics, catering, facilities' },
-  { id: 'growth', name: 'Growth', description: 'Marketing, sponsorship, communications' },
-  { id: 'content', name: 'Content', description: 'Content creation, speakers, judges, media' },
-  { id: 'tech_finance', name: 'Tech & Finance', description: 'Technical, IT, finance, registration' },
-  { id: 'volunteers', name: 'Volunteers', description: 'Volunteer coordination and management' },
+  { id: 'operations', name: 'Operations', description: 'Event logistics, catering, facilities', managerRole: WorkspaceRole.OPERATIONS_MANAGER },
+  { id: 'growth', name: 'Growth', description: 'Marketing, sponsorship, communications', managerRole: WorkspaceRole.GROWTH_MANAGER },
+  { id: 'content', name: 'Content', description: 'Content creation, speakers, judges, media', managerRole: WorkspaceRole.CONTENT_MANAGER },
+  { id: 'tech_finance', name: 'Tech & Finance', description: 'Technical, IT, finance, registration', managerRole: WorkspaceRole.TECH_FINANCE_MANAGER },
+  { id: 'volunteers', name: 'Volunteers', description: 'Volunteer coordination and management', managerRole: WorkspaceRole.VOLUNTEERS_MANAGER },
 ] as const;
 
 export type DepartmentId = typeof WORKSPACE_DEPARTMENTS[number]['id'];
@@ -178,8 +178,16 @@ export function getWorkspaceRoleLevel(role: WorkspaceRole): WorkspaceHierarchyLe
     return WorkspaceHierarchyLevel.OWNER;
   }
 
-  // Level 2 - Managers
-  if (role === WorkspaceRole.DEPARTMENT_MANAGER) {
+  // Level 2 - Department Managers
+  const managerRoles: WorkspaceRole[] = [
+    WorkspaceRole.OPERATIONS_MANAGER,
+    WorkspaceRole.GROWTH_MANAGER,
+    WorkspaceRole.CONTENT_MANAGER,
+    WorkspaceRole.TECH_FINANCE_MANAGER,
+    WorkspaceRole.VOLUNTEERS_MANAGER,
+  ];
+  
+  if (managerRoles.includes(role)) {
     return WorkspaceHierarchyLevel.MANAGER;
   }
 
@@ -218,7 +226,11 @@ export function getWorkspaceRoleLevel(role: WorkspaceRole): WorkspaceHierarchyLe
 export function getWorkspaceRoleLabel(role: WorkspaceRole): string {
   const labels: Record<WorkspaceRole, string> = {
     [WorkspaceRole.WORKSPACE_OWNER]: 'Workspace Owner',
-    [WorkspaceRole.DEPARTMENT_MANAGER]: 'Department Manager',
+    [WorkspaceRole.OPERATIONS_MANAGER]: 'Operations Manager',
+    [WorkspaceRole.GROWTH_MANAGER]: 'Growth Manager',
+    [WorkspaceRole.CONTENT_MANAGER]: 'Content Manager',
+    [WorkspaceRole.TECH_FINANCE_MANAGER]: 'Tech & Finance Manager',
+    [WorkspaceRole.VOLUNTEERS_MANAGER]: 'Volunteers Manager',
     [WorkspaceRole.EVENT_LEAD]: 'Event Lead',
     [WorkspaceRole.CATERING_LEAD]: 'Catering Lead',
     [WorkspaceRole.LOGISTICS_LEAD]: 'Logistics Lead',

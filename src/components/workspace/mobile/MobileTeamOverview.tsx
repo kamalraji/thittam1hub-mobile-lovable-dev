@@ -42,12 +42,17 @@ export function MobileTeamOverview({ workspace, onViewTeam }: MobileTeamOverview
   const getRoleColor = (role: WorkspaceRole) => {
     const colors: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'bg-purple-100 text-purple-800',
-      [WorkspaceRole.DEPARTMENT_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.OPERATIONS_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.GROWTH_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.CONTENT_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.TECH_FINANCE_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.VOLUNTEERS_MANAGER]: 'bg-violet-100 text-violet-800',
       [WorkspaceRole.EVENT_COORDINATOR]: 'bg-indigo-100 text-indigo-800',
       [WorkspaceRole.MARKETING_LEAD]: 'bg-pink-100 text-pink-800',
     };
     // Fallback based on role pattern
     if (colors[role]) return colors[role];
+    if (role.endsWith('_MANAGER')) return 'bg-violet-100 text-violet-800';
     if (role.endsWith('_LEAD')) return 'bg-blue-100 text-blue-800';
     if (role.endsWith('_COORDINATOR')) return 'bg-indigo-100 text-indigo-800';
     return 'bg-gray-100 text-gray-800';
@@ -56,12 +61,17 @@ export function MobileTeamOverview({ workspace, onViewTeam }: MobileTeamOverview
   const getRoleLabel = (role: WorkspaceRole) => {
     const labels: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'Owner',
-      [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
+      [WorkspaceRole.OPERATIONS_MANAGER]: 'Ops Mgr',
+      [WorkspaceRole.GROWTH_MANAGER]: 'Growth Mgr',
+      [WorkspaceRole.CONTENT_MANAGER]: 'Content Mgr',
+      [WorkspaceRole.TECH_FINANCE_MANAGER]: 'Tech/Finance',
+      [WorkspaceRole.VOLUNTEERS_MANAGER]: 'Vol Mgr',
       [WorkspaceRole.EVENT_COORDINATOR]: 'Coordinator',
       [WorkspaceRole.MARKETING_LEAD]: 'Marketing',
     };
     // Fallback based on role pattern
     if (labels[role]) return labels[role];
+    if (role.endsWith('_MANAGER')) return role.replace(/_MANAGER$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
     if (role.endsWith('_LEAD')) return role.replace(/_LEAD$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
     if (role.endsWith('_COORDINATOR')) return role.replace(/_COORDINATOR$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
     return role.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');

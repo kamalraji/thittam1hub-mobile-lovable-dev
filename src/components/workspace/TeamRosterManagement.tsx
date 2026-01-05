@@ -67,7 +67,11 @@ export function TeamRosterManagement({
   const roleOptions = [
     { value: 'all', label: 'All Roles' },
     { value: WorkspaceRole.WORKSPACE_OWNER, label: 'Workspace Owner' },
-    { value: WorkspaceRole.DEPARTMENT_MANAGER, label: 'Department Manager' },
+    { value: WorkspaceRole.OPERATIONS_MANAGER, label: 'Operations Manager' },
+    { value: WorkspaceRole.GROWTH_MANAGER, label: 'Growth Manager' },
+    { value: WorkspaceRole.CONTENT_MANAGER, label: 'Content Manager' },
+    { value: WorkspaceRole.TECH_FINANCE_MANAGER, label: 'Tech & Finance Manager' },
+    { value: WorkspaceRole.VOLUNTEERS_MANAGER, label: 'Volunteers Manager' },
     { value: WorkspaceRole.EVENT_LEAD, label: 'Event Lead' },
     { value: WorkspaceRole.MARKETING_LEAD, label: 'Marketing Lead' },
     { value: WorkspaceRole.EVENT_COORDINATOR, label: 'Event Coordinator' },
@@ -139,8 +143,12 @@ export function TeamRosterManagement({
     const permissions: Record<string, string[]> = {
       // Level 1 - Owner
       [WorkspaceRole.WORKSPACE_OWNER]: ['Full workspace access', 'Manage all team members', 'Delete workspace'],
-      // Level 2 - Manager
-      [WorkspaceRole.DEPARTMENT_MANAGER]: ['Manage department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
+      // Level 2 - Managers (department-specific)
+      [WorkspaceRole.OPERATIONS_MANAGER]: ['Manage Operations department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
+      [WorkspaceRole.GROWTH_MANAGER]: ['Manage Growth department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
+      [WorkspaceRole.CONTENT_MANAGER]: ['Manage Content department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
+      [WorkspaceRole.TECH_FINANCE_MANAGER]: ['Manage Tech & Finance department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
+      [WorkspaceRole.VOLUNTEERS_MANAGER]: ['Manage Volunteers department', 'Oversee leads', 'View all department data', 'Create sub-workspaces'],
       // Level 3 - Leads
       [WorkspaceRole.EVENT_LEAD]: ['Manage event planning', 'Coordinate with vendors', 'Access participant data'],
       [WorkspaceRole.CATERING_LEAD]: ['Manage catering operations', 'Coordinate vendors', 'Track catering budget'],

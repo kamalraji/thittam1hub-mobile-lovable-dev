@@ -10,8 +10,12 @@ export function WorkspaceRoleBadge({ role }: WorkspaceRoleBadgeProps) {
   const roleLabels: Record<WorkspaceRole, string> = {
     // Level 1
     [WorkspaceRole.WORKSPACE_OWNER]: 'Owner',
-    // Level 2
-    [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
+    // Level 2 - Department Managers
+    [WorkspaceRole.OPERATIONS_MANAGER]: 'Ops Manager',
+    [WorkspaceRole.GROWTH_MANAGER]: 'Growth Manager',
+    [WorkspaceRole.CONTENT_MANAGER]: 'Content Manager',
+    [WorkspaceRole.TECH_FINANCE_MANAGER]: 'Tech/Finance Mgr',
+    [WorkspaceRole.VOLUNTEERS_MANAGER]: 'Vol Manager',
     // Level 3 - Leads
     [WorkspaceRole.EVENT_LEAD]: 'Event Lead',
     [WorkspaceRole.CATERING_LEAD]: 'Catering Lead',
@@ -54,8 +58,8 @@ export function WorkspaceRoleBadge({ role }: WorkspaceRoleBadgeProps) {
   const getRoleTone = (r: WorkspaceRole): 'default' | 'secondary' | 'outline' => {
     // Level 1 - Owner: primary/default
     if (r === WorkspaceRole.WORKSPACE_OWNER) return 'default';
-    // Level 2 - Manager: default (distinct)
-    if (r === WorkspaceRole.DEPARTMENT_MANAGER) return 'default';
+    // Level 2 - Managers: default (distinct)
+    if (r.endsWith('_MANAGER')) return 'default';
     // Level 3 - Leads: secondary
     if (r.endsWith('_LEAD')) {
       return 'secondary';

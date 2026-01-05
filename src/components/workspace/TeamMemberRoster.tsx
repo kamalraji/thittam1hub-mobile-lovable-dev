@@ -24,7 +24,11 @@ export function TeamMemberRoster({
     switch (role) {
       case WorkspaceRole.WORKSPACE_OWNER:
         return 'bg-primary/10 text-primary';
-      case WorkspaceRole.DEPARTMENT_MANAGER:
+      case WorkspaceRole.OPERATIONS_MANAGER:
+      case WorkspaceRole.GROWTH_MANAGER:
+      case WorkspaceRole.CONTENT_MANAGER:
+      case WorkspaceRole.TECH_FINANCE_MANAGER:
+      case WorkspaceRole.VOLUNTEERS_MANAGER:
         return 'bg-secondary/10 text-secondary-foreground';
       case WorkspaceRole.EVENT_COORDINATOR:
         return 'bg-accent/10 text-accent-foreground';

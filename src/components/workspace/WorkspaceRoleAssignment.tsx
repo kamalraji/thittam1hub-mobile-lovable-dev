@@ -16,8 +16,12 @@ interface WorkspaceRoleAssignmentProps {
 const ROLE_DESCRIPTIONS: Partial<Record<WorkspaceRole, string>> = {
   // Level 1
   [WorkspaceRole.WORKSPACE_OWNER]: 'Full control over workspace settings, team, tasks, and permissions',
-  // Level 2
-  [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manage department strategy, oversee leads, and create sub-workspaces',
+  // Level 2 - Department Managers
+  [WorkspaceRole.OPERATIONS_MANAGER]: 'Manage Operations department strategy, oversee leads, and create sub-workspaces',
+  [WorkspaceRole.GROWTH_MANAGER]: 'Manage Growth department strategy, oversee leads, and create sub-workspaces',
+  [WorkspaceRole.CONTENT_MANAGER]: 'Manage Content department strategy, oversee leads, and create sub-workspaces',
+  [WorkspaceRole.TECH_FINANCE_MANAGER]: 'Manage Tech & Finance department strategy, oversee leads, and create sub-workspaces',
+  [WorkspaceRole.VOLUNTEERS_MANAGER]: 'Manage Volunteers department strategy, oversee leads, and create sub-workspaces',
   // Level 3 - Leads
   [WorkspaceRole.EVENT_LEAD]: 'Lead event planning, coordinate vendors, and manage event timeline',
   [WorkspaceRole.CATERING_LEAD]: 'Lead catering operations and vendor coordination',

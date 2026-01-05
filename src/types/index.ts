@@ -642,7 +642,7 @@ export enum WorkspaceStatus {
  * 4-Level Workspace Hierarchy Roles
  * 
  * Level 1: WORKSPACE_OWNER - Full control & oversight
- * Level 2: DEPARTMENT_MANAGER - Department strategy, manages leads
+ * Level 2: *_MANAGER roles - Department-specific managers (Operations, Growth, Content, Tech/Finance, Volunteers)
  * Level 3: TEAM_LEAD, *_LEAD roles - Committee execution, manages coordinators
  * Level 4: *_COORDINATOR roles - Task execution
  */
@@ -650,8 +650,12 @@ export enum WorkspaceRole {
   // Level 1 - Workspace Owner
   WORKSPACE_OWNER = 'WORKSPACE_OWNER',
   
-  // Level 2 - Department Managers
-  DEPARTMENT_MANAGER = 'DEPARTMENT_MANAGER',
+  // Level 2 - Department Managers (one per department)
+  OPERATIONS_MANAGER = 'OPERATIONS_MANAGER',
+  GROWTH_MANAGER = 'GROWTH_MANAGER',
+  CONTENT_MANAGER = 'CONTENT_MANAGER',
+  TECH_FINANCE_MANAGER = 'TECH_FINANCE_MANAGER',
+  VOLUNTEERS_MANAGER = 'VOLUNTEERS_MANAGER',
   
   // Level 3 - Team Leads (Committee Leads)
   EVENT_LEAD = 'EVENT_LEAD',

@@ -61,7 +61,11 @@ export function WorkspaceAuditLog({ workspace, teamMembers }: WorkspaceAuditLogP
   const currentMember = teamMembers?.find((member) => member.userId === user?.id);
   const managerWorkspaceRoles: WorkspaceRole[] = [
     WorkspaceRole.WORKSPACE_OWNER,
-    WorkspaceRole.DEPARTMENT_MANAGER,
+    WorkspaceRole.OPERATIONS_MANAGER,
+    WorkspaceRole.GROWTH_MANAGER,
+    WorkspaceRole.CONTENT_MANAGER,
+    WorkspaceRole.TECH_FINANCE_MANAGER,
+    WorkspaceRole.VOLUNTEERS_MANAGER,
     WorkspaceRole.EVENT_COORDINATOR,
   ];
   const isWorkspaceManager = currentMember

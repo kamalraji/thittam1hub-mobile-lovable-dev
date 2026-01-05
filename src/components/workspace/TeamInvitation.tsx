@@ -189,8 +189,12 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
 
   // All available role options with their groups
   const allRoleOptions = useMemo(() => [
-    // Level 2 - Managers
-    { value: WorkspaceRole.DEPARTMENT_MANAGER, label: 'Department Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
+    // Level 2 - Managers (department-specific)
+    { value: WorkspaceRole.OPERATIONS_MANAGER, label: 'Operations Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
+    { value: WorkspaceRole.GROWTH_MANAGER, label: 'Growth Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
+    { value: WorkspaceRole.CONTENT_MANAGER, label: 'Content Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
+    { value: WorkspaceRole.TECH_FINANCE_MANAGER, label: 'Tech & Finance Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
+    { value: WorkspaceRole.VOLUNTEERS_MANAGER, label: 'Volunteers Manager', group: 'Managers', level: WorkspaceHierarchyLevel.MANAGER },
     // Level 3 - Leads
     { value: WorkspaceRole.EVENT_LEAD, label: 'Event Lead', group: 'Leads', level: WorkspaceHierarchyLevel.LEAD },
     { value: WorkspaceRole.CATERING_LEAD, label: 'Catering Lead', group: 'Leads', level: WorkspaceHierarchyLevel.LEAD },

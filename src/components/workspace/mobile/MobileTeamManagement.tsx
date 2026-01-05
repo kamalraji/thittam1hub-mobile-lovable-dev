@@ -101,14 +101,22 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
   const getRoleBadge = (role: WorkspaceRole) => {
     const roleColors: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'bg-purple-100 text-purple-800',
-      [WorkspaceRole.DEPARTMENT_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.OPERATIONS_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.GROWTH_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.CONTENT_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.TECH_FINANCE_MANAGER]: 'bg-violet-100 text-violet-800',
+      [WorkspaceRole.VOLUNTEERS_MANAGER]: 'bg-violet-100 text-violet-800',
       [WorkspaceRole.EVENT_COORDINATOR]: 'bg-indigo-100 text-indigo-800',
       [WorkspaceRole.MARKETING_LEAD]: 'bg-pink-100 text-pink-800',
     };
 
     const roleLabels: Record<string, string> = {
       [WorkspaceRole.WORKSPACE_OWNER]: 'Owner',
-      [WorkspaceRole.DEPARTMENT_MANAGER]: 'Manager',
+      [WorkspaceRole.OPERATIONS_MANAGER]: 'Ops Manager',
+      [WorkspaceRole.GROWTH_MANAGER]: 'Growth Mgr',
+      [WorkspaceRole.CONTENT_MANAGER]: 'Content Mgr',
+      [WorkspaceRole.TECH_FINANCE_MANAGER]: 'Tech/Finance',
+      [WorkspaceRole.VOLUNTEERS_MANAGER]: 'Vol Manager',
       [WorkspaceRole.EVENT_COORDINATOR]: 'Coordinator',
       [WorkspaceRole.MARKETING_LEAD]: 'Marketing Lead',
     };
@@ -116,6 +124,7 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
     // Get label with fallback - handle lead roles and coordinator roles
     const getLabel = (r: WorkspaceRole): string => {
       if (roleLabels[r]) return roleLabels[r];
+      if (r.endsWith('_MANAGER')) return r.replace(/_MANAGER$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') + ' Mgr';
       if (r.endsWith('_LEAD')) return r.replace(/_LEAD$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') + ' Lead';
       if (r.endsWith('_COORDINATOR')) return r.replace(/_COORDINATOR$/, '').split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ') + ' Coord';
       return r.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
@@ -124,7 +133,7 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
     // Get color with fallback based on role hierarchy
     const getColor = (r: WorkspaceRole): string => {
       if (roleColors[r]) return roleColors[r];
-      if (r === WorkspaceRole.DEPARTMENT_MANAGER) return 'bg-violet-100 text-violet-800';
+      if (r.endsWith('_MANAGER')) return 'bg-violet-100 text-violet-800';
       if (r.endsWith('_LEAD')) return 'bg-blue-100 text-blue-800';
       if (r.endsWith('_COORDINATOR')) return 'bg-indigo-100 text-indigo-800';
       return 'bg-gray-100 text-gray-800';
@@ -227,7 +236,8 @@ export function MobileTeamManagement({ workspace, onInviteMember }: MobileTeamMa
               >
                 <option value="all">All Roles</option>
                 <option value={WorkspaceRole.WORKSPACE_OWNER}>Owner</option>
-                <option value={WorkspaceRole.DEPARTMENT_MANAGER}>Manager</option>
+                <option value={WorkspaceRole.OPERATIONS_MANAGER}>Ops Manager</option>
+                <option value={WorkspaceRole.GROWTH_MANAGER}>Growth Mgr</option>
                 <option value={WorkspaceRole.EVENT_LEAD}>Event Lead</option>
                 <option value={WorkspaceRole.EVENT_COORDINATOR}>Coordinator</option>
                 <option value={WorkspaceRole.MARKETING_LEAD}>Marketing Lead</option>
