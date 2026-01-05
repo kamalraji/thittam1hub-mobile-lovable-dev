@@ -748,6 +748,239 @@ export const ENHANCED_WORKSPACE_TEMPLATES: EnhancedWorkspaceTemplate[] = [
       budgetCategories: ['Venue', 'Prizes', 'Catering', 'Swag', 'APIs', 'Marketing', 'Staff'],
     },
   },
+  // -------------------------------------------------------------------------
+  // ADDITIONAL TEMPLATES
+  // -------------------------------------------------------------------------
+  {
+    id: 'academic-conference',
+    name: 'Academic Conference',
+    description: 'Scholarly conferences with paper presentations and peer review',
+    icon: AcademicCapIcon,
+    complexity: 'COMPLEX',
+    category: 'education',
+    eventSizeRange: { min: 200, max: 3000 },
+    suggestedTeamSize: { min: 15, max: 40 },
+    structure: {
+      departments: [
+        { id: 'operations', name: 'Operations', description: 'Venue and logistics', committees: ['event', 'facility', 'logistics', 'catering'] },
+        { id: 'content', name: 'Academic Program', description: 'Papers and sessions', committees: ['content', 'speaker_liaison', 'judge'] },
+        { id: 'growth', name: 'Outreach', description: 'Participants and sponsors', committees: ['marketing', 'registration', 'sponsorship'] },
+        { id: 'tech_finance', name: 'Tech & Finance', description: 'Publishing and budgets', committees: ['technical', 'finance'] },
+      ],
+      roles: [
+        { role: 'PROGRAM_CHAIR', count: 1, level: 'MANAGER' },
+        { role: 'GENERAL_CHAIR', count: 1, level: 'MANAGER' },
+        { role: 'PAPER_TRACK_LEAD', count: 3, level: 'LEAD' },
+        { role: 'REVIEWER_COORDINATOR', count: 2, level: 'COORDINATOR' },
+        { role: 'SESSION_CHAIR', count: 6, level: 'COORDINATOR' },
+        { role: 'POSTER_COORDINATOR', count: 1, level: 'COORDINATOR' },
+      ],
+      tasks: [
+        { title: 'Define conference tracks and themes', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Setup paper submission system', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Recruit program committee reviewers', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Manage peer review process', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Send acceptance/rejection notifications', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Create conference proceedings', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Organize poster sessions', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Plan keynote speaker sessions', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Arrange student travel grants', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'CFP Published', description: 'Call for papers goes live', daysFromEventStart: -180 },
+        { name: 'Submission Deadline', description: 'Papers due', daysFromEventStart: -90 },
+        { name: 'Reviews Complete', description: 'All reviews submitted', daysFromEventStart: -60 },
+        { name: 'Camera Ready Due', description: 'Final papers due', daysFromEventStart: -30 },
+        { name: 'Conference Day 1', description: 'Event begins', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Venue', 'Catering', 'Proceedings', 'Keynotes', 'Travel Grants', 'Marketing', 'Staff'],
+    },
+  },
+  {
+    id: 'sports-tournament',
+    name: 'Sports Tournament',
+    description: 'Competitive sports events with teams, brackets, and awards',
+    icon: TrophyIcon,
+    complexity: 'MODERATE',
+    category: 'competition',
+    eventSizeRange: { min: 50, max: 2000 },
+    suggestedTeamSize: { min: 10, max: 30 },
+    structure: {
+      departments: [
+        { id: 'operations', name: 'Operations', description: 'Venue and equipment', committees: ['event', 'facility', 'logistics'] },
+        { id: 'content', name: 'Competition', description: 'Brackets and officiating', committees: ['content', 'judge'] },
+        { id: 'growth', name: 'Participants', description: 'Teams and sponsors', committees: ['registration', 'sponsorship', 'marketing'] },
+        { id: 'volunteers', name: 'Game Day', description: 'Referees and support', committees: ['volunteers'] },
+      ],
+      roles: [
+        { role: 'TOURNAMENT_DIRECTOR', count: 1, level: 'MANAGER' },
+        { role: 'HEAD_REFEREE', count: 1, level: 'LEAD' },
+        { role: 'TEAM_COORDINATOR', count: 2, level: 'COORDINATOR' },
+        { role: 'FIELD_COORDINATOR', count: 3, level: 'COORDINATOR' },
+        { role: 'SCOREKEEPER', count: 4, level: 'MEMBER' },
+      ],
+      tasks: [
+        { title: 'Define tournament format and rules', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Secure playing fields/courts', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Create team registration system', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Generate tournament brackets', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Recruit and train referees', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Order trophies and medals', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Setup live scoring system', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Arrange first aid coverage', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'Team Registration Opens', description: 'Teams can sign up', daysFromEventStart: -45 },
+        { name: 'Registration Closes', description: 'Final team list', daysFromEventStart: -14 },
+        { name: 'Brackets Released', description: 'Match schedule published', daysFromEventStart: -7 },
+        { name: 'Tournament Begins', description: 'First games', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Venue', 'Equipment', 'Referees', 'Trophies', 'Insurance', 'Marketing', 'First Aid'],
+    },
+  },
+  {
+    id: 'workshop-series',
+    name: 'Workshop Series',
+    description: 'Multi-session hands-on learning workshops',
+    icon: AcademicCapIcon,
+    complexity: 'SIMPLE',
+    category: 'education',
+    eventSizeRange: { min: 10, max: 100 },
+    suggestedTeamSize: { min: 3, max: 10 },
+    structure: {
+      departments: [
+        { id: 'operations', name: 'Operations', description: 'Venue and materials', committees: ['event', 'logistics'] },
+        { id: 'content', name: 'Curriculum', description: 'Workshop content', committees: ['content', 'speaker_liaison'] },
+      ],
+      roles: [
+        { role: 'WORKSHOP_LEAD', count: 1, level: 'MANAGER' },
+        { role: 'FACILITATOR', count: 2, level: 'COORDINATOR' },
+        { role: 'MATERIALS_COORDINATOR', count: 1, level: 'COORDINATOR' },
+      ],
+      tasks: [
+        { title: 'Define workshop curriculum and learning outcomes', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Create hands-on exercises', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Prepare workshop materials and supplies', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Setup participant registration', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Create pre-workshop assignments', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Design completion certificates', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'Curriculum Finalized', description: 'All sessions planned', daysFromEventStart: -21 },
+        { name: 'Materials Ready', description: 'Supplies prepared', daysFromEventStart: -7 },
+        { name: 'First Session', description: 'Workshop begins', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Venue', 'Materials', 'Facilitators', 'Refreshments', 'Certificates'],
+    },
+  },
+  {
+    id: 'webinar-series',
+    name: 'Webinar Series',
+    description: 'Virtual presentation series with Q&A sessions',
+    icon: GlobeAltIcon,
+    complexity: 'SIMPLE',
+    category: 'education',
+    eventSizeRange: { min: 50, max: 5000 },
+    suggestedTeamSize: { min: 3, max: 8 },
+    structure: {
+      departments: [
+        { id: 'content', name: 'Content', description: 'Speakers and topics', committees: ['content', 'speaker_liaison'] },
+        { id: 'tech_finance', name: 'Tech', description: 'Platform and streaming', committees: ['technical'] },
+        { id: 'growth', name: 'Promotion', description: 'Registration and marketing', committees: ['registration', 'marketing', 'social_media'] },
+      ],
+      roles: [
+        { role: 'SERIES_HOST', count: 1, level: 'MANAGER' },
+        { role: 'TECH_PRODUCER', count: 1, level: 'COORDINATOR' },
+        { role: 'MODERATOR', count: 2, level: 'COORDINATOR' },
+      ],
+      tasks: [
+        { title: 'Define webinar topics and schedule', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Recruit and confirm speakers', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Setup webinar platform', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Create registration landing page', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Prepare Q&A moderation strategy', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Plan post-webinar follow-up', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'Speakers Confirmed', description: 'All presenters locked', daysFromEventStart: -30 },
+        { name: 'Registration Opens', description: 'Attendees can sign up', daysFromEventStart: -21 },
+        { name: 'First Webinar', description: 'Series begins', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Platform', 'Speaker Fees', 'Marketing', 'Recording'],
+    },
+  },
+  {
+    id: 'corporate-retreat',
+    name: 'Corporate Retreat',
+    description: 'Team-building offsite with activities and workshops',
+    icon: BuildingOfficeIcon,
+    complexity: 'MODERATE',
+    category: 'business',
+    eventSizeRange: { min: 20, max: 200 },
+    suggestedTeamSize: { min: 5, max: 15 },
+    structure: {
+      departments: [
+        { id: 'operations', name: 'Operations', description: 'Venue and logistics', committees: ['event', 'facility', 'catering', 'logistics'] },
+        { id: 'content', name: 'Programming', description: 'Activities and sessions', committees: ['content'] },
+      ],
+      roles: [
+        { role: 'RETREAT_COORDINATOR', count: 1, level: 'MANAGER' },
+        { role: 'ACTIVITIES_LEAD', count: 1, level: 'LEAD' },
+        { role: 'LOGISTICS_COORDINATOR', count: 2, level: 'COORDINATOR' },
+      ],
+      tasks: [
+        { title: 'Define retreat goals and themes', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Book retreat venue and accommodations', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Plan team-building activities', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Arrange transportation', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Create retreat agenda', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Organize evening social events', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'Venue Booked', description: 'Location confirmed', daysFromEventStart: -60 },
+        { name: 'Agenda Finalized', description: 'Full schedule ready', daysFromEventStart: -14 },
+        { name: 'Retreat Begins', description: 'Offsite starts', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Venue', 'Accommodations', 'Activities', 'Catering', 'Transportation'],
+    },
+  },
+  {
+    id: 'fundraising-run',
+    name: 'Charity Run / Walk',
+    description: 'Fundraising running or walking events for a cause',
+    icon: HeartIcon,
+    complexity: 'MODERATE',
+    category: 'social',
+    eventSizeRange: { min: 100, max: 5000 },
+    suggestedTeamSize: { min: 10, max: 25 },
+    structure: {
+      departments: [
+        { id: 'operations', name: 'Operations', description: 'Course and logistics', committees: ['event', 'logistics', 'facility'] },
+        { id: 'growth', name: 'Fundraising', description: 'Donors and sponsors', committees: ['sponsorship', 'registration', 'marketing', 'social_media'] },
+        { id: 'volunteers', name: 'Race Day', description: 'Volunteers and support', committees: ['volunteers'] },
+      ],
+      roles: [
+        { role: 'RACE_DIRECTOR', count: 1, level: 'MANAGER' },
+        { role: 'COURSE_MARSHAL', count: 1, level: 'LEAD' },
+        { role: 'REGISTRATION_LEAD', count: 1, level: 'COORDINATOR' },
+        { role: 'VOLUNTEER_COORDINATOR', count: 2, level: 'COORDINATOR' },
+      ],
+      tasks: [
+        { title: 'Define race course and distances', priority: 'HIGH', status: 'TODO', targetLevel: 'ROOT' },
+        { title: 'Obtain permits and insurance', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Setup online fundraising pages', priority: 'HIGH', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Recruit course volunteers', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Order race bibs and timing chips', priority: 'MEDIUM', status: 'TODO', targetLevel: 'COMMITTEE' },
+        { title: 'Plan post-race celebration', priority: 'LOW', status: 'TODO', targetLevel: 'COMMITTEE' },
+      ],
+      milestones: [
+        { name: 'Permits Approved', description: 'Course officially approved', daysFromEventStart: -45 },
+        { name: 'Registration Opens', description: 'Runners can sign up', daysFromEventStart: -60 },
+        { name: 'Race Day', description: 'Event takes place', daysFromEventStart: 0 },
+      ],
+      budgetCategories: ['Permits', 'Insurance', 'Timing', 'Medals', 'Water Stations', 'Marketing', 'Volunteers'],
+    },
+  },
 ];
 
 // Get templates by complexity
@@ -763,4 +996,15 @@ export function getTemplatesByCategory(category: string) {
 // Get template by ID
 export function getTemplateById(id: string) {
   return ENHANCED_WORKSPACE_TEMPLATES.find(t => t.id === id);
+}
+
+// Get all available categories
+export function getTemplateCategories() {
+  const categories = new Set(ENHANCED_WORKSPACE_TEMPLATES.map(t => t.category));
+  return Array.from(categories);
+}
+
+// Clone template for customization
+export function cloneTemplateForCustomization(template: EnhancedWorkspaceTemplate): EnhancedWorkspaceTemplate {
+  return JSON.parse(JSON.stringify(template));
 }

@@ -206,7 +206,7 @@ const getWorkspaceQuickActions = (base: string): WorkspaceQuickAction[] => [
   {
     title: 'Browse Templates',
     description: 'Use pre-built workspace templates',
-    path: `${base}/workspaces?tab=templates`,
+    path: `${base}/templates`,
     icon: LayoutTemplate,
   },
   {

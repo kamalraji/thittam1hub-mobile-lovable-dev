@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyMemberOrganizations, useOrganizationBySlug } from '@/hooks/useOrganization';
 import { OrganizerDashboard } from '@/components/dashboard/OrganizerDashboard';
 import { EventService, WorkspaceService, OrganizationService } from '@/components/routing/services';
+import { OrgTemplatesPage } from '@/components/routing/services/OrgTemplatesPage';
 import { OrganizationProvider } from './OrganizationContext';
 import { OrganizationAnalyticsDashboard } from './OrganizationAnalyticsDashboard';
 import { OrganizationTeamManagement } from './OrganizationTeamManagement';
@@ -130,6 +131,7 @@ export const OrgScopedLayout: React.FC = () => {
             <Route path="settings/story" element={<OrgStorySettingsPage />} />
             <Route path="eventmanagement/*" element={<EventService />} />
             <Route path="workspaces/*" element={<WorkspaceService />} />
+            <Route path="templates" element={<OrgTemplatesPage />} />
             <Route path="marketplace" element={<OrgMarketplacePage />} />
             <Route path="organizations/*" element={<OrganizationService />} />
             <Route path="analytics" element={<OrganizationAnalyticsDashboard />} />
@@ -170,6 +172,7 @@ export const OrgScopedLayout: React.FC = () => {
                   <Route path="settings/story" element={<OrgStorySettingsPage />} />
                   <Route path="eventmanagement/*" element={<EventService />} />
                   <Route path="workspaces/*" element={<WorkspaceService />} />
+                  <Route path="templates" element={<OrgTemplatesPage />} />
                   <Route path="marketplace" element={<OrgMarketplacePage />} />
                   <Route path="organizations/*" element={<OrganizationService />} />
                   <Route path="analytics" element={<OrganizationAnalyticsDashboard />} />

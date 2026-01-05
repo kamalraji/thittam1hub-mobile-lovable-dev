@@ -3,15 +3,17 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CheckIcon, UsersIcon, ClipboardDocumentListIcon, CalendarDaysIcon, FolderIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, UsersIcon, ClipboardDocumentListIcon, CalendarDaysIcon, FolderIcon, EyeIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { ENHANCED_WORKSPACE_TEMPLATES, EnhancedWorkspaceTemplate, COMMITTEE_DEFINITIONS } from '@/lib/workspaceTemplates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
+import { TemplateCustomizationModal } from './TemplateCustomizationModal';
 
 interface WorkspaceTemplateSelectorProps {
   selectedTemplate: EnhancedWorkspaceTemplate;
   onSelectTemplate: (template: EnhancedWorkspaceTemplate) => void;
   onApplyTemplate?: (template: EnhancedWorkspaceTemplate) => void;
   isApplying?: boolean;
+  showCustomization?: boolean;
 }
 
 export function WorkspaceTemplateSelector({
@@ -19,9 +21,11 @@ export function WorkspaceTemplateSelector({
   onSelectTemplate,
   onApplyTemplate,
   isApplying = false,
+  showCustomization = true,
 }: WorkspaceTemplateSelectorProps) {
   const [activeTab, setActiveTab] = useState<'SIMPLE' | 'MODERATE' | 'COMPLEX'>('SIMPLE');
   const [previewTemplate, setPreviewTemplate] = useState<EnhancedWorkspaceTemplate | null>(null);
+  const [customizeTemplate, setCustomizeTemplate] = useState<EnhancedWorkspaceTemplate | null>(null);
 
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
@@ -203,6 +207,21 @@ export function WorkspaceTemplateSelector({
               <Badge variant="outline" className={cn("text-xs", getComplexityColor(selectedTemplate.complexity))}>
                 {selectedTemplate.complexity}
               </Badge>
+              {showCustomization && selectedTemplate.structure.departments.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCustomizeTemplate(selectedTemplate);
+                  }}
+                >
+                  <AdjustmentsHorizontalIcon className="h-3.5 w-3.5 mr-1" />
+                  Customize
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -315,6 +334,20 @@ export function WorkspaceTemplateSelector({
         }}
         isApplying={isApplying}
       />
+
+      {/* Template Customization Modal */}
+      {customizeTemplate && (
+        <TemplateCustomizationModal
+          template={customizeTemplate}
+          open={!!customizeTemplate}
+          onOpenChange={(open) => !open && setCustomizeTemplate(null)}
+          onApply={(customized) => {
+            onSelectTemplate(customized);
+            setCustomizeTemplate(null);
+          }}
+          isApplying={isApplying}
+        />
+      )}
     </div>
   );
 }
