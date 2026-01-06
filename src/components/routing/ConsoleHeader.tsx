@@ -117,7 +117,7 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({
         case 'marketplace':
           return `/${effectiveOrgSlug}/marketplace`;
         case 'organizations':
-          return `/${effectiveOrgSlug}/settings`;
+          return `/${effectiveOrgSlug}/organizations`;
         case 'analytics':
           return `/${effectiveOrgSlug}/analytics`;
         default:
