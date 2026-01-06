@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { MarketplaceServiceDashboard } from './MarketplaceServiceDashboard';
 import { VendorDashboardPage } from './VendorDashboardPage';
 import { VendorRegistrationPage } from './VendorRegistrationPage';
 import { VendorListingPage } from './VendorListingPage';
@@ -24,9 +23,6 @@ export const MarketplaceService: React.FC = () => {
     <Routes>
       {/* Enhanced Marketplace Page - default route */}
       <Route index element={<MarketplacePage />} />
-      
-      {/* Service Dashboard */}
-      <Route path="dashboard" element={<MarketplaceServiceDashboard />} />
       
       {/* Service Discovery - marketplace service listings */}
       <Route path="services" element={<ServiceDiscoveryEnhanced />} />
