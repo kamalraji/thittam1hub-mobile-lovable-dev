@@ -114,8 +114,8 @@ export const OrganizationServiceDashboard: React.FC = () => {
                     {recentOrganizations.map((org) => {
                       const matchedOrg = organizations?.find((o) => o.id === org.id);
                       const orgSlug = matchedOrg?.slug;
-                      const dashboardPath = orgSlug ? `/${orgSlug}/dashboard` : '/dashboard';
-                      const teamPath = orgSlug ? `/${orgSlug}/team` : '/dashboard/organizations/join';
+                          const dashboardPath = orgSlug ? `/${orgSlug}/dashboard` : '/dashboard';
+                          const settingsPath = orgSlug ? `/${orgSlug}/settings` : '/dashboard/organizations/join';
 
                       return (
                         <tr key={org.id} className="hover:bg-muted/60">
@@ -144,7 +144,7 @@ export const OrganizationServiceDashboard: React.FC = () => {
                               View
                             </Link>
                             <Link
-                              to={teamPath}
+                              to={settingsPath}
                               className="text-muted-foreground hover:text-foreground"
                             >
                               Manage
