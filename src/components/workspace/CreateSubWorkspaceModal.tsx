@@ -252,189 +252,140 @@ export function CreateSubWorkspaceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-border/50 bg-card">
-        {/* Header with gradient */}
+      <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-border/50 bg-card gap-0">
+        {/* Compact Header */}
         <div className={cn(
-          "relative px-6 pt-8 pb-6 bg-gradient-to-b",
+          "px-5 pt-5 pb-4 bg-gradient-to-b",
           styles.gradient
         )}>
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-background/0 to-background pointer-events-none" />
-          
-          <DialogHeader className="relative space-y-3">
-            <div className={cn(
-              "w-14 h-14 rounded-2xl flex items-center justify-center",
-              "bg-background border shadow-lg",
-              styles.border
-            )}>
-              <TypeIcon className={cn("h-7 w-7", styles.iconColor)} />
-            </div>
-            
-            <div className="space-y-1.5">
-              <DialogTitle className="text-xl font-semibold tracking-tight text-foreground">
-                Create Sub-Workspace
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                {canCreate 
-                  ? `Add a new ${getWorkspaceTypeLabel(nextType || undefined).toLowerCase()} under "${parentWorkspace?.name || 'Workspace'}"`
-                  : 'This workspace has reached its maximum depth.'}
-              </DialogDescription>
+          <DialogHeader className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                "bg-background/80 border shadow-sm",
+                styles.border
+              )}>
+                <TypeIcon className={cn("h-5 w-5", styles.iconColor)} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="text-base font-semibold text-foreground">
+                  New {getWorkspaceTypeLabel(nextType || undefined)}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground truncate">
+                  {canCreate 
+                    ? `Under "${parentWorkspace?.name || 'Workspace'}"`
+                    : 'Maximum depth reached'}
+                </DialogDescription>
+              </div>
             </div>
           </DialogHeader>
         </div>
 
         {!canCreate ? (
-          <div className="flex flex-col items-center gap-4 p-8">
-            <div className="rounded-full bg-destructive/10 p-4">
-              <AlertTriangle className="h-8 w-8 text-destructive" />
+          <div className="flex flex-col items-center gap-3 p-6">
+            <div className="rounded-full bg-destructive/10 p-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
-            <div className="text-center space-y-2">
-              <p className="font-semibold text-foreground">Maximum Depth Reached</p>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Teams are the final level. You cannot create sub-workspaces beyond level {MAX_WORKSPACE_DEPTH}.
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Teams are the final level (L{MAX_WORKSPACE_DEPTH}).
+            </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
-            {/* Hierarchy breadcrumb */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-1 rounded-md bg-muted/50">
-                {parentWorkspace?.name || 'Parent'}
-              </span>
-              <ArrowRight className="h-3 w-3" />
-              <span className={cn(
-                "px-2 py-1 rounded-md border-2 border-dashed",
-                styles.border,
-                styles.iconColor
-              )}>
-                New {getWorkspaceTypeLabel(nextType || undefined)}
-              </span>
-            </div>
-
+          <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
             {/* Input Section */}
             {allowCustomName ? (
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">
-                  Workspace Name
-                </label>
+              <div className="space-y-2">
                 <Input
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Enter a name for your workspace..."
+                  placeholder="Enter workspace name..."
                   maxLength={100}
                   autoFocus
-                  className={cn(
-                    "h-12 text-base transition-all duration-200",
-                    "focus-visible:ring-2",
-                    styles.ring
-                  )}
+                  className="h-10"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Choose a descriptive name (e.g., "Stage Setup", "Vendor Coordination")
-                </p>
               </div>
             ) : options && options.length > 0 ? (
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">
-                  Select Type
-                </label>
-                <div className="grid gap-2">
-                  {options.map((option) => {
-                    const isSelected = selectedOption === option.id;
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setSelectedOption(option.id)}
-                        className={cn(
-                          "relative flex items-start gap-3 p-4 rounded-xl text-left transition-all duration-200",
-                          "border-2 hover:border-primary/50 hover:bg-accent/50",
-                          isSelected 
-                            ? "border-primary bg-primary/5 shadow-sm" 
-                            : "border-border bg-background"
-                        )}
-                      >
-                        <div className={cn(
-                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                          isSelected 
-                            ? "border-primary bg-primary text-primary-foreground" 
-                            : "border-muted-foreground/30"
+              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                {options.map((option) => {
+                  const isSelected = selectedOption === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setSelectedOption(option.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all",
+                        "border hover:border-primary/50 hover:bg-accent/30",
+                        isSelected 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border/50 bg-background"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                        isSelected 
+                          ? "border-primary bg-primary" 
+                          : "border-muted-foreground/30"
+                      )}>
+                        {isSelected && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className={cn(
+                          "text-sm font-medium block",
+                          isSelected ? "text-foreground" : "text-foreground/80"
                         )}>
-                          {isSelected && <Check className="h-3 w-3" />}
-                        </div>
-                        <div className="flex-1 space-y-0.5">
-                          <span className={cn(
-                            "font-medium",
-                            isSelected ? "text-foreground" : "text-foreground/80"
-                          )}>
-                            {option.name}
-                          </span>
-                          {option.description && (
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {option.description}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                          {option.name}
+                        </span>
+                        {option.description && (
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {option.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                No options available for this level.
-              </div>
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No options available.
+              </p>
             )}
 
-            {/* Role assignment preview */}
+            {/* Role badge - compact */}
             {responsibleRole && isValid && (
-              <div className={cn(
-                "flex items-center gap-3 p-4 rounded-xl",
-                "bg-gradient-to-r from-primary/5 to-transparent",
-                "border border-primary/20"
-              )}>
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    You'll be the {getWorkspaceRoleLabel(responsibleRole)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Automatically assigned as the creator
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-xs text-muted-foreground">
+                  You'll be <span className="font-medium text-foreground">{getWorkspaceRoleLabel(responsibleRole)}</span>
+                </span>
               </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-3 pt-2">
+            {/* Compact action buttons */}
+            <div className="flex items-center gap-2 pt-1">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() => onOpenChange(false)}
                 disabled={createSubWorkspaceMutation.isPending}
-                className="flex-1 h-11"
+                className="flex-1"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
+                size="sm"
                 disabled={!isValid || createSubWorkspaceMutation.isPending}
-                className={cn(
-                  "flex-1 h-11 gap-2",
-                  "bg-primary hover:bg-primary/90"
-                )}
+                className="flex-1 gap-1.5"
               >
                 {createSubWorkspaceMutation.isPending ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Creating...
-                  </>
+                  <div className="h-3.5 w-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                 ) : (
                   <>
                     Create
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </>
                 )}
               </Button>
