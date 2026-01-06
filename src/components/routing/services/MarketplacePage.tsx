@@ -109,54 +109,6 @@ export const MarketplacePage: React.FC = () => {
           }))}
         />
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">150+</p>
-                <p className="text-xs text-muted-foreground">Verified Vendors</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-xl p-4 border border-emerald-500/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/20 rounded-lg">
-                <Sparkles className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">500+</p>
-                <p className="text-xs text-muted-foreground">Services Available</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 rounded-xl p-4 border border-amber-500/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">98%</p>
-                <p className="text-xs text-muted-foreground">Satisfaction Rate</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 rounded-xl p-4 border border-violet-500/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-500/20 rounded-lg">
-                <Users className="w-5 h-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">2.5K+</p>
-                <p className="text-xs text-muted-foreground">Events Served</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Hero CTA Section */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Organizer CTA */}
@@ -253,6 +205,26 @@ export const MarketplacePage: React.FC = () => {
               <h4 className="font-semibold text-foreground mb-2">Direct Communication</h4>
               <p className="text-sm text-muted-foreground">Connect directly with vendors, request quotes, and coordinate service delivery.</p>
             </div>
+          </div>
+        </div>
+
+        {/* Stats Row - Compact */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-primary" />
+            <span><strong className="text-foreground">150+</strong> Vendors</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span><strong className="text-foreground">500+</strong> Services</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
+            <span><strong className="text-foreground">98%</strong> Satisfaction</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-violet-600" />
+            <span><strong className="text-foreground">2.5K+</strong> Events</span>
           </div>
         </div>
       </div>
