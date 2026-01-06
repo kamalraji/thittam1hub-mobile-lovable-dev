@@ -243,8 +243,7 @@ export function OrganizerDashboard() {
                                 Organizer Dashboard
                             </h1>
                             <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-                                Welcome back{user?.name ? `, ${user.name}` : ''}. Manage your organization's events and insights in one
-                                focused workspace.
+                                Manage your organization's events and insights in one focused workspace.
                             </p>
                         </div>
 

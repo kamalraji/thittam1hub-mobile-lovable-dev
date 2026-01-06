@@ -108,7 +108,7 @@ export const ServiceDashboard: React.FC<ServiceDashboardProps> = ({
       <div className="min-h-screen bg-background">
         <PageHeader
           title={`${service} Dashboard`}
-          subtitle={`Welcome to your ${service.toLowerCase()} dashboard`}
+          subtitle={`Manage your ${service.toLowerCase()} resources`}
         />
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -130,7 +130,7 @@ export const ServiceDashboard: React.FC<ServiceDashboardProps> = ({
     <div className="min-h-screen bg-background">
       <PageHeader
         title={`${service} Dashboard`}
-        subtitle={`Welcome to your ${service.toLowerCase()} dashboard`}
+        subtitle={`Manage your ${service.toLowerCase()} resources`}
         actions={pageActions}
       />
  
