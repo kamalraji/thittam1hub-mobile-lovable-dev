@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '../PageHeader';
 import { useEventManagementPaths } from '@/hooks/useEventManagementPaths';
 import { useEventManagementMetrics, DashboardEventRow } from '@/hooks/useEventManagementMetrics';
@@ -19,7 +18,6 @@ import { Label } from '@/components/ui/label';
  * - Service-specific widgets and analytics
  */
 export const EventServiceDashboard: React.FC = () => {
-  const { user } = useAuth();
   const organization = useOptionalOrganization();
   const [onlyMine, setOnlyMine] = useState(false);
   const { createPath, listPath, eventDetailPath, eventEditPath } = useEventManagementPaths();
@@ -71,15 +69,6 @@ export const EventServiceDashboard: React.FC = () => {
             actions={pageActions}
           />
 
-          {/* Welcome Message */}
-          {user && (
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 text-xs sm:text-sm">
-              <p className="text-primary">
-                Welcome back, <span className="font-semibold">{user.name}</span>! Ready to manage your
-                events?
-              </p>
-            </div>
-          )}
 
           {/* Ownership Toggle - only show in org context */}
           {organization?.id && (

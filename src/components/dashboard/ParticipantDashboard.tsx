@@ -299,8 +299,7 @@ export function ParticipantDashboard() {
                 Participant Dashboard
               </h1>
               <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-                Welcome back{user?.name ? `, ${user.name}` : ''}. Track your event journey, certificates, and
-                profile in one place.
+                Track your event journey, certificates, and profile in one place.
               </p>
             </div>
 

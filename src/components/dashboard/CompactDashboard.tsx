@@ -135,13 +135,13 @@ export function CompactDashboard() {
 
   return (
     <div className="px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6 max-w-2xl mx-auto">
-      {/* Welcome Section */}
+      {/* Header Section */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          Welcome{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
+          {organization.name}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          Here's what's happening in {organization.name}
+          Here's what's happening
         </p>
       </div>
 
