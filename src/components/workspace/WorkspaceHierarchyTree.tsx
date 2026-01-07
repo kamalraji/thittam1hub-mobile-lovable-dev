@@ -13,11 +13,11 @@ import {
 } from '@/lib/workspaceHierarchy';
 import { WorkspaceType, WorkspaceRole, TeamMember } from '@/types';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  SimpleTooltip as Tooltip,
+  SimpleTooltipContent as TooltipContent,
+  SimpleTooltipProvider as TooltipProvider,
+  SimpleTooltipTrigger as TooltipTrigger,
+} from '@/components/ui/simple-tooltip';
 
 import { RoleDelegationModal } from './RoleDelegationModal';
 import { useAuth } from '@/hooks/useAuth';

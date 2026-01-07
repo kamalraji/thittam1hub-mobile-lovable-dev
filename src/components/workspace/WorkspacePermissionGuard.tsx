@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { WorkspaceRole } from '@/types';
 import { useWorkspaceRBAC } from '@/hooks/useWorkspaceRBAC';
 import { ShieldXIcon } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SimpleTooltip as Tooltip, SimpleTooltipContent as TooltipContent, SimpleTooltipProvider as TooltipProvider, SimpleTooltipTrigger as TooltipTrigger } from '@/components/ui/simple-tooltip';
 
 interface WorkspacePermissionGuardProps {
   /** The user's current workspace role */

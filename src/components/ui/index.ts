@@ -45,7 +45,7 @@ export { Separator } from './separator';
 export { Skeleton } from './skeleton';
 export { Switch } from './switch';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
+export { SimpleTooltip as Tooltip, SimpleTooltipContent as TooltipContent, SimpleTooltipProvider as TooltipProvider, SimpleTooltipTrigger as TooltipTrigger } from './simple-tooltip';
 
 // Re-export utility functions
 export { cn } from '../../lib/utils';

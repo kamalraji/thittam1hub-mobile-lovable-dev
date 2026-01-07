@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  SimpleTooltip as Tooltip,
+  SimpleTooltipContent as TooltipContent,
+  SimpleTooltipProvider as TooltipProvider,
+  SimpleTooltipTrigger as TooltipTrigger,
+} from '@/components/ui/simple-tooltip';
 
 interface BuilderToolbarProps {
   projectName?: string;
