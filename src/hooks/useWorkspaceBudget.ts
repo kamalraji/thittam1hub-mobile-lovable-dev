@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { queryPresets } from '@/lib/query-config';
 
 export interface WorkspaceBudget {
   id: string;
@@ -48,13 +49,15 @@ export function useWorkspaceBudget(workspaceId: string | undefined) {
       if (!workspaceId) return null;
       const { data, error } = await supabase
         .from('workspace_budgets')
-        .select('*')
+        .select('id, workspace_id, allocated, used, currency, fiscal_year, created_at, updated_at')
         .eq('workspace_id', workspaceId)
         .maybeSingle();
       if (error) throw error;
       return data as WorkspaceBudget | null;
     },
     enabled: !!workspaceId,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
   const categoriesQuery = useQuery({
@@ -63,12 +66,14 @@ export function useWorkspaceBudget(workspaceId: string | undefined) {
       if (!budgetQuery.data?.id) return [];
       const { data, error } = await supabase
         .from('workspace_budget_categories')
-        .select('*')
+        .select('id, budget_id, name, allocated, used, created_at')
         .eq('budget_id', budgetQuery.data.id);
       if (error) throw error;
       return data as BudgetCategory[];
     },
     enabled: !!budgetQuery.data?.id,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
   const createBudgetMutation = useMutation({
@@ -143,13 +148,15 @@ export function useWorkspaceBudget(workspaceId: string | undefined) {
       if (!workspaceId) return [];
       const { data, error } = await supabase
         .from('workspace_budget_requests')
-        .select('*')
+        .select('id, requesting_workspace_id, requested_amount, reason, status, created_at')
         .eq('target_workspace_id', workspaceId)
         .eq('status', 'pending');
       if (error) throw error;
       return data;
     },
     enabled: !!workspaceId,
+    staleTime: queryPresets.dynamic.staleTime,
+    gcTime: queryPresets.dynamic.gcTime,
   });
 
   return {
@@ -176,7 +183,7 @@ export function useBudgetRequests(workspaceId: string | undefined, role: 'reques
       const { data, error } = await supabase
         .from('workspace_budget_requests')
         .select(`
-          *,
+          id, requesting_workspace_id, target_workspace_id, requested_amount, reason, status, requested_by, reviewed_by, reviewed_at, review_notes, created_at,
           requesting_workspace:workspaces!workspace_budget_requests_requesting_workspace_id_fkey(name),
           target_workspace:workspaces!workspace_budget_requests_target_workspace_id_fkey(name)
         `)
@@ -186,6 +193,8 @@ export function useBudgetRequests(workspaceId: string | undefined, role: 'reques
       return data as BudgetRequest[];
     },
     enabled: !!workspaceId,
+    staleTime: queryPresets.dynamic.staleTime,
+    gcTime: queryPresets.dynamic.gcTime,
   });
 
   const createRequestMutation = useMutation({
@@ -241,7 +250,7 @@ export function useBudgetRequests(workspaceId: string | undefined, role: 'reques
         // Get current budget for requesting workspace
         const { data: budget } = await supabase
           .from('workspace_budgets')
-          .select('*')
+          .select('id, allocated')
           .eq('workspace_id', request.requesting_workspace_id)
           .maybeSingle();
 
