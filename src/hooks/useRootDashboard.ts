@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { WORKSPACE_DEPARTMENTS } from '@/lib/workspaceHierarchy';
+import { queryPresets } from '@/lib/query-config';
 
 export interface DepartmentStats {
   departmentId: string;
@@ -54,23 +55,25 @@ export interface RootDashboardData {
 }
 
 export function useRootDashboard(eventId: string | undefined) {
-  // Fetch all workspaces for this event
+  // Fetch all workspaces for this event - optimized select
   const workspacesQuery = useQuery({
     queryKey: ['root-dashboard-workspaces', eventId],
     queryFn: async () => {
       if (!eventId) return [];
       const { data, error } = await supabase
         .from('workspaces')
-        .select('*')
+        .select('id, name, status, workspace_type, department_id, parent_workspace_id, created_at')
         .eq('event_id', eventId)
         .order('created_at');
       if (error) throw error;
       return data;
     },
     enabled: !!eventId,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
-  // Fetch all tasks across the event
+  // Fetch all tasks across the event - only fields needed for aggregation
   const tasksQuery = useQuery({
     queryKey: ['root-dashboard-tasks', eventId],
     queryFn: async () => {
@@ -80,15 +83,17 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_tasks')
-        .select('*')
+        .select('id, workspace_id, status')
         .in('workspace_id', workspaceIds);
       if (error) throw error;
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.dynamic.staleTime,
+    gcTime: queryPresets.dynamic.gcTime,
   });
 
-  // Fetch all team members
+  // Fetch all team members - only fields needed for counting
   const membersQuery = useQuery({
     queryKey: ['root-dashboard-members', eventId],
     queryFn: async () => {
@@ -98,16 +103,18 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_team_members')
-        .select('*')
+        .select('id, workspace_id, user_id')
         .in('workspace_id', workspaceIds)
         .eq('status', 'ACTIVE');
       if (error) throw error;
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
-  // Fetch budgets
+  // Fetch budgets - only fields needed for aggregation
   const budgetsQuery = useQuery({
     queryKey: ['root-dashboard-budgets', eventId],
     queryFn: async () => {
@@ -117,15 +124,17 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_budgets')
-        .select('*')
+        .select('id, workspace_id, allocated, used')
         .in('workspace_id', workspaceIds);
       if (error) throw error;
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
-  // Fetch resources
+  // Fetch resources - only fields needed for aggregation
   const resourcesQuery = useQuery({
     queryKey: ['root-dashboard-resources', eventId],
     queryFn: async () => {
@@ -135,15 +144,17 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_resources')
-        .select('*')
+        .select('id, workspace_id, quantity, available')
         .in('workspace_id', workspaceIds);
       if (error) throw error;
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.standard.staleTime,
+    gcTime: queryPresets.standard.gcTime,
   });
 
-  // Fetch recent activities
+  // Fetch recent activities - only fields needed for display
   const activitiesQuery = useQuery({
     queryKey: ['root-dashboard-activities', eventId],
     queryFn: async () => {
@@ -153,7 +164,7 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_activities')
-        .select('*')
+        .select('id, title, type, created_at, actor_name')
         .in('workspace_id', workspaceIds)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -161,9 +172,11 @@ export function useRootDashboard(eventId: string | undefined) {
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.realtime.staleTime,
+    gcTime: queryPresets.realtime.gcTime,
   });
 
-  // Fetch upcoming milestones
+  // Fetch upcoming milestones - only fields needed for display
   const milestonesQuery = useQuery({
     queryKey: ['root-dashboard-milestones', eventId],
     queryFn: async () => {
@@ -173,7 +186,7 @@ export function useRootDashboard(eventId: string | undefined) {
       
       const { data, error } = await supabase
         .from('workspace_milestones')
-        .select('*')
+        .select('id, title, due_date, workspace_id, status')
         .in('workspace_id', workspaceIds)
         .neq('status', 'completed')
         .order('due_date', { ascending: true })
@@ -182,6 +195,8 @@ export function useRootDashboard(eventId: string | undefined) {
       return data;
     },
     enabled: !!eventId && (workspacesQuery.data?.length ?? 0) > 0,
+    staleTime: queryPresets.dynamic.staleTime,
+    gcTime: queryPresets.dynamic.gcTime,
   });
 
   // Compute department stats
