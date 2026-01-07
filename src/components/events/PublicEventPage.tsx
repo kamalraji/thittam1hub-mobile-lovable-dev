@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { useSeo } from '@/hooks/useSeo';
@@ -11,12 +11,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 
 /**
- * Public Event Page - accessible via /e/:slug
+ * Public Event Page - accessible via /event/:slug
  * Uses the landing_page_slug field for SEO-friendly URLs
+ * Supports UTM tracking (utm_source, utm_medium, utm_campaign) and section deep-linking (sectionid)
  */
 export function PublicEventPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const hasTrackedRef = useRef(false);
+
+  // Extract UTM parameters
+  const utmSource = searchParams.get('utm_source');
+  const utmMedium = searchParams.get('utm_medium');
+  const utmCampaign = searchParams.get('utm_campaign');
+
+  // Extract section deep-link parameter
+  const sectionId = searchParams.get('sectionid');
 
   // Fetch event by slug
   const { data: event, isLoading, error } = useQuery({
@@ -48,9 +59,41 @@ export function PublicEventPage() {
   useSeo({
     title: event ? `${event.name} | Thittam1Hub` : 'Event | Thittam1Hub',
     description: event?.description || 'Join this event on Thittam1Hub',
-    canonicalPath: `/e/${slug || ''}`,
+    canonicalPath: `/event/${slug || ''}`,
     ogType: 'website',
   });
+
+  // UTM tracking - log for analytics
+  useEffect(() => {
+    if (event && !hasTrackedRef.current && (utmSource || utmMedium || utmCampaign)) {
+      hasTrackedRef.current = true;
+      console.log('[Analytics] Event page view with UTM:', {
+        eventId: event.id,
+        eventSlug: slug,
+        utm_source: utmSource,
+        utm_medium: utmMedium,
+        utm_campaign: utmCampaign,
+        referrer: document.referrer,
+        timestamp: new Date().toISOString(),
+      });
+      // Future: Store in Supabase for marketing analytics
+      // supabase.from('event_page_views').insert({ event_id: event.id, utm_source: utmSource, ... })
+    }
+  }, [event, slug, utmSource, utmMedium, utmCampaign]);
+
+  // Section deep-linking - auto-scroll to section
+  useEffect(() => {
+    if (!sectionId || !event) return;
+    
+    // Delay to ensure DOM is rendered
+    const timer = setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [sectionId, event]);
 
   // JSON-LD for events
   useEffect(() => {
@@ -138,6 +181,7 @@ export function PublicEventPage() {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section
+        id="hero"
         className="relative overflow-hidden"
         style={{
           background: branding.primaryColor
@@ -243,10 +287,10 @@ export function PublicEventPage() {
       </section>
 
       {/* Event Details */}
-      <section className="container mx-auto px-4 py-10">
+      <section id="details" className="container mx-auto px-4 py-10">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
-            <Card>
+            <Card id="about">
               <CardHeader>
                 <CardTitle>About This Event</CardTitle>
               </CardHeader>
@@ -259,7 +303,7 @@ export function PublicEventPage() {
 
             {/* Render custom landing page if available */}
             {event.landing_page_data && (event.landing_page_data as any).html && (
-              <Card>
+              <Card id="custom-content">
                 <CardContent className="pt-6">
                   {(event.landing_page_data as any).css && (
                     <style
@@ -276,7 +320,7 @@ export function PublicEventPage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            <Card>
+            <Card id="register">
               <CardHeader>
                 <CardTitle className="text-base">Event Details</CardTitle>
               </CardHeader>
@@ -330,7 +374,7 @@ export function PublicEventPage() {
 
             {/* Organizer Card */}
             {org && (
-              <Card>
+              <Card id="organizer">
                 <CardHeader>
                   <CardTitle className="text-base">Organized by</CardTitle>
                 </CardHeader>

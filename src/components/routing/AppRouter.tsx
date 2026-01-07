@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { AuthProvider, useAuth } from '../../hooks/useAuth';
@@ -136,6 +136,14 @@ const ResetPasswordPage = () => {
       </div>
     </AuthLayout>
   );
+};
+
+// Redirect component for backward compatibility from /e/:slug to /event/:slug
+const SlugRedirect = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const queryString = searchParams.toString();
+  return <Navigate to={`/event/${slug}${queryString ? `?${queryString}` : ''}`} replace />;
 };
 
 // Types for unified dashboard metrics
@@ -540,7 +548,9 @@ export const AppRouter: React.FC = () => {
             {/* Public event routes */}
             <Route path="/events" element={<ParticipantEventsPage />} />
             <Route path="/events/:eventId/*" element={<EventLandingPage />} />
-            <Route path="/e/:slug" element={<PublicEventPage />} />
+            <Route path="/event/:slug" element={<PublicEventPage />} />
+            {/* Backward compatibility redirect from old /e/:slug to /event/:slug */}
+            <Route path="/e/:slug" element={<SlugRedirect />} />
 
             <Route path="/portfolio/:userId" element={
               <Suspense fallback={<RouteLoadingFallback />}>
