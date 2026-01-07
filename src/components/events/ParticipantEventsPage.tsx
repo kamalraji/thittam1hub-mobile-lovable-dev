@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { Event, EventMode, EventStatus } from '@/types';
-import { Calendar, MapPin, Globe, Users, ArrowRight, Search, Sparkles, Filter, X, Clock, Zap } from 'lucide-react';
+import { Calendar, MapPin, Globe, Users, ArrowRight, Search, Sparkles, Filter, X, Clock, Zap, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { OrganizationsListView } from './OrganizationsListView';
 
 interface SupabaseEventRow {
   id: string;
@@ -54,6 +55,7 @@ function mapRowToEvent(row: SupabaseEventRow): Event | null {
 }
 
 type DateFilter = 'ALL' | 'PAST';
+type ListType = 'events' | 'organizations';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -73,10 +75,17 @@ const cardVariants = {
 };
 
 export function ParticipantEventsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const listType = (searchParams.get('list') as ListType) || 'events';
+  
   const [modeFilter, setModeFilter] = useState<EventMode | 'ALL'>('ALL');
   const [dateFilter, setDateFilter] = useState<DateFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const setListType = (type: ListType) => {
+    setSearchParams({ list: type });
+  };
 
   const { data: events, isLoading, error } = useQuery<Event[]>({
     queryKey: ['participant-events'],
@@ -251,19 +260,32 @@ export function ParticipantEventsPage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20 backdrop-blur-sm"
             >
               <Sparkles className="h-4 w-4" />
-              <span>Discover Amazing Events</span>
+              <span>{listType === 'events' ? 'Discover Amazing Events' : 'Explore Organizations'}</span>
             </motion.div>
 
             {/* Title */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-4 sm:mb-6">
-              Find Your Next
-              <span className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                Experience
-              </span>
+              {listType === 'events' ? (
+                <>
+                  Find Your Next
+                  <span className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                    Experience
+                  </span>
+                </>
+              ) : (
+                <>
+                  Discover
+                  <span className="block bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                    Organizations
+                  </span>
+                </>
+              )}
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto px-4">
-              Explore conferences, workshops, meetups, and more happening around you and online.
+              {listType === 'events' 
+                ? 'Explore conferences, workshops, meetups, and more happening around you and online.'
+                : 'Find and follow organizations hosting events in your area of interest.'}
             </p>
 
             {/* Search Bar */}
@@ -279,7 +301,7 @@ export function ParticipantEventsPage() {
                   <Search className="absolute left-4 sm:left-5 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
                   <Input
                     type="text"
-                    placeholder="Search events..."
+                    placeholder={listType === 'events' ? 'Search events...' : 'Search organizations...'}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-11 sm:pl-14 pr-4 py-5 sm:py-6 text-base rounded-xl sm:rounded-2xl border-2 border-border/40 bg-background/90 backdrop-blur-md shadow-lg focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all"
@@ -300,6 +322,47 @@ export function ParticipantEventsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* List Type Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mb-6"
+        >
+          <div className="flex items-center p-1.5 bg-muted/60 rounded-2xl backdrop-blur-sm w-fit">
+            <button
+              onClick={() => setListType('events')}
+              className={`inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                listType === 'events'
+                  ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              <Calendar className="h-4 w-4" />
+              <span>Events</span>
+            </button>
+            <button
+              onClick={() => setListType('organizations')}
+              className={`inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
+                listType === 'organizations'
+                  ? 'bg-background text-foreground shadow-sm ring-1 ring-border/50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              <Building2 className="h-4 w-4" />
+              <span>Organizations</span>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Organizations List View */}
+        {listType === 'organizations' && (
+          <OrganizationsListView searchQuery={searchQuery} />
+        )}
+
+        {/* Events List View */}
+        {listType === 'events' && (
+          <>
         {/* Filters Bar */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
@@ -550,6 +613,8 @@ export function ParticipantEventsPage() {
               Clear all filters
             </Button>
           </motion.div>
+        )}
+          </>
         )}
       </div>
     </div>
