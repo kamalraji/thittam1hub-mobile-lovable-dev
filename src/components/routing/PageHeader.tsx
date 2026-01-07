@@ -81,8 +81,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   };
 
   return (
-    <div className="rounded-xl bg-card border border-border overflow-hidden">
-      <div className="px-4 sm:px-6">
+    <div className="rounded-xl bg-card border border-border overflow-hidden px-4 sm:px-6">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav className="flex py-3 overflow-x-auto" aria-label="Breadcrumb">
@@ -260,7 +259,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </div>
           )
         }
-      </div>
     </div>
   );
 };
