@@ -84,12 +84,14 @@ export function useWorkspaceShell({
   orgSlug: propOrgSlug 
 }: UseWorkspaceShellProps = {}): WorkspaceShellResult {
   const { workspaceId: paramWorkspaceId } = useParams<{ workspaceId: string }>();
-  const workspaceId = propWorkspaceId || paramWorkspaceId;
-  const orgSlug = propOrgSlug;
-  
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+  
+  // Support both legacy URL path params AND new type-based query params
+  const queryWorkspaceId = searchParams.get('workspaceId') || undefined;
+  const workspaceId = propWorkspaceId || queryWorkspaceId || paramWorkspaceId;
+  const orgSlug = propOrgSlug;
   
   const taskIdFromUrl = searchParams.get('taskId') || undefined;
   const tabFromUrl = searchParams.get('tab') as WorkspaceTab | null;
