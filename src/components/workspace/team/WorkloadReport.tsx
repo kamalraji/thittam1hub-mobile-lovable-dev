@@ -1,5 +1,5 @@
 import { useTeamTimeEntries } from '@/hooks/useTimeTracking';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LazyAvatar } from '@/components/ui/lazy-avatar';
 import { Progress } from '@/components/ui/progress';
 
 import { Button } from '@/components/ui/button';
@@ -51,10 +51,11 @@ export function WorkloadReport({ workspaceId, targetHoursPerWeek = 40 }: Workloa
               
               return (
                 <div key={member.userId} className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <LazyAvatar 
+                    src={member.avatar} 
+                    name={member.name}
+                    size="sm"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
@@ -92,10 +93,11 @@ export function WorkloadReport({ workspaceId, targetHoursPerWeek = 40 }: Workloa
             {pendingEntries.slice(0, 5).map((entry: any) => (
               <div key={entry.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={entry.user_profiles?.avatar_url} />
-                    <AvatarFallback>{entry.user_profiles?.full_name?.charAt(0) || 'U'}</AvatarFallback>
-                  </Avatar>
+                  <LazyAvatar 
+                    src={entry.user_profiles?.avatar_url} 
+                    name={entry.user_profiles?.full_name || 'Unknown'}
+                    size="sm"
+                  />
                   <div>
                     <p className="text-sm font-medium text-foreground">
                       {entry.user_profiles?.full_name || 'Unknown'}

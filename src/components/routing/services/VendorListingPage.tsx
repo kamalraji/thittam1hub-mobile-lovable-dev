@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LazyThumbnail } from '@/components/ui/lazy-image';
 import {
   Select,
   SelectContent,
@@ -238,19 +239,13 @@ export const VendorListingPage: React.FC = () => {
                   className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group"
                 >
                   {/* Portfolio Preview */}
-                  {vendor.portfolio_urls && vendor.portfolio_urls.length > 0 ? (
-                    <div className="aspect-video overflow-hidden rounded-t-lg">
-                      <img
-                        src={vendor.portfolio_urls[0]}
-                        alt={vendor.business_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 rounded-t-lg flex items-center justify-center">
-                      <Building2 className="w-16 h-16 text-primary/30" />
-                    </div>
-                  )}
+                  <LazyThumbnail
+                    src={vendor.portfolio_urls?.[0]}
+                    alt={vendor.business_name}
+                    aspectRatio="video"
+                    className="rounded-t-lg"
+                    fallbackIcon={<Building2 className="w-16 h-16 text-primary/30" />}
+                  />
 
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
