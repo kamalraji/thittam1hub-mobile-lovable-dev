@@ -17,6 +17,7 @@ import { DashboardRouter } from '../dashboard/DashboardRouter';
 import { FollowedOrganizationsPage } from '../organization/FollowedOrganizationsPage';
 import { ParticipantEventsPage } from '../events/ParticipantEventsPage';
 import { EventLandingPage } from '../events/EventLandingPage';
+import { PublicEventPage } from '../events/PublicEventPage';
 import { ProfilePage } from '../profile/ProfilePage';
 import { ProfileSettingsPage } from '../profile/ProfileSettingsPage';
 import { PublicProfilePage } from '../profile/PublicProfilePage';
@@ -536,9 +537,10 @@ export const AppRouter: React.FC = () => {
               }
             />
 
-            {/* Public participant event listing */}
+            {/* Public event routes */}
             <Route path="/events" element={<ParticipantEventsPage />} />
             <Route path="/events/:eventId/*" element={<EventLandingPage />} />
+            <Route path="/e/:slug" element={<PublicEventPage />} />
 
             <Route path="/portfolio/:userId" element={
               <Suspense fallback={<RouteLoadingFallback />}>
