@@ -12,15 +12,11 @@ import {
   Users, 
   UserPlus, 
   Shield, 
-  Crown, 
   Check, 
   X, 
-  Mail, 
-  BarChart3, 
   Settings2,
   ArrowLeft,
-  Clock,
-  TrendingUp
+  Clock
 } from 'lucide-react';
 
 /**
@@ -157,34 +153,6 @@ export const OrganizationMembersPage: React.FC = () => {
     );
   }
 
-  // Mock stats - replace with real data
-  const stats = [
-    { label: 'Total Members', value: 15, icon: Users, color: 'text-primary' },
-    { label: 'Owners', value: 1, icon: Crown, color: 'text-amber-500' },
-    { label: 'Admins', value: 3, icon: Shield, color: 'text-blue-500' },
-    { label: 'Pending', value: pendingOrganizers.length, icon: Clock, color: 'text-orange-500' },
-  ];
-
-  const quickActions = [
-    {
-      icon: Mail,
-      title: 'Bulk Invite',
-      description: 'Invite multiple members via CSV',
-      onClick: () => toast({ title: 'Coming soon', description: 'Bulk invite feature is in development.' }),
-    },
-    {
-      icon: BarChart3,
-      title: 'Activity Report',
-      description: 'View member engagement metrics',
-      onClick: () => toast({ title: 'Coming soon', description: 'Reports feature is in development.' }),
-    },
-    {
-      icon: Settings2,
-      title: 'Role Settings',
-      description: 'Configure role permissions',
-      onClick: () => toast({ title: 'Coming soon', description: 'Role settings is in development.' }),
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -224,24 +192,6 @@ export const OrganizationMembersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-muted ${stat.color}`}>
-                  <stat.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       {/* Pending Organizer Requests */}
       {(pendingError || isLoadingPending || pendingOrganizers.length > 0) && (
@@ -319,66 +269,34 @@ export const OrganizationMembersPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {quickActions.map((action) => (
-              <button
-                key={action.title}
-                onClick={action.onClick}
-                className="w-full text-left p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <action.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-foreground">{action.title}</h4>
-                    <p className="text-sm text-muted-foreground">{action.description}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Member List Placeholder */}
-        <Card className="lg:col-span-2 border-border">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  Team Members
-                </CardTitle>
-                <CardDescription>Manage your organization's team</CardDescription>
-              </div>
-              <Button size="sm">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
+      {/* Team Members Card */}
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Team Members
+              </CardTitle>
+              <CardDescription>Manage your organization's team</CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <h3 className="font-medium text-foreground mb-2">Member List</h3>
-              <p className="text-sm max-w-sm mx-auto">
-                Team member management is integrated with the organization admin panel. 
-                Use the invite button above to add new members.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Button size="sm">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="w-16 h-16 mx-auto mb-4 opacity-20" />
+            <h3 className="font-medium text-foreground mb-2">Member List</h3>
+            <p className="text-sm max-w-sm mx-auto">
+              Team member management is integrated with the organization admin panel. 
+              Use the invite button above to add new members.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tips Section */}
       <Card className="border-primary/20 bg-primary/5">
