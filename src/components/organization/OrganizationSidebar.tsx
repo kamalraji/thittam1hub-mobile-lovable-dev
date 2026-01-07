@@ -38,7 +38,6 @@ import {
   List,
   ClipboardList,
   ExternalLink,
-  Shield,
   BarChart3,
   Package,
   ShoppingCart,
@@ -123,7 +122,6 @@ export const OrganizationSidebar: React.FC = () => {
 
   const base = `/${orgSlug ?? ''}`.replace(/\/$/, '');
   const currentPath = location.pathname;
-  const isThittamHubOrg = orgSlug === 'thittam1hub';
   const selectedWorkspaceId = searchParams.get('workspaceId');
 
   // Check active states
@@ -513,35 +511,6 @@ export const OrganizationSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Section - Only for thittam1hub */}
-        {isThittamHubOrg && (
-          <>
-            <div className="h-px bg-gradient-to-r from-transparent via-border/50 to-transparent mx-3 my-3" />
-            <SidebarGroup>
-              <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 mb-2">
-                Admin
-              </SidebarGroupLabel>
-              <SidebarGroupContent className="space-y-1">
-                <SidebarNavLink
-                  to={`/${orgSlug}/admin/users`}
-                  icon={Shield}
-                  title="User Roles"
-                  description="Manage platform access"
-                  isCollapsed={isCollapsed}
-                  isActive={currentPath.startsWith(`/${orgSlug}/admin/users`)}
-                />
-                <SidebarNavLink
-                  to={`/${orgSlug}/admin/activity`}
-                  icon={Building2}
-                  title="Activity Logs"
-                  description="Admin audit trail"
-                  isCollapsed={isCollapsed}
-                  isActive={currentPath.startsWith(`/${orgSlug}/admin/activity`)}
-                />
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
       </SidebarContent>
 
       <SidebarUserFooter />
