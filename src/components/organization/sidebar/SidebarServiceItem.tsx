@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,8 +19,6 @@ interface SidebarServiceItemProps {
   isExpanded: boolean;
   onToggle: () => void;
   quickActions: QuickAction[];
-  quickCreatePath?: string;
-  quickCreateTitle?: string;
   isCollapsed?: boolean;
 }
 
@@ -33,8 +30,6 @@ export const SidebarServiceItem: React.FC<SidebarServiceItemProps> = ({
   isExpanded,
   onToggle,
   quickActions,
-  quickCreatePath,
-  quickCreateTitle = 'Create',
   isCollapsed = false,
 }) => {
   const navigate = useNavigate();
@@ -79,26 +74,6 @@ export const SidebarServiceItem: React.FC<SidebarServiceItemProps> = ({
             </div>
           )}
         </div>
-        {!isCollapsed && (
-          <div className="flex items-center gap-1">
-            {quickCreatePath && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(quickCreatePath);
-                }}
-                className={cn(
-                  "p-1.5 rounded-lg transition-all duration-200",
-                  "hover:bg-primary/15 hover:text-primary",
-                  "opacity-0 group-hover/service:opacity-100"
-                )}
-                title={quickCreateTitle}
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
       </button>
 
       <AnimatePresence>

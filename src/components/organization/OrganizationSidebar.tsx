@@ -349,8 +349,6 @@ export const OrganizationSidebar: React.FC = () => {
               isExpanded={eventExpanded}
               onToggle={() => setEventExpanded(!eventExpanded)}
               quickActions={getEventQuickActions(base)}
-              quickCreatePath={`${base}/eventmanagement/create`}
-              quickCreateTitle="Create event"
               isCollapsed={isCollapsed}
             />
 
@@ -363,8 +361,6 @@ export const OrganizationSidebar: React.FC = () => {
               isExpanded={workspacesExpanded}
               onToggle={() => setWorkspacesExpanded(!workspacesExpanded)}
               quickActions={getWorkspaceQuickActions(base)}
-              quickCreatePath={`${base}/workspaces`}
-              quickCreateTitle="Create workspace"
               isCollapsed={isCollapsed}
             />
 
@@ -377,8 +373,6 @@ export const OrganizationSidebar: React.FC = () => {
               isExpanded={marketplaceExpanded}
               onToggle={() => setMarketplaceExpanded(!marketplaceExpanded)}
               quickActions={getMarketplaceQuickActions(base)}
-              quickCreatePath={`${base}/settings/story`}
-              quickCreateTitle="Add product"
               isCollapsed={isCollapsed}
             />
 
@@ -403,8 +397,6 @@ export const OrganizationSidebar: React.FC = () => {
               isExpanded={teamExpanded}
               onToggle={() => setTeamExpanded(!teamExpanded)}
               quickActions={getTeamQuickActions(base)}
-              quickCreatePath={`${base}/team?tab=invite`}
-              quickCreateTitle="Invite member"
               isCollapsed={isCollapsed}
             />
 
@@ -417,8 +409,6 @@ export const OrganizationSidebar: React.FC = () => {
               isExpanded={organizationsExpanded}
               onToggle={() => setOrganizationsExpanded(!organizationsExpanded)}
               quickActions={getOrganizationQuickActions(base)}
-              quickCreatePath={`${base}/organizations/list?action=create`}
-              quickCreateTitle="Create organization"
               isCollapsed={isCollapsed}
             />
           </SidebarGroupContent>
