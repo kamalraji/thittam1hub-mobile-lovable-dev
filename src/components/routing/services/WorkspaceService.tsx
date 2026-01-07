@@ -92,11 +92,52 @@ const LegacyWorkspaceRedirect: React.FC = () => {
  */
 
 const WorkspaceIndexRoute: React.FC = () => {
-  const { eventId } = useParams<{ eventId?: string }>();
+  const { orgSlug, eventId } = useParams<{ orgSlug?: string; eventId?: string }>();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const pathParts = location.pathname.split('/').filter(Boolean);
   const isOrgContext = pathParts.length >= 1 && pathParts[0] !== 'dashboard' && pathParts[0] !== 'console';
+  const workspaceId = searchParams.get('workspaceId');
+
+  // Redirect old URLs with workspaceId query param to new type-based URLs
+  useEffect(() => {
+    const redirectToNewUrl = async () => {
+      if (!isOrgContext || !eventId || !workspaceId || !orgSlug) return;
+
+      try {
+        const { data: workspace, error } = await supabase
+          .from('workspaces')
+          .select('id, name, workspace_type')
+          .eq('id', workspaceId)
+          .single();
+
+        if (error || !workspace) return;
+
+        const tab = searchParams.get('tab');
+        const taskId = searchParams.get('taskId');
+        const sectionId = searchParams.get('sectionid');
+
+        const newUrl = buildWorkspaceUrl({
+          orgSlug,
+          eventId,
+          workspaceId: workspace.id,
+          workspaceType: workspace.workspace_type || 'ROOT',
+          workspaceName: workspace.name,
+          tab: tab || undefined,
+          taskId: taskId || undefined,
+          sectionId: sectionId || undefined,
+        });
+
+        navigate(newUrl, { replace: true });
+      } catch (err) {
+        console.error('Error redirecting to new workspace URL:', err);
+      }
+    };
+
+    redirectToNewUrl();
+  }, [isOrgContext, eventId, workspaceId, orgSlug, searchParams, navigate]);
 
   if (isOrgContext && eventId) {
     return <OrgWorkspacePage />;
