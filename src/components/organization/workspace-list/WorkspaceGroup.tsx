@@ -19,7 +19,7 @@ interface WorkspaceGroupProps {
   orgSlug?: string;
 }
 
-export const WorkspaceGroup: React.FC<WorkspaceGroupProps> = ({
+export const WorkspaceGroup = React.forwardRef<HTMLDivElement, WorkspaceGroupProps>(({
   title,
   icon,
   workspaces,
@@ -27,7 +27,7 @@ export const WorkspaceGroup: React.FC<WorkspaceGroupProps> = ({
   emptyMessage,
   defaultExpanded = true,
   orgSlug,
-}) => {
+}, ref) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const navigate = useNavigate();
 
@@ -59,6 +59,7 @@ export const WorkspaceGroup: React.FC<WorkspaceGroupProps> = ({
 
   return (
     <motion.div 
+      ref={ref}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
@@ -126,4 +127,6 @@ export const WorkspaceGroup: React.FC<WorkspaceGroupProps> = ({
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+
+WorkspaceGroup.displayName = 'WorkspaceGroup';
