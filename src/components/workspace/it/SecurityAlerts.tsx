@@ -1,24 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShieldAlert, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ITSecurityAlert } from '@/hooks/useITDashboardData';
 
-interface SecurityAlert {
-  id: string;
-  title: string;
-  description: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  timestamp: string;
-  status: 'active' | 'investigating' | 'resolved';
+interface SecurityAlertsProps {
+  alerts?: ITSecurityAlert[];
+  isLoading?: boolean;
 }
 
-export function SecurityAlerts() {
-  const alerts: SecurityAlert[] = [
-    { id: '1', title: 'Multiple failed login attempts', description: 'Detected 15 failed attempts from IP 192.168.1.xxx', severity: 'high', timestamp: '30 min ago', status: 'investigating' },
-    { id: '2', title: 'SSL certificate expiring soon', description: 'Badge portal certificate expires in 7 days', severity: 'medium', timestamp: '2 hours ago', status: 'active' },
-    { id: '3', title: 'Unusual data export detected', description: 'Large export from registration database', severity: 'info', timestamp: '4 hours ago', status: 'resolved' },
-  ];
-
-  const getSeverityIcon = (severity: SecurityAlert['severity']) => {
+export function SecurityAlerts({ alerts = [], isLoading }: SecurityAlertsProps) {
+  const getSeverityIcon = (severity: ITSecurityAlert['severity']) => {
     switch (severity) {
       case 'critical':
       case 'high':
@@ -31,7 +23,7 @@ export function SecurityAlerts() {
     }
   };
 
-  const getSeverityBadge = (severity: SecurityAlert['severity']) => {
+  const getSeverityBadge = (severity: ITSecurityAlert['severity']) => {
     switch (severity) {
       case 'critical':
         return <Badge className="bg-destructive text-destructive-foreground">Critical</Badge>;
@@ -48,6 +40,35 @@ export function SecurityAlerts() {
 
   const activeAlerts = alerts.filter(a => a.status !== 'resolved');
 
+  if (isLoading) {
+    return (
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-4 w-20 mt-1" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3 rounded-lg bg-muted/50 border-l-4 border-muted">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show "All Clear" state if no alerts
+  const displayAlerts = alerts.length > 0 ? alerts : [];
+
   return (
     <Card className="bg-card border-border">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -63,34 +84,42 @@ export function SecurityAlerts() {
         </Badge>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-3 rounded-lg border-l-4 ${
-                alert.status === 'resolved'
-                  ? 'bg-muted/30 border-muted opacity-60'
-                  : alert.severity === 'critical' || alert.severity === 'high'
-                  ? 'bg-destructive/5 border-destructive'
-                  : alert.severity === 'medium'
-                  ? 'bg-warning/5 border-warning'
-                  : 'bg-primary/5 border-primary'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {getSeverityIcon(alert.severity)}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-foreground">{alert.title}</span>
-                    {getSeverityBadge(alert.severity)}
+        {displayAlerts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <ShieldCheck className="h-12 w-12 text-success/50 mb-3" />
+            <p className="text-sm font-medium text-foreground">No active alerts</p>
+            <p className="text-xs text-muted-foreground">All systems are secure</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {displayAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={`p-3 rounded-lg border-l-4 ${
+                  alert.status === 'resolved'
+                    ? 'bg-muted/30 border-muted opacity-60'
+                    : alert.severity === 'critical' || alert.severity === 'high'
+                    ? 'bg-destructive/5 border-destructive'
+                    : alert.severity === 'medium'
+                    ? 'bg-warning/5 border-warning'
+                    : 'bg-primary/5 border-primary'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {getSeverityIcon(alert.severity)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-sm font-medium text-foreground">{alert.title}</span>
+                      {getSeverityBadge(alert.severity)}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{alert.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{alert.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

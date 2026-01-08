@@ -2,27 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TicketCheck, Clock, User, ArrowRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ITTicket } from '@/hooks/useITDashboardData';
 
-interface Ticket {
-  id: string;
-  title: string;
-  requester: string;
-  category: 'software' | 'hardware' | 'access' | 'network' | 'other';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'new' | 'assigned' | 'in_progress' | 'resolved';
-  assignedTo?: string;
-  createdAt: string;
+interface HelpdeskTicketsProps {
+  tickets?: ITTicket[];
+  isLoading?: boolean;
 }
 
-export function HelpdeskTickets() {
-  const tickets: Ticket[] = [
-    { id: 'HD-101', title: 'Cannot access registration portal', requester: 'Jane Wilson', category: 'access', priority: 'urgent', status: 'in_progress', assignedTo: 'Mike T.', createdAt: '15 min ago' },
-    { id: 'HD-102', title: 'Need software license for badge printer', requester: 'Tom Chen', category: 'software', priority: 'high', status: 'assigned', assignedTo: 'Sarah K.', createdAt: '1 hour ago' },
-    { id: 'HD-103', title: 'VPN connection issues', requester: 'Emily Davis', category: 'network', priority: 'medium', status: 'new', createdAt: '2 hours ago' },
-    { id: 'HD-104', title: 'Laptop keyboard not working', requester: 'John Smith', category: 'hardware', priority: 'low', status: 'resolved', createdAt: '3 hours ago' },
-  ];
-
-  const getPriorityBadge = (priority: Ticket['priority']) => {
+export function HelpdeskTickets({ tickets = [], isLoading }: HelpdeskTicketsProps) {
+  const getPriorityBadge = (priority: ITTicket['priority']) => {
     switch (priority) {
       case 'urgent':
         return <Badge className="bg-destructive text-destructive-foreground">Urgent</Badge>;
@@ -35,18 +24,49 @@ export function HelpdeskTickets() {
     }
   };
 
-  const getCategoryBadge = (category: Ticket['category']) => {
-    const colors: Record<Ticket['category'], string> = {
-      software: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-      hardware: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-      access: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-      network: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/20',
+  const getCategoryBadge = (category: ITTicket['category']) => {
+    const colors: Record<ITTicket['category'], string> = {
+      software: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+      hardware: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+      access: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+      network: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
       other: 'bg-muted text-muted-foreground',
     };
     return <Badge className={colors[category]}>{category}</Badge>;
   };
 
   const openTickets = tickets.filter(t => t.status !== 'resolved');
+
+  if (isLoading) {
+    return (
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TicketCheck className="h-5 w-5 text-primary" />
+            <div>
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-20 mt-1" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-3 rounded-lg bg-muted/50">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Use sample data if no real data
+  const displayTickets = tickets.length > 0 ? tickets : [
+    { id: 'HD-101', title: 'No tickets yet', requester: 'System', category: 'other' as const, priority: 'low' as const, status: 'new' as const, createdAt: 'Just now' },
+  ];
 
   return (
     <Card className="bg-card border-border">
@@ -64,22 +84,22 @@ export function HelpdeskTickets() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {tickets.map((ticket) => (
+          {displayTickets.map((ticket) => (
             <div
               key={ticket.id}
-              className={`p-3 rounded-lg transition-colors cursor-pointer ${
+              className={`p-3 rounded-lg transition-colors cursor-pointer active:scale-[0.98] ${
                 ticket.status === 'resolved' ? 'bg-muted/30 opacity-60' : 'bg-muted/50 hover:bg-muted'
               }`}
             >
               <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-mono text-muted-foreground">{ticket.id}</span>
                   {getPriorityBadge(ticket.priority)}
                   {getCategoryBadge(ticket.category)}
                 </div>
               </div>
               <p className="text-sm font-medium text-foreground">{ticket.title}</p>
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-1">
                   <User className="h-3 w-3" />
                   {ticket.requester}

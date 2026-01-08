@@ -2,26 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Server, Database, Cloud, Globe, Cpu, HardDrive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ITSystemStatus } from '@/hooks/useITDashboardData';
 
-interface SystemStatus {
-  id: string;
-  name: string;
-  type: 'server' | 'database' | 'cloud' | 'network' | 'application';
-  status: 'online' | 'offline' | 'degraded';
-  load: number;
-  uptime: string;
+interface SystemHealthMonitorProps {
+  systems?: ITSystemStatus[];
+  isLoading?: boolean;
 }
 
-export function SystemHealthMonitor() {
-  const systems: SystemStatus[] = [
-    { id: '1', name: 'Registration Server', type: 'server', status: 'online', load: 45, uptime: '99.9%' },
-    { id: '2', name: 'Event Database', type: 'database', status: 'online', load: 32, uptime: '99.99%' },
-    { id: '3', name: 'Cloud Storage', type: 'cloud', status: 'online', load: 67, uptime: '100%' },
-    { id: '4', name: 'Payment Gateway', type: 'network', status: 'degraded', load: 89, uptime: '98.5%' },
-    { id: '5', name: 'Badge Printing', type: 'application', status: 'online', load: 15, uptime: '100%' },
-  ];
-
-  const getIcon = (type: SystemStatus['type']) => {
+export function SystemHealthMonitor({ systems = [], isLoading }: SystemHealthMonitorProps) {
+  const getIcon = (type: ITSystemStatus['type']) => {
     switch (type) {
       case 'server': return Server;
       case 'database': return Database;
@@ -32,7 +22,7 @@ export function SystemHealthMonitor() {
     }
   };
 
-  const getStatusBadge = (status: SystemStatus['status']) => {
+  const getStatusBadge = (status: ITSystemStatus['status']) => {
     switch (status) {
       case 'online':
         return <Badge className="bg-success/10 text-success border-success/20">Online</Badge>;
@@ -49,6 +39,40 @@ export function SystemHealthMonitor() {
     return 'bg-destructive';
   };
 
+  if (isLoading) {
+    return (
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-primary" />
+            System Health
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <Skeleton className="h-1.5 w-full" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Use default systems if none provided
+  const displaySystems = systems.length > 0 ? systems : [
+    { id: '1', name: 'Registration Server', type: 'server' as const, status: 'online' as const, load: 45, uptime: '99.9%' },
+    { id: '2', name: 'Event Database', type: 'database' as const, status: 'online' as const, load: 32, uptime: '99.99%' },
+    { id: '3', name: 'Cloud Storage', type: 'cloud' as const, status: 'online' as const, load: 67, uptime: '100%' },
+    { id: '4', name: 'Network Gateway', type: 'network' as const, status: 'online' as const, load: 28, uptime: '99.95%' },
+  ];
+
   return (
     <Card className="bg-card border-border">
       <CardHeader>
@@ -59,7 +83,7 @@ export function SystemHealthMonitor() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {systems.map((system) => {
+          {displaySystems.map((system) => {
             const Icon = getIcon(system.type);
             return (
               <div key={system.id} className="p-3 rounded-lg bg-muted/50">
