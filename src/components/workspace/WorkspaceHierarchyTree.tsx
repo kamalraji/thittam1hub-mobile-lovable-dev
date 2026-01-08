@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Users, Building2, Layers, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { 
-  MAX_WORKSPACE_DEPTH, 
   getWorkspaceTypeLabel,
   getWorkspaceRoleLabel,
   WORKSPACE_DEPARTMENTS,
@@ -21,6 +20,7 @@ import {
 
 import { RoleDelegationModal } from './RoleDelegationModal';
 import { useAuth } from '@/hooks/useAuth';
+import { buildHierarchyChain, slugify, buildWorkspaceUrl } from '@/lib/workspaceNavigation';
 
 interface WorkspaceNode {
   id: string;
@@ -46,6 +46,7 @@ export function WorkspaceHierarchyTree({
   onWorkspaceSelect,
 }: WorkspaceHierarchyTreeProps) {
   const navigate = useNavigate();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const { user } = useAuth();
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [delegationModal, setDelegationModal] = useState<{
@@ -57,12 +58,28 @@ export function WorkspaceHierarchyTree({
     teamMembers: TeamMember[];
   } | null>(null);
 
+  // Fetch event data for hierarchical URLs
+  const { data: event } = useQuery({
+    queryKey: ['workspace-hierarchy-event', eventId],
+    queryFn: async () => {
+      if (!eventId) return null;
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, slug, name')
+        .eq('id', eventId)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!eventId,
+  });
+
   const { data: workspaces, isLoading, refetch } = useQuery({
     queryKey: ['workspace-hierarchy', eventId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workspaces')
-        .select('id, name, parent_workspace_id, status, workspace_type, department_id')
+        .select('id, name, slug, parent_workspace_id, status, workspace_type, department_id')
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
 
@@ -193,6 +210,27 @@ export function WorkspaceHierarchyTree({
   const handleSelect = (workspaceId: string) => {
     if (onWorkspaceSelect) {
       onWorkspaceSelect(workspaceId);
+    } else if (orgSlug && event && workspaces) {
+      // Build hierarchical URL
+      const workspaceData = workspaces.map(ws => ({
+        id: ws.id,
+        slug: ws.slug || slugify(ws.name),
+        name: ws.name,
+        workspaceType: ws.workspace_type,
+        parentWorkspaceId: ws.parent_workspace_id,
+      }));
+      
+      const hierarchy = buildHierarchyChain(workspaceId, workspaceData);
+      const eventSlug = event.slug || slugify(event.name);
+      
+      const url = buildWorkspaceUrl({
+        orgSlug,
+        eventSlug,
+        eventId: event.id,
+        hierarchy,
+      });
+      
+      navigate(url);
     } else {
       navigate(`/workspaces/${workspaceId}`);
     }
@@ -555,7 +593,7 @@ export function WorkspaceHierarchyTree({
 
         {/* Depth info */}
         <div className="px-3 pt-3 mt-2 border-t border-border text-[10px] text-muted-foreground">
-          Max hierarchy depth: {MAX_WORKSPACE_DEPTH} levels
+          Max hierarchy depth: 4 levels
         </div>
       </div>
 

@@ -37,7 +37,6 @@ import {
   LayoutTemplate,
   List,
   ClipboardList,
-  ExternalLink,
   BarChart3,
   Package,
   ShoppingCart,
@@ -52,9 +51,11 @@ import {
   Clock,
   UserCheck,
   Settings,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkspaceStatus } from '@/types';
+// Hierarchical URL utilities available: buildHierarchyChain, slugify, buildWorkspaceUrl from '@/lib/workspaceNavigation'
 
 // Quick action definitions
 const getEventQuickActions = (base: string) => [

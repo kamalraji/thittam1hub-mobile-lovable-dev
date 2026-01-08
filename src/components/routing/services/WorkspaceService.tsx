@@ -7,6 +7,7 @@ import { WorkspaceCreatePage } from './WorkspaceCreatePage';
 import { OrgWorkspacePage } from '@/components/organization/OrgWorkspacePage';
 import { OrgWorkspaceListPage } from '@/components/organization/OrgWorkspaceListPage';
 import { WorkspaceSettingsPage } from '@/components/workspace/WorkspaceSettingsPage';
+import { LegacyWorkspaceRedirect } from '@/components/workspace/LegacyWorkspaceRedirect';
 
 /**
  * WorkspaceService component provides the main routing structure for the Workspace Management Service.
@@ -16,14 +17,16 @@ import { WorkspaceSettingsPage } from '@/components/workspace/WorkspaceSettingsP
  * - Resource detail view (workspace details with tabs for tasks, team, communication)
  * - Workspace context switching and navigation
  * 
- * Routes:
- * - /:orgSlug/workspaces - Organization workspace list (grouped by ownership)
- * - /:orgSlug/workspaces/:eventId - Event-specific workspace portal
- * - /:orgSlug/workspaces/:eventId/root - Root workspace (L1)
- * - /:orgSlug/workspaces/:eventId/department?name=xxx - Department workspace (L2)
- * - /:orgSlug/workspaces/:eventId/committee?name=xxx - Committee workspace (L3)
- * - /:orgSlug/workspaces/:eventId/team?name=xxx - Team workspace (L4)
- * - /:orgSlug/workspaces/:eventId/:workspaceType/:workspaceId/* - Workspace detail views
+ * NEW Hierarchical Routes (Option A):
+ * - /:orgSlug/workspaces/:eventSlug/root/:rootSlug
+ * - /:orgSlug/workspaces/:eventSlug/root/:rootSlug/department/:deptSlug
+ * - /:orgSlug/workspaces/:eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug
+ * - /:orgSlug/workspaces/:eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug/team/:teamSlug
+ * 
+ * LEGACY Routes (redirect to new format):
+ * - /:orgSlug/workspaces/:eventId/root?workspaceId=xxx
+ * - /:orgSlug/workspaces/:eventId/department?name=xxx&workspaceId=xxx
+ * - /:orgSlug/workspaces/:eventId/committee?name=xxx&workspaceId=xxx
  */
 
 const WorkspaceIndexRoute: React.FC = () => {
@@ -50,6 +53,29 @@ const WorkspaceIndexRoute: React.FC = () => {
   return <WorkspaceServiceDashboard />;
 };
 
+/**
+ * Helper to detect if a path segment looks like a UUID (legacy format)
+ */
+const isUUID = (str: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+};
+
+/**
+ * Wrapper component that detects legacy vs new URL format
+ * and renders appropriate component
+ */
+const HierarchicalOrLegacyRoute: React.FC = () => {
+  const { eventSlug } = useParams<{ eventSlug: string }>();
+  
+  // If eventSlug is a UUID, it's a legacy URL - redirect
+  if (eventSlug && isUUID(eventSlug)) {
+    return <LegacyWorkspaceRedirect />;
+  }
+  
+  // New hierarchical format
+  return <OrgWorkspacePage />;
+};
+
 export const WorkspaceService: React.FC = () => {
   return (
     <Routes>
@@ -65,37 +91,48 @@ export const WorkspaceService: React.FC = () => {
       {/* Workspace Create with event pre-selected - /:orgSlug/workspaces/create/:eventId */}
       <Route path="create/:eventId" element={<WorkspaceCreatePage />} />
 
-      {/* Event-specific workspace portal - /:orgSlug/workspaces/:eventId */}
-      <Route path=":eventId" element={<WorkspaceIndexRoute />} />
-
       {/* ============================================
-          NEW: Type-based workspace routes (L1-L4)
-          URL pattern: /:orgSlug/workspaces/:eventId/:workspaceType?name=xxx&workspaceId=xxx
+          NEW: Hierarchical URL Routes (Option A)
+          Pattern: /:orgSlug/workspaces/:eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug
           ============================================ */}
       
-      {/* Root workspace (L1) - /:orgSlug/workspaces/:eventId/root */}
-      <Route path=":eventId/root" element={<OrgWorkspacePage />} />
+      {/* L1 Root: /:orgSlug/workspaces/:eventSlug/root/:rootSlug */}
+      <Route path=":eventSlug/root/:rootSlug" element={<HierarchicalOrLegacyRoute />} />
+      <Route path=":eventSlug/root/:rootSlug/settings" element={<WorkspaceSettingsPage />} />
       
-      {/* Department workspace (L2) - /:orgSlug/workspaces/:eventId/department?name=operations */}
-      <Route path=":eventId/department" element={<OrgWorkspacePage />} />
-      <Route path=":eventId/department/settings" element={<WorkspaceSettingsPage />} />
+      {/* L2 Department: .../root/:rootSlug/department/:deptSlug */}
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug" element={<HierarchicalOrLegacyRoute />} />
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug/settings" element={<WorkspaceSettingsPage />} />
       
-      {/* Committee workspace (L3) - /:orgSlug/workspaces/:eventId/committee?name=marketing */}
-      <Route path=":eventId/committee" element={<OrgWorkspacePage />} />
-      <Route path=":eventId/committee/settings" element={<WorkspaceSettingsPage />} />
+      {/* L3 Committee: .../department/:deptSlug/committee/:committeeSlug */}
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug" element={<HierarchicalOrLegacyRoute />} />
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug/settings" element={<WorkspaceSettingsPage />} />
       
-      {/* Team workspace (L4) - /:orgSlug/workspaces/:eventId/team?name=design-team */}
-      <Route path=":eventId/team" element={<OrgWorkspacePage />} />
-      <Route path=":eventId/team/settings" element={<WorkspaceSettingsPage />} />
+      {/* L4 Team: .../committee/:committeeSlug/team/:teamSlug */}
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug/team/:teamSlug" element={<HierarchicalOrLegacyRoute />} />
+      <Route path=":eventSlug/root/:rootSlug/department/:deptSlug/committee/:committeeSlug/team/:teamSlug/settings" element={<WorkspaceSettingsPage />} />
 
       {/* ============================================
           LEGACY: ID-based workspace routes (backward compatibility)
+          These redirect to new hierarchical format
           ============================================ */}
       
-      {/* Workspace Settings Page under event context */}
+      {/* Legacy type-based routes - redirect to new format */}
+      <Route path=":eventId/root" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/department" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/department/settings" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/committee" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/committee/settings" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/team" element={<LegacyWorkspaceRedirect />} />
+      <Route path=":eventId/team/settings" element={<LegacyWorkspaceRedirect />} />
+
+      {/* Event-specific workspace portal (legacy eventId format) */}
+      <Route path=":eventId" element={<WorkspaceIndexRoute />} />
+      
+      {/* Legacy workspace settings */}
       <Route path=":eventId/:workspaceId/settings" element={<WorkspaceSettingsPage />} />
 
-      {/* Workspace Detail with tabs under event context */}
+      {/* Legacy workspace detail with tabs */}
       <Route path=":eventId/:workspaceId/tasks" element={<WorkspaceDetailPage defaultTab="tasks" />} />
       <Route path=":eventId/:workspaceId/team" element={<WorkspaceDetailPage defaultTab="team" />} />
       <Route path=":eventId/:workspaceId/team/invite" element={<WorkspaceDetailPage defaultTab="team" />} />
