@@ -23,7 +23,8 @@ export type WorkspaceTab =
   | 'marketplace'
   | 'templates'
   | 'audit'
-  | 'role-management';
+  | 'role-management'
+  | 'settings';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;
@@ -214,44 +215,10 @@ export function useWorkspaceShell({
     mutations.createTask();
   };
 
-  const handleManageSettings = async () => {
+  const handleManageSettings = () => {
     if (!workspaceId || !permissions.isGlobalWorkspaceManager) return;
-    
-    // Build settings URL using hierarchical structure if available
-    if (orgSlug && workspace?.eventId) {
-      // Fetch event and workspace data to build proper URL
-      const { data: eventData } = await supabase
-        .from('events')
-        .select('slug, name')
-        .eq('id', workspace.eventId)
-        .single();
-      
-      const { data: workspacesData } = await supabase
-        .from('workspaces')
-        .select('id, name, slug, workspace_type, parent_workspace_id')
-        .eq('event_id', workspace.eventId);
-      
-      if (eventData && workspacesData) {
-        const eventSlug = eventData.slug || slugify(eventData.name);
-        const hierarchy = buildHierarchyChain(workspaceId, workspacesData.map(ws => ({
-          id: ws.id,
-          slug: ws.slug || slugify(ws.name),
-          name: ws.name,
-          workspaceType: ws.workspace_type,
-          parentWorkspaceId: ws.parent_workspace_id,
-        })));
-        
-        const baseUrl = buildWorkspaceUrl(
-          { orgSlug, eventSlug, eventId: workspace.eventId, hierarchy },
-        );
-        navigate(baseUrl.split('?')[0] + '/settings?' + baseUrl.split('?')[1]);
-        return;
-      }
-    }
-    
-    // Fallback - redirect to dashboard if hierarchical URL cannot be built
-    console.warn('[WorkspaceShell] Cannot build settings URL, redirecting to dashboard');
-    navigate('/dashboard');
+    // Navigate to settings tab instead of separate page
+    handleSetActiveTab('settings');
   };
 
   const handleViewTasks = () => {
