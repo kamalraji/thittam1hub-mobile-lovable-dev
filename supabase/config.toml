@@ -32,3 +32,15 @@ verify_jwt = true
 
 [functions.judging-leaderboard]
 verify_jwt = false
+
+[functions.invite-to-workspace]
+verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false
+
+[functions.request-workspace-access]
+verify_jwt = false
+
+[functions.respond-access-request]
+verify_jwt = false

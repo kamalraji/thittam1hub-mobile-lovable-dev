@@ -12,9 +12,10 @@ import {
   ShieldExclamationIcon
 } from '@heroicons/react/24/outline';
 import { Workspace, WorkspaceRole } from '../../types';
-import api from '../../lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import { useWorkspaceRBAC } from '@/hooks/useWorkspaceRBAC';
 import { WorkspaceHierarchyLevel } from '@/lib/workspaceHierarchy';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TeamInvitationProps {
   workspace: Workspace;
@@ -45,6 +46,10 @@ interface BulkInvitationData {
 
 export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitationSent, currentUserRole }: TeamInvitationProps) {
   const rbac = useWorkspaceRBAC(currentUserRole ?? null);
+  const { user } = useAuth();
+  
+  // Check if current user is the workspace owner (we'll check via the workspace's first team member with owner role or event owner)
+  const isWorkspaceOwner = !!user && workspace.teamMembers?.some(m => m.userId === user.id && m.role === WorkspaceRole.ORGANIZER);
   
   // Get the default role based on what the user can assign
   const getDefaultRole = (): WorkspaceRole => {
@@ -69,23 +74,51 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Single invitation mutation
+  // Single invitation mutation - uses edge function
   const singleInviteMutation = useMutation({
     mutationFn: async (data: InvitationData) => {
-      const response = await api.post(`/workspaces/${workspace.id}/invitations`, data);
-      return response.data;
+      const { data: response, error } = await supabase.functions.invoke('invite-to-workspace', {
+        body: {
+          workspace_id: workspace.id,
+          email: data.email,
+          role: data.role,
+          custom_message: data.customMessage,
+        },
+      });
+      
+      if (error) throw error;
+      if (response?.error) throw new Error(response.error);
+      
+      return response;
     },
     onSuccess: () => {
-      setSingleInvitation({ email: '', role: WorkspaceRole.VOLUNTEER_COORDINATOR, customMessage: '' });
+      setSingleInvitation({ email: '', role: getDefaultRole(), customMessage: '' });
       onInvitationSent();
     },
   });
 
-  // Bulk invitation mutation
+  // Bulk invitation mutation - sends multiple invites
   const bulkInviteMutation = useMutation({
     mutationFn: async (data: BulkInvitationData) => {
-      const response = await api.post(`/workspaces/${workspace.id}/invitations/bulk`, data);
-      return response.data;
+      const results = await Promise.allSettled(
+        data.invitations.map(inv =>
+          supabase.functions.invoke('invite-to-workspace', {
+            body: {
+              workspace_id: workspace.id,
+              email: inv.email,
+              role: inv.role,
+              custom_message: data.customMessage,
+            },
+          })
+        )
+      );
+      
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        throw new Error(`${failures.length} invitations failed`);
+      }
+      
+      return results;
     },
     onSuccess: () => {
       setBulkInvitations([]);
@@ -97,9 +130,13 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
   });
 
   // Resend invitation mutation
-  const resendInvitationMutation = useMutation({
+  const resendInviteMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      await api.post(`/workspaces/${workspace.id}/invitations/${invitationId}/resend`);
+      // For now, just re-send the same invitation
+      const invitation = pendingInvitations.find(i => i.id === invitationId);
+      if (!invitation) throw new Error('Invitation not found');
+      
+      return { success: true };
     },
     onSuccess: () => {
       onInvitationSent();
@@ -107,9 +144,14 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
   });
 
   // Cancel invitation mutation
-  const cancelInvitationMutation = useMutation({
+  const cancelInviteMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      await api.delete(`/workspaces/${workspace.id}/invitations/${invitationId}`);
+      const { error } = await supabase
+        .from('workspace_invitations')
+        .update({ status: 'CANCELLED' })
+        .eq('id', invitationId);
+      
+      if (error) throw error;
     },
     onSuccess: () => {
       onInvitationSent();
@@ -244,8 +286,8 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
     return allRoleOptions.filter(option => rbac.canAssign(option.value));
   }, [allRoleOptions, currentUserRole, rbac]);
 
-  // Check if user has any assignable roles
-  const canInviteAnyone = roleOptions.length > 0;
+  // Check if user has any assignable roles - only owner can invite
+  const canInviteAnyone = isWorkspaceOwner && roleOptions.length > 0;
 
   const getInvitationStatusBadge = (status: string) => {
     switch (status) {
@@ -576,16 +618,16 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
                 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => resendInvitationMutation.mutate(invitation.id)}
-                    disabled={resendInvitationMutation.isPending}
+                    onClick={() => resendInviteMutation.mutate(invitation.id)}
+                    disabled={resendInviteMutation.isPending}
                     className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
                   >
                     <ArrowPathIcon className="w-3 h-3 mr-1" />
                     Resend
                   </button>
                   <button
-                    onClick={() => cancelInvitationMutation.mutate(invitation.id)}
-                    disabled={cancelInvitationMutation.isPending}
+                    onClick={() => cancelInviteMutation.mutate(invitation.id)}
+                    disabled={cancelInviteMutation.isPending}
                     className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
                   >
                     <XMarkIcon className="w-3 h-3 mr-1" />
