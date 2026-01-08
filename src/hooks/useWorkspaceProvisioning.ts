@@ -12,7 +12,7 @@ interface ProvisionWorkspaceParams {
   name: string;
   eventId: string;
   userId: string;
-  template: EnhancedWorkspaceTemplate;
+  template: EnhancedWorkspaceTemplate | null;
   organizationId?: string;
 }
 
@@ -74,8 +74,8 @@ export function useWorkspaceProvisioning() {
         status: 'ACTIVE',
       });
 
-      // For blank template, just return the root workspace
-      if (template.id === 'blank' || template.structure.departments.length === 0) {
+      // For null template or blank template, just return the root workspace
+      if (!template || template.id === 'blank' || template.structure.departments.length === 0) {
         return {
           rootWorkspace,
           departments: [],
@@ -302,7 +302,9 @@ export function useWorkspaceProvisioning() {
       };
     },
     onSuccess: (data, variables) => {
-      const templateName = variables.template.id !== 'blank' ? ` with "${variables.template.name}" template` : '';
+      const templateName = variables.template && variables.template.id !== 'blank' 
+        ? ` with "${variables.template.name}" template` 
+        : '';
       
       if (data.departments.length > 0) {
         toast.success(

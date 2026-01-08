@@ -8,15 +8,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useCurrentOrganization } from '@/components/organization/OrganizationContext';
 import { useOrganizationEvents } from '@/hooks/useOrganization';
 import { getWorkspaceRoleLabel } from '@/lib/workspaceHierarchy';
-import { ENHANCED_WORKSPACE_TEMPLATES, EnhancedWorkspaceTemplate } from '@/lib/workspaceTemplates';
-import { WorkspaceTemplateSelector } from '@/components/workspace/WorkspaceTemplateSelector';
 import { useWorkspaceProvisioning } from '@/hooks/useWorkspaceProvisioning';
-import { Shield, Layers } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { ActionButton } from '@/components/ui/action-button';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { slugify, logWorkspaceUrl } from '@/lib/workspaceNavigation';
 
 const workspaceCreateSchema = z.object({
@@ -55,8 +51,6 @@ export const WorkspaceCreatePage: React.FC = () => {
     eventId: eventIdFromQuery,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [selectedTemplate, setSelectedTemplate] = useState<EnhancedWorkspaceTemplate>(ENHANCED_WORKSPACE_TEMPLATES[0]);
-  const [templateSectionOpen, setTemplateSectionOpen] = useState(true);
 
   const { provisionWorkspaceAsync, isPending } = useWorkspaceProvisioning();
 
@@ -99,19 +93,18 @@ export const WorkspaceCreatePage: React.FC = () => {
     }
 
     try {
+      // Create blank root workspace only (no template)
       const result = await provisionWorkspaceAsync({
         name: parseResult.data.name,
         eventId: parseResult.data.eventId,
         userId: user.id,
-        template: selectedTemplate,
+        template: null,
         organizationId,
       });
 
       toast({
-        title: 'Workspace created',
-        description: selectedTemplate.id !== 'blank'
-          ? `Created with "${selectedTemplate.name}" template. ${result.departments.length} departments, ${result.committees.length} committees.`
-          : 'Your workspace has been created successfully. You are now the Workspace Owner.',
+        title: 'Root workspace created',
+        description: 'Your workspace has been created successfully. You are now the Workspace Owner.',
       });
 
       // Build hierarchical URL for the new root workspace
@@ -126,7 +119,7 @@ export const WorkspaceCreatePage: React.FC = () => {
           action: 'navigate',
           url: hierarchicalUrl,
           isValid: true,
-          context: { newWorkspaceId: result.rootWorkspace.id, template: selectedTemplate.id },
+          context: { newWorkspaceId: result.rootWorkspace.id },
         });
         
         navigate(hierarchicalUrl, { replace: true });
@@ -172,10 +165,10 @@ export const WorkspaceCreatePage: React.FC = () => {
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-3xl mx-auto">
         <PageHeader
-          title={isOrgContext ? 'Create Organization Workspace' : 'Create Workspace'}
+          title={isOrgContext ? 'Create Root Workspace' : 'Create Workspace'}
           subtitle={
             isOrgContext
-              ? 'Set up a new workspace scoped to this organization and event.'
+              ? 'Set up a new root workspace for your event. You can add departments and committees later.'
               : 'Set up a new collaboration workspace for your event team.'
           }
         />
@@ -288,50 +281,6 @@ export const WorkspaceCreatePage: React.FC = () => {
             )}
           </div>
 
-          {/* Template Selection Section */}
-          <Collapsible open={templateSectionOpen} onOpenChange={setTemplateSectionOpen}>
-            <div className="rounded-lg border border-border bg-card">
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                      <Layers className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Workspace Template</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedTemplate.id === 'blank'
-                          ? 'Starting from scratch'
-                          : `${selectedTemplate.name} - ${selectedTemplate.structure.departments.length} departments`}
-                      </p>
-                    </div>
-                  </div>
-                  {templateSectionOpen ? (
-                    <ChevronUpIcon className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="border-t border-border px-4 py-4">
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Choose a template to automatically create departments, committees, tasks, and milestones. 
-                    You can customize everything after creation.
-                  </p>
-                  <WorkspaceTemplateSelector
-                    selectedTemplate={selectedTemplate}
-                    onSelectTemplate={setSelectedTemplate}
-                    isApplying={isPending}
-                  />
-                </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
-
           {/* Role Assignment Preview */}
           <div className="rounded-md border border-border bg-muted/50 px-4 py-3">
             <div className="flex items-center gap-2 mb-2">
@@ -349,9 +298,7 @@ export const WorkspaceCreatePage: React.FC = () => {
           <div className="rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-foreground">
             <p className="font-semibold mb-1">What happens next?</p>
             <p className="text-muted-foreground">
-              {selectedTemplate.id === 'blank'
-                ? 'After creation, you can manually add departments, committees, and invite team members from the workspace dashboard.'
-                : `We'll automatically create ${selectedTemplate.structure.departments.length} departments, their committees, ${selectedTemplate.structure.tasks.length} starter tasks, and ${selectedTemplate.structure.milestones.length} milestones. You can then invite team members and customize everything.`}
+              After creation, you can add departments, committees, and invite team members from the workspace dashboard.
             </p>
           </div>
 
@@ -369,7 +316,7 @@ export const WorkspaceCreatePage: React.FC = () => {
               isLoading={isPending}
               loadingText="Creating workspace…"
             >
-              Create workspace
+              Create root workspace
             </ActionButton>
           </div>
         </form>
