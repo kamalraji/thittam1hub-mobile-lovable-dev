@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Workspace, WorkspaceRole } from '@/types';
 import { useRootDashboard, getDepartmentColor } from '@/hooks/useRootDashboard';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -5,15 +6,20 @@ import { HierarchyTreeCard } from '../HierarchyTreeCard';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { RoleBasedActions } from '../RoleBasedActions';
 import { ChildWorkspacesManager } from './ChildWorkspacesManager';
+import { WorkspaceStructureOverview } from '../WorkspaceStructureOverview';
 import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Building2, 
   TrendingUp,
   Calendar,
   Activity,
+  ChevronDown,
+  GitBranch,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface RootDashboardProps {
   workspace: Workspace;
@@ -34,6 +40,7 @@ export function RootDashboard({
 }: RootDashboardProps) {
   const navigate = useNavigate();
   const { data, isLoading } = useRootDashboard(workspace.eventId);
+  const [structureOpen, setStructureOpen] = useState(true);
 
   const handleDepartmentClick = (workspaceId: string) => {
     const basePath = orgSlug ? `/${orgSlug}/workspaces` : '/workspaces';
@@ -158,6 +165,33 @@ export function RootDashboard({
               orgSlug={orgSlug}
               onWorkspaceSelect={handleDepartmentClick}
             />
+          </section>
+
+          {/* Workspace Structure Overview - Planned vs Created */}
+          <section id="structure">
+            <Collapsible open={structureOpen} onOpenChange={setStructureOpen}>
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-primary" />
+                    Hierarchy Overview
+                  </h3>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform",
+                    structureOpen && "rotate-180"
+                  )} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <WorkspaceStructureOverview
+                      eventId={workspace.eventId}
+                      parentWorkspaceId={workspace.id}
+                      canManage={!!onManageSettings}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           </section>
 
           {/* Upcoming Milestones */}
