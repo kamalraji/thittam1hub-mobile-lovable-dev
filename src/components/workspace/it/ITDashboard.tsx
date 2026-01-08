@@ -9,6 +9,7 @@ import { SoftwareLicenses } from './SoftwareLicenses';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { RoleBasedActions } from '../RoleBasedActions';
 import { TeamMemberRoster } from '../TeamMemberRoster';
+import { useITDashboardData } from '@/hooks/useITDashboardData';
 
 interface ITDashboardProps {
   workspace: Workspace;
@@ -31,10 +32,12 @@ export function ITDashboard({
   onRequestBudget,
   onRequestResource,
 }: ITDashboardProps) {
+  const { tickets, accessRequests, systems, securityAlerts, stats, isLoading } = useITDashboardData(workspace.id);
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Stats Overview */}
-      <ITStatsCards />
+      {/* Stats Overview - connected to real data */}
+      <ITStatsCards stats={stats} isLoading={isLoading} />
 
       {/* Quick Actions - touch-friendly on mobile */}
       <div className="touch-pan-x">
@@ -57,14 +60,14 @@ export function ITDashboard({
         <div className="xl:col-span-3 space-y-4 sm:space-y-6">
           {/* System Health & Security - stack on mobile, side-by-side on sm+ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <SystemHealthMonitor />
-            <SecurityAlerts />
+            <SystemHealthMonitor systems={systems} isLoading={isLoading} />
+            <SecurityAlerts alerts={securityAlerts} isLoading={isLoading} />
           </div>
 
           {/* Helpdesk & Access Management */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <HelpdeskTickets />
-            <AccessManagement />
+            <HelpdeskTickets tickets={tickets} isLoading={isLoading} />
+            <AccessManagement requests={accessRequests} isLoading={isLoading} />
           </div>
         </div>
 
