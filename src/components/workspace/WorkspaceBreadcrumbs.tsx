@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Home, ChevronRight, Building2, Users, Briefcase, UsersRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { slugify, buildWorkspaceUrl, WorkspaceLevel, WorkspacePathSegment } from '@/lib/workspaceNavigation';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -25,8 +26,15 @@ interface WorkspaceBreadcrumbsProps {
 interface BreadcrumbWorkspace {
   id: string;
   name: string;
+  slug: string | null;
   parentWorkspaceId: string | null;
   workspaceType: string | null;
+}
+
+interface EventData {
+  id: string;
+  slug: string | null;
+  name: string;
 }
 
 const LEVEL_CONFIG = {
@@ -52,6 +60,13 @@ const LEVEL_CONFIG = {
   },
 } as const;
 
+const DB_TYPE_TO_LEVEL: Record<string, WorkspaceLevel> = {
+  'ROOT': 'root',
+  'DEPARTMENT': 'department',
+  'COMMITTEE': 'committee',
+  'TEAM': 'team',
+};
+
 export function WorkspaceBreadcrumbs({
   workspaceId,
   eventId,
@@ -60,8 +75,25 @@ export function WorkspaceBreadcrumbs({
   compact = false,
 }: WorkspaceBreadcrumbsProps) {
   const params = useParams<{ orgSlug?: string; eventId?: string }>();
+  const [searchParams] = useSearchParams();
   const orgSlug = propOrgSlug || params.orgSlug;
-  const resolvedEventId = eventId || params.eventId;
+  const resolvedEventId = eventId || params.eventId || searchParams.get('eventId') || undefined;
+
+  // Fetch event data for slug
+  const { data: event } = useQuery({
+    queryKey: ['workspace-breadcrumbs-event', resolvedEventId],
+    queryFn: async () => {
+      if (!resolvedEventId) return null;
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, slug, name')
+        .eq('id', resolvedEventId)
+        .single();
+      if (error) return null;
+      return data as EventData;
+    },
+    enabled: !!resolvedEventId,
+  });
 
   // Fetch all workspaces for the event to build the breadcrumb path
   const { data: workspaces } = useQuery({
@@ -83,13 +115,14 @@ export function WorkspaceBreadcrumbs({
 
       const { data, error } = await supabase
         .from('workspaces')
-        .select('id, name, parent_workspace_id, workspace_type')
+        .select('id, name, slug, parent_workspace_id, workspace_type')
         .eq('event_id', targetEventId);
 
       if (error) throw error;
       return (data || []).map((ws) => ({
         id: ws.id,
         name: ws.name,
+        slug: ws.slug,
         parentWorkspaceId: ws.parent_workspace_id,
         workspaceType: ws.workspace_type,
       })) as BreadcrumbWorkspace[];
@@ -121,14 +154,36 @@ export function WorkspaceBreadcrumbs({
     return path;
   }, [workspaces, workspaceId]);
 
-  const getWorkspaceLink = (wsId: string) => {
-    if (orgSlug && resolvedEventId) {
-      return `/${orgSlug}/workspaces/${resolvedEventId}/${wsId}`;
+  // Build hierarchical URL for a workspace at a given index in the path
+  const getWorkspaceLink = (targetIndex: number) => {
+    if (!orgSlug || !event || !breadcrumbPath.length) {
+      return `/workspaces/${breadcrumbPath[targetIndex]?.id || ''}`;
     }
-    return `/workspaces/${wsId}`;
+
+    const eventSlug = event.slug || slugify(event.name);
+    
+    // Build hierarchy up to and including the target index
+    const hierarchy: WorkspacePathSegment[] = breadcrumbPath
+      .slice(0, targetIndex + 1)
+      .map((ws) => ({
+        level: DB_TYPE_TO_LEVEL[ws.workspaceType || 'ROOT'] || 'root',
+        slug: ws.slug || slugify(ws.name),
+        workspaceId: ws.id,
+      }));
+
+    return buildWorkspaceUrl({
+      orgSlug,
+      eventSlug,
+      eventId: event.id,
+      hierarchy,
+    });
   };
 
   const getWorkspacesListLink = () => {
+    if (orgSlug && event) {
+      const eventSlug = event.slug || slugify(event.name);
+      return `/${orgSlug}/workspaces/${eventSlug}?eventId=${event.id}`;
+    }
     if (orgSlug && resolvedEventId) {
       return `/${orgSlug}/workspaces/${resolvedEventId}`;
     }
@@ -180,7 +235,7 @@ export function WorkspaceBreadcrumbs({
                 <>
                   <BreadcrumbLink asChild>
                     <Link
-                      to={getWorkspaceLink(ws.id)}
+                      to={getWorkspaceLink(index)}
                       className="flex items-center gap-1.5 max-w-[100px] sm:max-w-[160px] group"
                     >
                       <Icon className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground group-hover:text-foreground transition-colors" />
