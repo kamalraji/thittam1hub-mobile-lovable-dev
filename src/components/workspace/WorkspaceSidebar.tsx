@@ -51,7 +51,8 @@ export type WorkspaceTab =
   | 'marketplace'
   | 'templates'
   | 'audit'
-  | 'role-management';
+  | 'role-management'
+  | 'settings';
 
 interface WorkspaceSidebarProps {
   workspace: Workspace;
@@ -420,15 +421,18 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                         <span>Invite Member</span>
                       </button>
                     )}
-                    {onManageSettings && (
-                      <button
-                        onClick={onManageSettings}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg hover:bg-muted/50 transition-colors text-foreground/80"
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                        <span>Settings</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleTabChange('settings')}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-colors",
+                        activeTab === 'settings' 
+                          ? "bg-primary/10 text-primary" 
+                          : "hover:bg-muted/50 text-foreground/80"
+                      )}
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                      <span>Settings</span>
+                    </button>
                   </div>
                 </SidebarGroupContent>
               </SidebarGroup>
