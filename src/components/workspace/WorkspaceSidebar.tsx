@@ -35,11 +35,15 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
+  Building2,
+  Calendar,
+  Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { buildHierarchyChain, buildWorkspaceUrl, slugify } from '@/lib/workspaceNavigation';
+import { useOptionalOrganization } from '@/components/organization/OrganizationContext';
 
 export type WorkspaceTab =
   | 'overview'
@@ -116,6 +120,55 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const [hierarchyExpanded, setHierarchyExpanded] = useState(true);
+  const organization = useOptionalOrganization();
+
+  // Fetch event details for breadcrumb
+  const { data: eventData } = useQuery({
+    queryKey: ['workspace-event', workspace.eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, name, slug')
+        .eq('id', workspace.eventId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!workspace.eventId,
+  });
+
+  // Fetch hierarchy chain for breadcrumbs
+  const { data: hierarchyChain } = useQuery({
+    queryKey: ['workspace-hierarchy-chain', workspace.id],
+    queryFn: async () => {
+      const { data: allWorkspaces, error } = await supabase
+        .from('workspaces')
+        .select('id, name, slug, workspace_type, parent_workspace_id')
+        .eq('event_id', workspace.eventId);
+      if (error) throw error;
+      
+      // Build chain from root to current workspace
+      const chain: { id: string; name: string; slug: string; type: string }[] = [];
+      let currentId: string | null = workspace.id;
+      
+      while (currentId) {
+        const ws = allWorkspaces?.find(w => w.id === currentId);
+        if (ws) {
+          chain.unshift({
+            id: ws.id,
+            name: ws.name,
+            slug: ws.slug || slugify(ws.name),
+            type: ws.workspace_type || 'ROOT',
+          });
+          currentId = ws.parent_workspace_id;
+        } else {
+          break;
+        }
+      }
+      return chain;
+    },
+    enabled: !!workspace.eventId,
+  });
 
   // Fetch child workspaces for hierarchy (only for ROOT workspaces)
   const { data: childWorkspaces } = useQuery({
@@ -196,12 +249,38 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     return acc;
   }, {} as Record<string, NavItem[]>);
 
+  // Build breadcrumb items
+  const breadcrumbItems = [
+    // Organization
+    organization && {
+      icon: Building2,
+      label: organization.name,
+      href: `/${orgSlug}/dashboard`,
+      type: 'org',
+    },
+    // Event
+    eventData && {
+      icon: Calendar,
+      label: eventData.name,
+      href: `/${orgSlug}/eventmanagement/${eventData.id}`,
+      type: 'event',
+    },
+    // Hierarchy chain (Root > Department > Committee > Team)
+    ...(hierarchyChain?.map((ws, index) => ({
+      icon: Network,
+      label: ws.name,
+      href: undefined, // Current workspace chain, no navigation needed
+      type: ws.type.toLowerCase(),
+      isCurrent: index === hierarchyChain.length - 1,
+    })) || []),
+  ].filter(Boolean);
+
   return (
     <Sidebar
       collapsible="offcanvas"
       className="border-r border-border/20 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95 backdrop-blur-xl"
     >
-      {/* Header with workspace info */}
+      {/* Header with breadcrumbs and workspace info */}
       <SidebarHeader className="p-0">
         <div className="p-4 border-b border-border/30">
           {/* Back button */}
@@ -212,6 +291,56 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             {!isCollapsed && <span>Back to Workspaces</span>}
           </button>
+
+          {/* Breadcrumb navigation */}
+          {!isCollapsed && breadcrumbItems.length > 0 && (
+            <div className="mb-3 space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
+                Hierarchy
+              </span>
+              <nav className="flex flex-col gap-0.5">
+                {breadcrumbItems.map((item, index) => {
+                  if (!item) return null;
+                  const Icon = item.icon;
+                  const isLast = index === breadcrumbItems.length - 1;
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center"
+                      style={{ paddingLeft: `${Math.min(index * 8, 24)}px` }}
+                    >
+                      {index > 0 && (
+                        <div className="w-2 h-2 border-l border-b border-border/50 mr-1.5" />
+                      )}
+                      {item.href ? (
+                        <button
+                          onClick={() => navigate(item.href!)}
+                          className={cn(
+                            'flex items-center gap-1.5 text-[11px] py-0.5 px-1.5 rounded hover:bg-muted/50 transition-colors truncate max-w-full',
+                            'text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          <Icon className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      ) : (
+                        <span
+                          className={cn(
+                            'flex items-center gap-1.5 text-[11px] py-0.5 px-1.5 truncate max-w-full',
+                            isLast ? 'text-foreground font-medium' : 'text-muted-foreground'
+                          )}
+                        >
+                          <Icon className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+            </div>
+          )}
 
           {/* Workspace info */}
           {!isCollapsed && (
