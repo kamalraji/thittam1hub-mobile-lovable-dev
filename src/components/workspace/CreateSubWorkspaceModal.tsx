@@ -25,6 +25,7 @@ import {
   Check,
   ChevronRight,
   ChevronDown,
+  CheckCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +72,35 @@ export function CreateSubWorkspaceModal({
     enabled: open && !!parentWorkspaceId,
   });
 
+  // Fetch existing sub-workspaces to prevent duplicates
+  const { data: existingWorkspaces } = useQuery({
+    queryKey: ['existing-sub-workspaces', eventId, parentWorkspaceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('workspaces')
+        .select('id, name, workspace_type, department_id')
+        .eq('event_id', eventId)
+        .eq('parent_workspace_id', parentWorkspaceId);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open && !!parentWorkspaceId && !!eventId,
+  });
+
+  // Build sets of already-created items for quick lookup
+  const existingDepartmentIds = new Set(
+    existingWorkspaces
+      ?.filter(w => w.workspace_type === WorkspaceType.DEPARTMENT && w.department_id)
+      .map(w => w.department_id) || []
+  );
+
+  const existingCommitteeNames = new Set(
+    existingWorkspaces
+      ?.filter(w => w.workspace_type === WorkspaceType.COMMITTEE)
+      .map(w => w.name.toLowerCase()) || []
+  );
+
   const toggleDeptExpanded = (deptId: string) => {
     setExpandedDepts(prev => {
       const next = new Set(prev);
@@ -97,16 +127,22 @@ export function CreateSubWorkspaceModal({
     return selectedItems.some(i => i.id === id && i.type === type);
   };
 
+  // Check if item already exists
+  const isDeptCreated = (deptId: string) => existingDepartmentIds.has(deptId);
+  const isCommCreated = (commName: string) => existingCommitteeNames.has(commName.toLowerCase());
+
   const selectAllCommitteesInDept = (deptId: string) => {
     const committees = DEPARTMENT_COMMITTEES[deptId] || [];
-    const allSelected = committees.every(c => isSelected(c.id, 'committee'));
+    // Only consider non-created committees
+    const availableComms = committees.filter(c => !isCommCreated(c.name));
+    const allSelected = availableComms.every(c => isSelected(c.id, 'committee'));
     
     if (allSelected) {
       // Deselect all
       setSelectedItems(prev => prev.filter(i => !(i.type === 'committee' && i.departmentId === deptId)));
     } else {
-      // Select all missing
-      const newItems = committees
+      // Select all missing (that aren't already created)
+      const newItems = availableComms
         .filter(c => !isSelected(c.id, 'committee'))
         .map(c => ({ id: c.id, name: c.name, type: 'committee' as const, departmentId: deptId }));
       setSelectedItems(prev => [...prev, ...newItems]);
@@ -241,7 +277,9 @@ export function CreateSubWorkspaceModal({
                 const committees = DEPARTMENT_COMMITTEES[dept.id] || [];
                 const isExpanded = expandedDepts.has(dept.id);
                 const isDeptSelected = isSelected(dept.id, 'department');
+                const deptAlreadyCreated = isDeptCreated(dept.id);
                 const selectedCommCount = committees.filter(c => isSelected(c.id, 'committee')).length;
+                const createdCommCount = committees.filter(c => isCommCreated(c.name)).length;
 
                 return (
                   <div key={dept.id} className="space-y-0.5">
@@ -263,73 +301,110 @@ export function CreateSubWorkspaceModal({
                       {/* Checkbox + Label */}
                       <button
                         type="button"
-                        onClick={() => toggleSelection({ id: dept.id, name: dept.name, type: 'department' })}
+                        onClick={() => !deptAlreadyCreated && toggleSelection({ id: dept.id, name: dept.name, type: 'department' })}
+                        disabled={deptAlreadyCreated}
                         className={cn(
                           "flex-1 flex items-center gap-2 p-2 rounded-md text-left transition-all",
-                          "hover:bg-accent/30",
-                          isDeptSelected && "bg-blue-500/10"
+                          deptAlreadyCreated 
+                            ? "opacity-50 cursor-not-allowed" 
+                            : "hover:bg-accent/30",
+                          isDeptSelected && !deptAlreadyCreated && "bg-blue-500/10"
                         )}
                       >
-                        <div className={cn(
-                          "flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors",
-                          "border-[1.5px]",
-                          isDeptSelected 
-                            ? "border-blue-500 bg-blue-500" 
-                            : "border-muted-foreground/40"
-                        )}>
-                          {isDeptSelected && <Check className="h-2.5 w-2.5 text-white" />}
-                        </div>
-                        <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                        <span className="text-xs font-medium text-foreground flex-1">{dept.name}</span>
-                        {selectedCommCount > 0 && (
+                        {deptAlreadyCreated ? (
+                          <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                        ) : (
+                          <div className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded transition-colors",
+                            "border-[1.5px]",
+                            isDeptSelected 
+                              ? "border-blue-500 bg-blue-500" 
+                              : "border-muted-foreground/40"
+                          )}>
+                            {isDeptSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                          </div>
+                        )}
+                        <Building2 className={cn("h-3.5 w-3.5", deptAlreadyCreated ? "text-green-500" : "text-blue-500")} />
+                        <span className={cn("text-xs font-medium flex-1", deptAlreadyCreated ? "text-muted-foreground" : "text-foreground")}>
+                          {dept.name}
+                        </span>
+                        {deptAlreadyCreated ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-600">
+                            Created
+                          </span>
+                        ) : selectedCommCount > 0 ? (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">
                             {selectedCommCount} comm
                           </span>
-                        )}
+                        ) : createdCommCount > 0 ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600">
+                            {createdCommCount}/{committees.length}
+                          </span>
+                        ) : null}
                       </button>
                     </div>
 
                     {/* Committees (Nested) */}
                     {isExpanded && committees.length > 0 && (
                       <div className="ml-6 pl-2 border-l border-border/50 space-y-0.5">
-                        {/* Select All */}
-                        <button
-                          type="button"
-                          onClick={() => selectAllCommitteesInDept(dept.id)}
-                          className="w-full text-left px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent/30 rounded transition-colors"
-                        >
-                          {committees.every(c => isSelected(c.id, 'committee')) ? 'Deselect all' : 'Select all committees'}
-                        </button>
+                        {/* Select All - only show if there are available committees */}
+                        {committees.some(c => !isCommCreated(c.name)) && (
+                          <button
+                            type="button"
+                            onClick={() => selectAllCommitteesInDept(dept.id)}
+                            className="w-full text-left px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent/30 rounded transition-colors"
+                          >
+                            {committees.filter(c => !isCommCreated(c.name)).every(c => isSelected(c.id, 'committee')) 
+                              ? 'Deselect all' 
+                              : 'Select available'}
+                          </button>
+                        )}
 
                         {committees.map((comm) => {
                           const isCommSelected = isSelected(comm.id, 'committee');
+                          const commAlreadyCreated = isCommCreated(comm.name);
+                          
                           return (
                             <button
                               key={comm.id}
                               type="button"
-                              onClick={() => toggleSelection({ 
+                              onClick={() => !commAlreadyCreated && toggleSelection({ 
                                 id: comm.id, 
                                 name: comm.name, 
                                 type: 'committee',
                                 departmentId: dept.id 
                               })}
+                              disabled={commAlreadyCreated}
                               className={cn(
                                 "w-full flex items-center gap-2 p-2 rounded-md text-left transition-all",
-                                "hover:bg-accent/30",
-                                isCommSelected && "bg-amber-500/10"
+                                commAlreadyCreated 
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "hover:bg-accent/30",
+                                isCommSelected && !commAlreadyCreated && "bg-amber-500/10"
                               )}
                             >
-                              <div className={cn(
-                                "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded transition-colors",
-                                "border-[1.5px]",
-                                isCommSelected 
-                                  ? "border-amber-500 bg-amber-500" 
-                                  : "border-muted-foreground/40"
-                              )}>
-                                {isCommSelected && <Check className="h-2 w-2 text-white" />}
-                              </div>
-                              <Users className="h-3 w-3 text-amber-500" />
-                              <span className="text-[11px] text-foreground">{comm.name}</span>
+                              {commAlreadyCreated ? (
+                                <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                              ) : (
+                                <div className={cn(
+                                  "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded transition-colors",
+                                  "border-[1.5px]",
+                                  isCommSelected 
+                                    ? "border-amber-500 bg-amber-500" 
+                                    : "border-muted-foreground/40"
+                                )}>
+                                  {isCommSelected && <Check className="h-2 w-2 text-white" />}
+                                </div>
+                              )}
+                              <Users className={cn("h-3 w-3", commAlreadyCreated ? "text-green-500" : "text-amber-500")} />
+                              <span className={cn("text-[11px] flex-1", commAlreadyCreated ? "text-muted-foreground" : "text-foreground")}>
+                                {comm.name}
+                              </span>
+                              {commAlreadyCreated && (
+                                <span className="text-[9px] px-1 py-0.5 rounded bg-green-500/20 text-green-600">
+                                  Created
+                                </span>
+                              )}
                             </button>
                           );
                         })}
