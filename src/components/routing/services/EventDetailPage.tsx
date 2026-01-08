@@ -128,7 +128,8 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ defaultTab = '
 
   const { orgSlug } = useParams<{ orgSlug?: string }>();
   const eventSlug = event?.slug || slugify(event?.name || '');
-  const workspacePath = orgSlug ? `/${orgSlug}/workspaces/${eventSlug}?eventId=${eventId}` : `/dashboard/workspaces?eventId=${eventId}`;
+  // Use clean hierarchical path to workspace list (no query params needed for list view)
+  const workspacePath = orgSlug ? `/${orgSlug}/workspaces/${eventSlug}` : `/dashboard`;
 
   const pageActions = [
     ...(canManage

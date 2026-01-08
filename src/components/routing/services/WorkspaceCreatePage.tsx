@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button';
 import { ActionButton } from '@/components/ui/action-button';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { slugify, logWorkspaceUrl } from '@/lib/workspaceNavigation';
 
 const workspaceCreateSchema = z.object({
   name: z
@@ -113,11 +114,27 @@ export const WorkspaceCreatePage: React.FC = () => {
           : 'Your workspace has been created successfully. You are now the Workspace Owner.',
       });
 
-      const baseWorkspacePath = isOrgContext && orgSlugCandidate
-        ? `/${orgSlugCandidate}/workspaces`
-        : '/dashboard/workspaces';
-
-      navigate(`${baseWorkspacePath}/${result.rootWorkspace.id}`, { replace: true });
+      // Build hierarchical URL for the new root workspace
+      const eventSlug = selectedEvent?.slug || slugify(selectedEvent?.name || formValues.name);
+      const rootSlug = slugify(result.rootWorkspace.name);
+      
+      if (isOrgContext && orgSlugCandidate) {
+        const hierarchicalUrl = `/${orgSlugCandidate}/workspaces/${eventSlug}/root/${rootSlug}?eventId=${formValues.eventId}&workspaceId=${result.rootWorkspace.id}`;
+        
+        logWorkspaceUrl({
+          component: 'WorkspaceCreatePage',
+          action: 'navigate',
+          url: hierarchicalUrl,
+          isValid: true,
+          context: { newWorkspaceId: result.rootWorkspace.id, template: selectedTemplate.id },
+        });
+        
+        navigate(hierarchicalUrl, { replace: true });
+      } else {
+        // Non-org context fallback
+        console.warn('[WorkspaceCreatePage] No org context, redirecting to dashboard');
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error: any) {
       console.error('Failed to create workspace', error);
       if (error?.message?.includes('already has a root workspace')) {
