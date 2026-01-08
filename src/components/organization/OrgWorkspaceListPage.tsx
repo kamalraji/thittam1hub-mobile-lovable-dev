@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { WorkspaceStatus, UserRole } from '@/types';
 import { useCurrentOrganization } from './OrganizationContext';
 import { useAuth } from '@/hooks/useAuth';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   BuildingOfficeIcon,
   EnvelopeIcon,
@@ -124,36 +123,33 @@ export const OrgWorkspaceListPage: React.FC = () => {
 
         {/* Workspace groups */}
         {!isLoading && (
-          <ScrollArea className="h-[calc(100vh-16rem)] sm:h-[calc(100vh-14rem)]">
-            <div className="space-y-6 sm:space-y-8 pb-8 pr-2">
-              {/* My Workspaces - Hierarchy View */}
-              <MyWorkspacesHierarchy
-                workspaces={workspacesData?.myWorkspaces || []}
-                orgSlug={orgSlug}
-              />
+          <div className="space-y-6 sm:space-y-8 pb-8">
+            {/* My Workspaces - Hierarchy View */}
+            <MyWorkspacesHierarchy
+              workspaces={workspacesData?.myWorkspaces || []}
+              orgSlug={orgSlug}
+            />
 
+            {/* Invited Workspaces */}
+            <WorkspaceGroup
+              title="Invited Workspaces"
+              icon={<EnvelopeIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />}
+              workspaces={workspacesData?.invitedWorkspaces || []}
+              emptyMessage="No workspace invitations"
+              defaultExpanded={true}
+              orgSlug={orgSlug}
+            />
 
-              {/* Invited Workspaces */}
-              <WorkspaceGroup
-                title="Invited Workspaces"
-                icon={<EnvelopeIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />}
-                workspaces={workspacesData?.invitedWorkspaces || []}
-                emptyMessage="No workspace invitations"
-                defaultExpanded={true}
-                orgSlug={orgSlug}
-              />
-
-              {/* Organization Workspaces */}
-              <WorkspaceGroup
-                title="Organization Workspaces"
-                icon={<BuildingOfficeIcon className="h-5 w-5 text-muted-foreground" />}
-                workspaces={workspacesData?.orgWorkspaces || []}
-                emptyMessage="No other workspaces in this organization"
-                defaultExpanded={true}
-                orgSlug={orgSlug}
-              />
-            </div>
-          </ScrollArea>
+            {/* Organization Workspaces */}
+            <WorkspaceGroup
+              title="Organization Workspaces"
+              icon={<BuildingOfficeIcon className="h-5 w-5 text-muted-foreground" />}
+              workspaces={workspacesData?.orgWorkspaces || []}
+              emptyMessage="No other workspaces in this organization"
+              defaultExpanded={true}
+              orgSlug={orgSlug}
+            />
+          </div>
         )}
       </div>
     </div>
