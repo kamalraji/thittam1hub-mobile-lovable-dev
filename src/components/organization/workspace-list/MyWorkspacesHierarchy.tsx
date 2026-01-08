@@ -223,6 +223,176 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   );
 };
 
+interface RootWorkspaceCardProps {
+  workspace: WorkspaceItem;
+  allWorkspaces: WorkspaceItem[];
+  orgSlug?: string;
+  index: number;
+}
+
+const RootWorkspaceCard: React.FC<RootWorkspaceCardProps> = ({
+  workspace,
+  allWorkspaces,
+  orgSlug,
+  index,
+}) => {
+  const [expanded, setExpanded] = useState(true);
+  const navigate = useNavigate();
+  const hasChildren = workspace.subWorkspaces && workspace.subWorkspaces.length > 0;
+
+  const workspaceDataForHierarchy = useMemo(() => {
+    return allWorkspaces.map(ws => ({
+      id: ws.id,
+      slug: ws.slug || slugify(ws.name),
+      name: ws.name,
+      workspaceType: ws.workspaceType || null,
+      parentWorkspaceId: ws.parentWorkspaceId,
+    }));
+  }, [allWorkspaces]);
+
+  const handleClick = () => {
+    if (workspace.eventId && orgSlug) {
+      const hierarchy = buildHierarchyChain(workspace.id, workspaceDataForHierarchy);
+      const eventSlug = workspace.event?.slug || slugify(workspace.event?.name || '');
+      const url = buildWorkspaceUrl({
+        orgSlug,
+        eventSlug,
+        eventId: workspace.eventId,
+        hierarchy,
+      });
+      navigate(url);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      className={cn(
+        "rounded-2xl overflow-hidden",
+        "bg-gradient-to-br from-card via-card to-muted/10",
+        "border border-border/50",
+        "shadow-lg shadow-black/5",
+        "hover:shadow-xl hover:border-primary/20",
+        "transition-all duration-300"
+      )}
+    >
+      {/* Root workspace header */}
+      <div
+        className={cn(
+          "flex items-center gap-3 p-4 cursor-pointer",
+          "bg-gradient-to-r from-primary/5 via-transparent to-primary/5",
+          "border-b border-border/30",
+          "hover:from-primary/10 hover:to-primary/10",
+          "transition-all duration-300 group"
+        )}
+        onClick={handleClick}
+      >
+        {/* Expand/Collapse toggle */}
+        {hasChildren && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
+            className={cn(
+              "p-1.5 rounded-lg",
+              "hover:bg-primary/10 transition-colors"
+            )}
+          >
+            <motion.div
+              animate={{ rotate: expanded ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
+            </motion.div>
+          </button>
+        )}
+
+        {/* Icon */}
+        <div className={cn(
+          "relative p-2.5 rounded-xl",
+          "bg-gradient-to-br from-primary/25 to-primary/10",
+          "border border-primary/20",
+          "group-hover:from-primary/35 group-hover:to-primary/15",
+          "transition-all duration-300"
+        )}>
+          <FolderIcon className="h-5 w-5 text-primary" />
+          <div className={cn(
+            "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full",
+            "border-2 border-card",
+            getStatusColor(workspace.status)
+          )} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+              {workspace.name}
+            </h3>
+            {workspace.isOwner && (
+              <span className={cn(
+                "text-[10px] px-2 py-0.5 rounded-full font-medium",
+                "bg-gradient-to-r from-primary/20 to-primary/10",
+                "text-primary border border-primary/20"
+              )}>
+                Owner
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            {workspace.event && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span className="truncate max-w-[150px]">{workspace.event.name}</span>
+              </span>
+            )}
+            {hasChildren && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground">
+                {workspace.subWorkspaces!.length} workspaces
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground/50">
+              {formatDistanceToNow(new Date(workspace.updatedAt), { addSuffix: true })}
+            </span>
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <ChevronRightIcon className="h-5 w-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+      </div>
+
+      {/* Children */}
+      <AnimatePresence initial={false}>
+        {expanded && hasChildren && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="p-3 space-y-2 bg-muted/5">
+              {workspace.subWorkspaces!.map((child, childIndex) => (
+                <TreeNode
+                  key={child.id}
+                  workspace={child}
+                  allWorkspaces={allWorkspaces}
+                  orgSlug={orgSlug}
+                  depth={0}
+                  index={childIndex}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 export const MyWorkspacesHierarchy: React.FC<MyWorkspacesHierarchyProps> = ({
   workspaces,
   allWorkspaces,
@@ -234,63 +404,59 @@ export const MyWorkspacesHierarchy: React.FC<MyWorkspacesHierarchyProps> = ({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "rounded-2xl overflow-hidden",
-        "bg-gradient-to-br from-card via-card to-muted/20",
-        "border border-border/50",
-        "shadow-xl shadow-black/5"
-      )}
-    >
-      {/* Header */}
-      <div className={cn(
-        "px-4 py-3 border-b border-border/30",
-        "bg-gradient-to-r from-primary/5 via-transparent to-primary/5"
-      )}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={cn(
-              "p-1.5 rounded-lg",
-              "bg-gradient-to-br from-primary/20 to-primary/10",
-              "border border-primary/20"
-            )}>
-              <SparklesIcon className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="font-semibold text-sm text-foreground">My Workspaces</h3>
-          </div>
-          <span className={cn(
-            "text-xs font-medium px-2 py-1 rounded-full",
-            "bg-primary/10 text-primary border border-primary/20"
+    <div className="space-y-4">
+      {/* Section Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
+        <div className="flex items-center gap-2">
+          <div className={cn(
+            "p-1.5 rounded-lg",
+            "bg-gradient-to-br from-primary/20 to-primary/10",
+            "border border-primary/20"
           )}>
-            {totalCount} total
-          </span>
+            <SparklesIcon className="h-4 w-4 text-primary" />
+          </div>
+          <h3 className="font-semibold text-foreground">My Workspaces</h3>
         </div>
-      </div>
+        <span className={cn(
+          "text-xs font-medium px-2.5 py-1 rounded-full",
+          "bg-primary/10 text-primary border border-primary/20"
+        )}>
+          {totalCount} total
+        </span>
+      </motion.div>
 
-      {/* Content */}
-      <div className="p-3">
-        {workspaces.length === 0 ? (
-          <div className="py-8 text-center">
-            <FolderIcon className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No workspaces yet</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Create your first workspace to get started</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {workspaces.map((workspace, index) => (
-              <TreeNode
-                key={workspace.id}
-                workspace={workspace}
-                allWorkspaces={flatList}
-                orgSlug={orgSlug}
-                index={index}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </motion.div>
+      {/* Workspace Cards */}
+      {workspaces.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "rounded-2xl p-8 text-center",
+            "bg-gradient-to-br from-card via-card to-muted/20",
+            "border border-border/50"
+          )}
+        >
+          <FolderIcon className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No workspaces yet</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Create your first workspace to get started</p>
+        </motion.div>
+      ) : (
+        <div className="space-y-4">
+          {workspaces.map((workspace, index) => (
+            <RootWorkspaceCard
+              key={workspace.id}
+              workspace={workspace}
+              allWorkspaces={flatList}
+              orgSlug={orgSlug}
+              index={index}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
