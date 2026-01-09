@@ -730,12 +730,25 @@ export enum TaskPriority {
 }
 
 export enum TaskCategory {
+  // Core categories
+  GENERAL = 'GENERAL',
   SETUP = 'SETUP',
   MARKETING = 'MARKETING',
   LOGISTICS = 'LOGISTICS',
   TECHNICAL = 'TECHNICAL',
   REGISTRATION = 'REGISTRATION',
-  POST_EVENT = 'POST_EVENT'
+  POST_EVENT = 'POST_EVENT',
+  // Extended categories
+  COMMUNICATION = 'COMMUNICATION',
+  FINANCE = 'FINANCE',
+  VOLUNTEER = 'VOLUNTEER',
+  SPONSOR = 'SPONSOR',
+  CONTENT = 'CONTENT',
+  DESIGN = 'DESIGN',
+  OPERATIONS = 'OPERATIONS',
+  SAFETY = 'SAFETY',
+  CATERING = 'CATERING',
+  VENUE = 'VENUE',
 }
 
 export interface Workspace {
@@ -789,6 +802,18 @@ export interface TeamMember {
   };
 }
 
+// Subtask interface for child tasks
+export interface Subtask {
+  id: string;
+  parentTaskId: string;
+  title: string;
+  status: 'TODO' | 'COMPLETED';
+  assignedTo?: string;
+  sortOrder?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WorkspaceTask {
   id: string;
   workspaceId: string;
@@ -803,6 +828,7 @@ export interface WorkspaceTask {
   tags: string[];
   metadata?: Record<string, any>;
   roleScope?: WorkspaceRoleScope;
+  // Single assignee (backward compatible)
   assignee?: {
     id: string;
     userId: string;
@@ -813,6 +839,19 @@ export interface WorkspaceTask {
       email: string;
     };
   } | null;
+  // Multi-assignee support
+  assignees?: Array<{
+    id: string;
+    userId: string;
+    role: WorkspaceRole;
+    user: { id: string; name: string; email?: string };
+  }>;
+  // Subtasks for progress tracking
+  subtasks?: Subtask[];
+  // Extended fields
+  estimatedHours?: number;
+  location?: string;
+  attachments?: string[];
   creator: {
     id: string;
     userId: string;

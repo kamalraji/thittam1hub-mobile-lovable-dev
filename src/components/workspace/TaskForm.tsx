@@ -19,8 +19,10 @@ import {
   Flag,
   Layers,
   Link2,
-  CheckCircle2
+  CheckCircle2,
+  ListTodo
 } from 'lucide-react';
+import { SubtaskSection, type Subtask, MultiAssigneeSelector } from './task-form';
 
 interface TaskFormProps {
   task?: WorkspaceTask;
@@ -38,11 +40,14 @@ export interface TaskFormData {
   category: TaskCategory;
   priority: TaskPriority;
   assigneeId?: string;
+  assigneeIds?: string[];
   dueDate?: string;
   dependencies: string[];
   tags: string[];
   templateId?: string;
   roleScope?: WorkspaceRoleScope;
+  subtasks?: Subtask[];
+  estimatedHours?: number;
 }
 
 const TASK_TEMPLATES = [
@@ -71,20 +76,23 @@ export function TaskForm({
   const [formData, setFormData] = useState<TaskFormData>({
     title: task?.title || '',
     description: task?.description || '',
-    category: task?.category || TaskCategory.SETUP,
+    category: task?.category || TaskCategory.GENERAL,
     priority: task?.priority || TaskPriority.MEDIUM,
     assigneeId: task?.assignee?.userId || '',
+    assigneeIds: task?.assignees?.map(a => a.userId) || [],
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
     dependencies: task?.dependencies || [],
     tags: task?.tags || [],
     templateId: '',
     roleScope: task?.roleScope || (task?.metadata?.roleScope as WorkspaceRoleScope | undefined),
+    subtasks: (task?.subtasks || []).map(s => ({ id: s.id, title: s.title, status: s.status, assignedTo: s.assignedTo })),
   });
 
   const [newTag, setNewTag] = useState('');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependencies || []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDependencies, setShowDependencies] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState((task?.subtasks?.length || 0) > 0);
 
   const availableDependencies = availableTasks.filter(t => t.id !== task?.id);
 
@@ -275,7 +283,7 @@ export function TaskForm({
         </div>
 
         {/* Category, Assignee, Due Date - Compact 3-col */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
               <Layers className="h-3 w-3" /> Category
@@ -291,20 +299,16 @@ export function TaskForm({
             </select>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 col-span-2">
             <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <Users className="h-3 w-3" /> Assignee
+              <Users className="h-3 w-3" /> Assignees
             </Label>
-            <select
-              value={formData.assigneeId}
-              onChange={(e) => handleInputChange('assigneeId', e.target.value)}
-              className="w-full h-9 px-2 rounded-md border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">Unassigned</option>
-              {teamMembers.map((member) => (
-                <option key={member.id} value={member.userId}>{member.user.name}</option>
-              ))}
-            </select>
+            <MultiAssigneeSelector
+              teamMembers={teamMembers}
+              selectedIds={formData.assigneeIds || []}
+              onChange={(ids) => handleInputChange('assigneeIds', ids)}
+              disabled={isLoading}
+            />
           </div>
 
           <div className="space-y-1">
@@ -376,6 +380,27 @@ export function TaskForm({
             )}
           </div>
         )}
+
+        {/* Subtasks Section */}
+        <div className="space-y-1.5">
+          <button
+            type="button"
+            onClick={() => setShowSubtasks(!showSubtasks)}
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ListTodo className="h-3 w-3" />
+            Subtasks {(formData.subtasks?.length || 0) > 0 && `(${formData.subtasks?.length})`}
+            <span className={cn("transition-transform", showSubtasks && "rotate-180")}>▼</span>
+          </button>
+          {showSubtasks && (
+            <SubtaskSection
+              subtasks={formData.subtasks || []}
+              onChange={(subtasks) => handleInputChange('subtasks', subtasks)}
+              teamMembers={teamMembers}
+              disabled={isLoading}
+            />
+          )}
+        </div>
 
         {/* Tags - Compact Inline */}
         <div className="space-y-1.5">

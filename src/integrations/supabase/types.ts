@@ -1972,6 +1972,53 @@ export type Database = {
           },
         ]
       }
+      workspace_custom_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          priority: string | null
+          tags: string[] | null
+          workspace_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          priority?: string | null
+          tags?: string[] | null
+          workspace_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          priority?: string | null
+          tags?: string[] | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_custom_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_goals: {
         Row: {
           category: string | null
@@ -2494,14 +2541,95 @@ export type Database = {
           },
         ]
       }
-      workspace_tasks: {
+      workspace_subtasks: {
         Row: {
           assigned_to: string | null
           created_at: string
+          id: string
+          parent_task_id: string
+          sort_order: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          parent_task_id: string
+          sort_order?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          parent_task_id?: string
+          sort_order?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_subtasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_task_drafts: {
+        Row: {
+          created_at: string
+          draft_data: Json
+          id: string
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          draft_data?: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          draft_data?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_task_drafts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_tasks: {
+        Row: {
+          assigned_to: string | null
+          attachments: string[] | null
+          category: string | null
+          created_at: string
           description: string | null
           due_date: string | null
+          estimated_hours: number | null
           id: string
+          location: string | null
           priority: string
+          progress: number | null
           role_scope: string | null
           status: string
           title: string
@@ -2510,11 +2638,16 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          attachments?: string[] | null
+          category?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimated_hours?: number | null
           id?: string
+          location?: string | null
           priority?: string
+          progress?: number | null
           role_scope?: string | null
           status?: string
           title: string
@@ -2523,11 +2656,16 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          attachments?: string[] | null
+          category?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimated_hours?: number | null
           id?: string
+          location?: string | null
           priority?: string
+          progress?: number | null
           role_scope?: string | null
           status?: string
           title?: string
