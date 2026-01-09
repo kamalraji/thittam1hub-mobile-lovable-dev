@@ -1,9 +1,10 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, Plus, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Users, Plus, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Shift {
   id: string;
@@ -20,52 +21,50 @@ interface VolunteerShiftSchedulerProps {
   workspaceId: string;
 }
 
-// Mock data for demonstration
-const MOCK_SHIFTS: Shift[] = [
-  {
-    id: '1',
-    name: 'Registration Desk',
-    date: '2026-01-10',
-    startTime: '08:00',
-    endTime: '12:00',
-    requiredVolunteers: 4,
-    assignedVolunteers: 3,
-    location: 'Main Entrance',
-  },
-  {
-    id: '2',
-    name: 'Session Support',
-    date: '2026-01-10',
-    startTime: '09:00',
-    endTime: '17:00',
-    requiredVolunteers: 6,
-    assignedVolunteers: 6,
-    location: 'Conference Hall A',
-  },
-  {
-    id: '3',
-    name: 'Lunch Service',
-    date: '2026-01-10',
-    startTime: '12:00',
-    endTime: '14:00',
-    requiredVolunteers: 8,
-    assignedVolunteers: 5,
-    location: 'Cafeteria',
-  },
-  {
-    id: '4',
-    name: 'Tech Booth',
-    date: '2026-01-10',
-    startTime: '08:00',
-    endTime: '18:00',
-    requiredVolunteers: 2,
-    assignedVolunteers: 2,
-    location: 'Innovation Zone',
-  },
-];
+export function VolunteerShiftScheduler({ workspaceId }: VolunteerShiftSchedulerProps) {
+  const { data: shifts = [], isLoading } = useQuery({
+    queryKey: ['volunteer-shifts', workspaceId],
+    queryFn: async (): Promise<Shift[]> => {
+      // Fetch shifts with assignment counts
+      const { data: shiftsData, error: shiftsError } = await supabase
+        .from('volunteer_shifts')
+        .select('id, name, date, start_time, end_time, location, required_volunteers')
+        .eq('workspace_id', workspaceId)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
 
-export function VolunteerShiftScheduler({ workspaceId: _workspaceId }: VolunteerShiftSchedulerProps) {
-  const [shifts] = useState<Shift[]>(MOCK_SHIFTS);
+      if (shiftsError) throw shiftsError;
+      if (!shiftsData?.length) return [];
+
+      // Get assignment counts for each shift
+      const shiftIds = shiftsData.map(s => s.id);
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('volunteer_assignments')
+        .select('shift_id')
+        .in('shift_id', shiftIds)
+        .neq('status', 'cancelled');
+
+      if (assignmentsError) throw assignmentsError;
+
+      // Count assignments per shift
+      const assignmentCounts = (assignmentsData || []).reduce((acc, a) => {
+        acc[a.shift_id] = (acc[a.shift_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return shiftsData.map(shift => ({
+        id: shift.id,
+        name: shift.name,
+        date: shift.date,
+        startTime: shift.start_time,
+        endTime: shift.end_time,
+        location: shift.location || '',
+        requiredVolunteers: shift.required_volunteers,
+        assignedVolunteers: assignmentCounts[shift.id] || 0,
+      }));
+    },
+    enabled: !!workspaceId,
+  });
 
   const getShiftStatus = (shift: Shift) => {
     const fillRate = shift.assignedVolunteers / shift.requiredVolunteers;
@@ -109,8 +108,20 @@ export function VolunteerShiftScheduler({ workspaceId: _workspaceId }: Volunteer
         </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Summary Bar */}
-        <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : shifts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Calendar className="h-10 w-10 text-muted-foreground/50 mb-2" />
+            <p className="text-sm text-muted-foreground">No shifts scheduled yet</p>
+            <p className="text-xs text-muted-foreground/70">Click "Add Shift" to create your first shift</p>
+          </div>
+        ) : (
+          <>
+            {/* Summary Bar */}
+            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Overall Fill Rate:</span>
@@ -170,8 +181,10 @@ export function VolunteerShiftScheduler({ workspaceId: _workspaceId }: Volunteer
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

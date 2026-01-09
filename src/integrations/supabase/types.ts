@@ -1562,6 +1562,94 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteer_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          shift_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shift_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shift_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteer_assignments_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "volunteer_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      volunteer_shifts: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          id: string
+          location: string | null
+          name: string
+          required_volunteers: number
+          start_time: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          id?: string
+          location?: string | null
+          name: string
+          required_volunteers?: number
+          start_time: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          location?: string | null
+          name?: string
+          required_volunteers?: number
+          start_time?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteer_shifts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_access_requests: {
         Row: {
           created_at: string
