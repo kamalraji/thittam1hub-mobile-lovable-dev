@@ -59,7 +59,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   return (
-    <div className="flex h-full flex-1 flex-col bg-[hsl(220,13%,6%)]">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col bg-[hsl(220,13%,6%)]">
       {/* Device bar */}
       <div className="flex h-10 items-center justify-between border-b border-[hsl(220,13%,18%)] bg-[hsl(220,13%,10%)] px-4">
         <div className="flex items-center gap-3">

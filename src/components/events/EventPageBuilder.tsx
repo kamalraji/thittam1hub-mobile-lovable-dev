@@ -104,7 +104,7 @@ export const EventPageBuilder: React.FC = () => {
       {/* Three-Panel Layout */}
       <div className="flex flex-1 overflow-hidden min-w-0">
         {/* Left Panel: Pages, Layers, Assets - hidden on small screens */}
-        <div className="hidden md:block flex-shrink-0">
+        <div className="hidden sm:flex flex-shrink-0 h-full">
           <LeftPanel
             blocksContainerRef={blocksContainerRef}
             layersContainerRef={layersContainerRef}
@@ -120,7 +120,7 @@ export const EventPageBuilder: React.FC = () => {
         </div>
 
         {/* Center: Canvas Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 h-full">
           <CanvasArea
             containerRef={containerRef}
             device={device}
@@ -128,8 +128,8 @@ export const EventPageBuilder: React.FC = () => {
           />
         </div>
 
-        {/* Right Panel: Design & Prototype - hidden on small screens */}
-        <div className="hidden lg:block flex-shrink-0">
+        {/* Right Panel: Design & Prototype - hidden on smaller screens */}
+        <div className="hidden md:flex flex-shrink-0 h-full">
           <RightPanel
             stylesContainerRef={stylesContainerRef}
             traitsContainerRef={traitsContainerRef}
