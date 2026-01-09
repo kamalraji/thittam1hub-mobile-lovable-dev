@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { WorkspaceTask, TaskCategory, TaskPriority, TeamMember, WorkspaceRoleScope, TaskStatus } from '../../types';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   ListTodo
 } from 'lucide-react';
-import { SubtaskSection, type Subtask, MultiAssigneeSelector } from './task-form';
+import { SubtaskSection, type Subtask, MultiAssigneeSelector, useTaskFormKeyboard } from './task-form';
+import { useTaskDraft } from '@/hooks/useTaskDraft';
 
 interface TaskFormProps {
   task?: WorkspaceTask;
@@ -73,6 +74,8 @@ export function TaskForm({
   onCancel,
   isLoading = false
 }: TaskFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  
   const [formData, setFormData] = useState<TaskFormData>({
     title: task?.title || '',
     description: task?.description || '',
@@ -93,6 +96,28 @@ export function TaskForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDependencies, setShowDependencies] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState((task?.subtasks?.length || 0) > 0);
+
+  // Autosave drafts (only for new tasks)
+  const { saveDraft } = useTaskDraft({
+    workspaceId: workspaceId || '',
+    onDraftRestored: (draft) => {
+      if (!task) {
+        setFormData(prev => ({ ...prev, ...draft }));
+      }
+    },
+  });
+
+  // Keyboard shortcuts
+  useTaskFormKeyboard({
+    formRef,
+    onSubmit: () => formRef.current?.requestSubmit(),
+    onCancel,
+    onSaveDraft: () => saveDraft(formData),
+    onPriorityChange: (priority) => handleInputChange('priority', priority),
+    onToggleDependencies: () => setShowDependencies(prev => !prev),
+    onToggleSubtasks: () => setShowSubtasks(prev => !prev),
+    disabled: isLoading,
+  });
 
   const availableDependencies = availableTasks.filter(t => t.id !== task?.id);
 
