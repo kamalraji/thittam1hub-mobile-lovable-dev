@@ -3172,6 +3172,37 @@ export type Database = {
         | "WEBINAR"
         | "COMPETITION"
         | "OTHER"
+        | "SEMINAR"
+        | "SYMPOSIUM"
+        | "CULTURAL_FEST"
+        | "SPORTS_EVENT"
+        | "ORIENTATION"
+        | "ALUMNI_MEET"
+        | "CAREER_FAIR"
+        | "LECTURE"
+        | "QUIZ"
+        | "DEBATE"
+        | "PRODUCT_LAUNCH"
+        | "TOWN_HALL"
+        | "TEAM_BUILDING"
+        | "TRAINING"
+        | "AWARDS_CEREMONY"
+        | "OFFSITE"
+        | "NETWORKING"
+        | "TRADE_SHOW"
+        | "EXPO"
+        | "SUMMIT"
+        | "PANEL_DISCUSSION"
+        | "DEMO_DAY"
+        | "FUNDRAISER"
+        | "GALA"
+        | "CHARITY_EVENT"
+        | "VOLUNTEER_DRIVE"
+        | "AWARENESS_CAMPAIGN"
+        | "CONCERT"
+        | "EXHIBITION"
+        | "FESTIVAL"
+        | "SOCIAL_GATHERING"
       event_mode: "OFFLINE" | "ONLINE" | "HYBRID"
       event_status:
         | "DRAFT"
@@ -3348,6 +3379,37 @@ export const Constants = {
         "WEBINAR",
         "COMPETITION",
         "OTHER",
+        "SEMINAR",
+        "SYMPOSIUM",
+        "CULTURAL_FEST",
+        "SPORTS_EVENT",
+        "ORIENTATION",
+        "ALUMNI_MEET",
+        "CAREER_FAIR",
+        "LECTURE",
+        "QUIZ",
+        "DEBATE",
+        "PRODUCT_LAUNCH",
+        "TOWN_HALL",
+        "TEAM_BUILDING",
+        "TRAINING",
+        "AWARDS_CEREMONY",
+        "OFFSITE",
+        "NETWORKING",
+        "TRADE_SHOW",
+        "EXPO",
+        "SUMMIT",
+        "PANEL_DISCUSSION",
+        "DEMO_DAY",
+        "FUNDRAISER",
+        "GALA",
+        "CHARITY_EVENT",
+        "VOLUNTEER_DRIVE",
+        "AWARENESS_CAMPAIGN",
+        "CONCERT",
+        "EXHIBITION",
+        "FESTIVAL",
+        "SOCIAL_GATHERING",
       ],
       event_mode: ["OFFLINE", "ONLINE", "HYBRID"],
       event_status: ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED", "CANCELLED"],
