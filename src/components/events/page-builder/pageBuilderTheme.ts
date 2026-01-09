@@ -1,15 +1,16 @@
 /**
- * GrapesJS Professional Dark Theme
- * Matching the app's design system
+ * GrapesJS Professional Theme
+ * Supporting both light and dark modes
  */
 export const pageBuilderTheme = `
 /* ========================================
-   GrapesJS Professional Dark Theme
+   GrapesJS Professional Theme
    Matching App Design System
 ======================================== */
 
-/* CSS Custom Properties */
-.gjs-editor {
+/* CSS Custom Properties - Dark Mode (default) */
+.gjs-editor,
+.builder-theme-dark {
   --gjs-bg-primary: hsl(222, 47%, 7%);
   --gjs-bg-secondary: hsl(222, 47%, 9%);
   --gjs-bg-tertiary: hsl(222, 47%, 11%);
@@ -18,7 +19,21 @@ export const pageBuilderTheme = `
   --gjs-text-primary: hsl(210, 40%, 98%);
   --gjs-text-secondary: hsl(215, 20%, 75%);
   --gjs-text-muted: hsl(215, 20%, 55%);
-  --gjs-accent: hsl(221, 83%, 66%);
+  --gjs-accent: hsl(221, 83%, 53%);
+  --gjs-accent-secondary: hsl(199, 89%, 60%);
+}
+
+/* CSS Custom Properties - Light Mode */
+.builder-theme-light {
+  --gjs-bg-primary: hsl(0, 0%, 100%);
+  --gjs-bg-secondary: hsl(210, 20%, 98%);
+  --gjs-bg-tertiary: hsl(210, 20%, 96%);
+  --gjs-bg-hover: hsl(210, 20%, 93%);
+  --gjs-border: hsl(214, 32%, 91%);
+  --gjs-text-primary: hsl(222, 47%, 11%);
+  --gjs-text-secondary: hsl(215, 16%, 47%);
+  --gjs-text-muted: hsl(215, 16%, 57%);
+  --gjs-accent: hsl(221, 83%, 53%);
   --gjs-accent-secondary: hsl(199, 89%, 60%);
 }
 

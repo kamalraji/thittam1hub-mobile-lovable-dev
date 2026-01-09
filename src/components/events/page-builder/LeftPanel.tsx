@@ -79,9 +79,9 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>('Layers');
 
   return (
-    <div className="flex h-full w-48 sm:w-52 md:w-56 lg:w-64 xl:w-72 flex-col border-r border-[hsl(220,13%,18%)] bg-[hsl(220,13%,10%)]">
+    <div className="flex h-full w-48 sm:w-52 md:w-56 lg:w-64 xl:w-72 flex-col border-r border-[var(--gjs-border)] bg-[var(--gjs-bg-secondary)]">
       {/* Tabs */}
-      <div className="flex h-10 items-center border-b border-[hsl(220,13%,18%)] px-3">
+      <div className="flex h-10 items-center border-b border-[var(--gjs-border)] px-3">
         {(['Pages', 'Layers', 'Assets'] as TabType[]).map((tab) => (
           <button
             key={tab}
@@ -89,8 +89,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
               activeTab === tab
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-[var(--gjs-accent)] text-white'
+                : 'text-[var(--gjs-text-muted)] hover:text-[var(--gjs-text-primary)]'
             )}
           >
             {tab}
@@ -134,10 +134,10 @@ const PagesPanel: React.FC = () => {
   return (
     <div className="p-2">
       {/* Page selector */}
-      <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-[hsl(220,13%,15%)] transition-colors">
-        <Home className="h-4 w-4 text-muted-foreground" />
+      <button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--gjs-text-primary)] hover:bg-[var(--gjs-bg-hover)] transition-colors">
+        <Home className="h-4 w-4 text-[var(--gjs-text-muted)]" />
         <span>Home</span>
-        <ChevronDown className="ml-auto h-3 w-3 text-muted-foreground" />
+        <ChevronDown className="ml-auto h-3 w-3 text-[var(--gjs-text-muted)]" />
       </button>
     </div>
   );
@@ -174,10 +174,10 @@ const LayersPanel: React.FC<LayersPanelProps> = ({
   return (
     <div className="p-2">
       {/* Page dropdown */}
-      <button className="mb-3 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-[hsl(220,13%,15%)] transition-colors">
-        <Home className="h-4 w-4 text-muted-foreground" />
+      <button className="mb-3 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--gjs-text-primary)] hover:bg-[var(--gjs-bg-hover)] transition-colors">
+        <Home className="h-4 w-4 text-[var(--gjs-text-muted)]" />
         <span>Home</span>
-        <ChevronDown className="ml-auto h-3 w-3 text-muted-foreground" />
+        <ChevronDown className="ml-auto h-3 w-3 text-[var(--gjs-text-muted)]" />
       </button>
 
       {/* Draggable layer tree */}
@@ -240,8 +240,8 @@ const DraggableLayerItem: React.FC<DraggableLayerItemProps> = ({
         className={cn(
           'flex items-center gap-1 rounded-md py-1 text-xs transition-colors relative',
           selected
-            ? 'bg-primary text-primary-foreground'
-            : 'text-foreground hover:bg-[hsl(220,13%,15%)]',
+            ? 'bg-[var(--gjs-accent)] text-white'
+            : 'text-[var(--gjs-text-primary)] hover:bg-[var(--gjs-bg-hover)]',
           !layer.visible && 'opacity-50'
         )}
         style={{ paddingLeft: `${paddingLeft}px`, paddingRight: '8px' }}
@@ -254,7 +254,7 @@ const DraggableLayerItem: React.FC<DraggableLayerItemProps> = ({
           className="cursor-grab active:cursor-grabbing touch-none"
           onPointerDown={(e) => dragControls.start(e)}
         >
-          <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <GripVertical className="h-3 w-3 text-[var(--gjs-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
         {/* Expand toggle */}
@@ -275,7 +275,7 @@ const DraggableLayerItem: React.FC<DraggableLayerItemProps> = ({
         {/* Icon */}
         <Icon className={cn(
           'h-3.5 w-3.5 shrink-0',
-          selected ? 'text-primary-foreground' : 'text-primary'
+          selected ? 'text-white' : 'text-[var(--gjs-accent)]'
         )} />
 
         {/* Label */}
@@ -291,12 +291,12 @@ const DraggableLayerItem: React.FC<DraggableLayerItemProps> = ({
               e.stopPropagation();
               onVisibilityToggle?.();
             }}
-            className="p-0.5 rounded hover:bg-[hsl(220,13%,25%)] transition-colors"
+            className="p-0.5 rounded hover:bg-[var(--gjs-bg-tertiary)] transition-colors"
           >
             {layer.visible ? (
-              <Eye className="h-3 w-3 text-muted-foreground" />
+              <Eye className="h-3 w-3 text-[var(--gjs-text-muted)]" />
             ) : (
-              <EyeOff className="h-3 w-3 text-muted-foreground" />
+              <EyeOff className="h-3 w-3 text-[var(--gjs-text-muted)]" />
             )}
           </button>
           <button
@@ -304,12 +304,12 @@ const DraggableLayerItem: React.FC<DraggableLayerItemProps> = ({
               e.stopPropagation();
               onLockToggle?.();
             }}
-            className="p-0.5 rounded hover:bg-[hsl(220,13%,25%)] transition-colors"
+            className="p-0.5 rounded hover:bg-[var(--gjs-bg-tertiary)] transition-colors"
           >
             {layer.locked ? (
-              <Lock className="h-3 w-3 text-muted-foreground" />
+              <Lock className="h-3 w-3 text-[var(--gjs-text-muted)]" />
             ) : (
-              <Unlock className="h-3 w-3 text-muted-foreground" />
+              <Unlock className="h-3 w-3 text-[var(--gjs-text-muted)]" />
             )}
           </button>
           <button
@@ -343,14 +343,14 @@ const AssetsPanel: React.FC<AssetsPanelProps> = ({
   return (
     <div className="p-2">
       {/* Toggle between Blocks and Templates */}
-      <div className="flex gap-1 mb-3 p-1 bg-[hsl(220,13%,12%)] rounded-lg">
+      <div className="flex gap-1 mb-3 p-1 bg-[var(--gjs-bg-primary)] rounded-lg border border-[var(--gjs-border)]">
         <button
           onClick={() => setActiveSection('templates')}
           className={cn(
             'flex-1 py-1.5 text-xs font-medium rounded-md transition-colors',
             activeSection === 'templates'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-[var(--gjs-accent)] text-white'
+              : 'text-[var(--gjs-text-muted)] hover:text-[var(--gjs-text-primary)]'
           )}
         >
           Templates
@@ -360,8 +360,8 @@ const AssetsPanel: React.FC<AssetsPanelProps> = ({
           className={cn(
             'flex-1 py-1.5 text-xs font-medium rounded-md transition-colors',
             activeSection === 'blocks'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-[var(--gjs-accent)] text-white'
+              : 'text-[var(--gjs-text-muted)] hover:text-[var(--gjs-text-primary)]'
           )}
         >
           Blocks
@@ -379,7 +379,7 @@ const AssetsPanel: React.FC<AssetsPanelProps> = ({
         </div>
 
         <div className={cn(activeSection === 'blocks' ? 'block' : 'hidden')}>
-          <p className="px-2 text-xs text-muted-foreground">Drag blocks to add sections</p>
+          <p className="px-2 text-xs text-[var(--gjs-text-muted)]">Drag blocks to add sections</p>
         </div>
 
         {/* GrapesJS blocks container (keep mounted so it can render on editor load) */}
