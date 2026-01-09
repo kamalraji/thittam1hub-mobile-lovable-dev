@@ -8,10 +8,15 @@ import { MilestoneTimeline } from '../committee/MilestoneTimeline';
 import { GoalTracker } from '../committee/GoalTracker';
 import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
 import { BudgetRequestForm } from '../committee/BudgetRequestForm';
+import { CommitteeChecklist } from '../committee/CommitteeChecklist';
+import { ResourceRequestForm } from '../committee/ResourceRequestForm';
 import { VolunteerShiftScheduler } from './VolunteerShiftScheduler';
 import { VolunteerRoster } from './VolunteerRoster';
 import { VolunteerCheckInStats } from './VolunteerCheckInStats';
 import { VolunteerQuickActions } from './VolunteerQuickActions';
+import { VolunteerStatsCards } from './VolunteerStatsCards';
+import { VolunteerTrainingTracker } from './VolunteerTrainingTracker';
+import { VolunteerPerformanceCard } from './VolunteerPerformanceCard';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
@@ -93,6 +98,9 @@ export function VolunteersDashboard({
         teamsCount={teams.length}
       />
 
+      {/* Volunteer Stats Cards */}
+      <VolunteerStatsCards workspaceId={workspace.id} />
+
       {/* Role-Based Actions */}
       <RoleBasedActions
         workspace={workspace}
@@ -119,12 +127,13 @@ export function VolunteersDashboard({
 
       {/* Volunteer-Specific Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Shift Scheduler */}
-        <div className="lg:col-span-2">
+        {/* Left Column - Shift Scheduler & Training */}
+        <div className="lg:col-span-2 space-y-6">
           <VolunteerShiftScheduler workspaceId={workspace.id} />
+          <VolunteerTrainingTracker workspaceId={workspace.id} />
         </div>
 
-        {/* Right Column - Check-In Stats & Quick Actions */}
+        {/* Right Column - Check-In Stats, Quick Actions & Checklist */}
         <div className="space-y-6">
           <VolunteerCheckInStats workspaceId={workspace.id} />
           <VolunteerQuickActions 
@@ -132,11 +141,17 @@ export function VolunteersDashboard({
             eventId={workspace.eventId}
             orgSlug={orgSlug}
           />
+          <CommitteeChecklist workspaceId={workspace.id} committeeType="VOLUNTEERS" />
         </div>
       </div>
 
-      {/* Volunteer Roster Section */}
-      <VolunteerRoster workspaceId={workspace.id} />
+      {/* Volunteer Roster & Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <VolunteerRoster workspaceId={workspace.id} />
+        </div>
+        <VolunteerPerformanceCard workspaceId={workspace.id} />
+      </div>
 
       {/* Goals & Milestones */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -144,7 +159,7 @@ export function VolunteersDashboard({
         <GoalTracker workspaceId={workspace.id} />
       </div>
 
-      {/* Budget Section */}
+      {/* Budget & Resource Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {!isBudgetLoading && (
           <BudgetTrackerConnected
@@ -152,10 +167,16 @@ export function VolunteersDashboard({
             showBreakdown={false}
           />
         )}
-        <BudgetRequestForm
-          workspaceId={workspace.id}
-          parentWorkspaceId={workspace.parentWorkspaceId || null}
-        />
+        <div className="space-y-6">
+          <BudgetRequestForm
+            workspaceId={workspace.id}
+            parentWorkspaceId={workspace.parentWorkspaceId || null}
+          />
+          <ResourceRequestForm
+            workspaceId={workspace.id}
+            parentWorkspaceId={workspace.parentWorkspaceId || null}
+          />
+        </div>
       </div>
 
       {/* Team Members */}
