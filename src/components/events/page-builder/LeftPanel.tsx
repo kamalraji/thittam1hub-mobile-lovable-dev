@@ -100,8 +100,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {activeTab === 'Pages' && <PagesPanel />}
-        {activeTab === 'Layers' && (
+        {/* Keep panels mounted so GrapesJS can render into refs even if tab isn't active yet */}
+        <div className={cn(activeTab === 'Pages' ? 'block' : 'hidden')}>
+          <PagesPanel />
+        </div>
+
+        <div className={cn(activeTab === 'Layers' ? 'block' : 'hidden')}>
           <LayersPanel 
             layersContainerRef={layersContainerRef}
             layers={layers}
@@ -112,14 +116,15 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             onLayerDelete={onLayerDelete}
             selectedLayerId={selectedLayerId}
           />
-        )}
-        {activeTab === 'Assets' && (
+        </div>
+
+        <div className={cn(activeTab === 'Assets' ? 'block' : 'hidden')}>
           <AssetsPanel 
             blocksContainerRef={blocksContainerRef}
             onSelectTemplate={onSelectTemplate}
             selectedTemplateId={selectedTemplateId}
           />
-        )}
+        </div>
       </div>
     </div>
   );

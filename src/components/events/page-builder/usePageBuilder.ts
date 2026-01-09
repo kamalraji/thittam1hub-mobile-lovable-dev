@@ -177,6 +177,8 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
       },
 
       blockManager: {
+        // Render blocks directly into our custom left panel container when available
+        appendTo: blocksContainerRef.current || undefined,
         blocks: [
           {
             id: 'section',
@@ -350,15 +352,8 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
         }
       }
 
-      // Render Block Manager to custom container
-      if (blocksContainerRef.current) {
-        const allBlocks = editor.BlockManager.getAll();
-        const bmEl = (editor.BlockManager as any).render?.(allBlocks, { external: true });
-        if (bmEl) {
-          blocksContainerRef.current.innerHTML = '';
-          blocksContainerRef.current.appendChild(bmEl);
-        }
-      }
+      // Block Manager is rendered via `blockManager.appendTo` in the init config
+      // (keeps native drag/drop behavior)
 
       // Render Layer Manager to custom container
       if (layersContainerRef.current) {
