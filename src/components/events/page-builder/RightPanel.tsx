@@ -18,11 +18,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   traitsContainerRef,
 }) => {
   return (
-    <div className="flex h-full w-48 sm:w-56 md:w-60 lg:w-64 xl:w-72 flex-col border-l border-[hsl(220,13%,18%)] bg-[hsl(220,13%,10%)]">
+    <div className="flex h-full w-48 sm:w-56 md:w-60 lg:w-64 xl:w-72 flex-col border-l border-[var(--gjs-border)] bg-[var(--gjs-bg-secondary)]">
       {/* GrapesJS Traits Panel */}
       <div 
         ref={traitsContainerRef} 
-        className="gjs-traits-container border-b border-[hsl(220,13%,18%)]"
+        className="gjs-traits-container border-b border-[var(--gjs-border)]"
       />
       
       {/* GrapesJS Styles Panel */}

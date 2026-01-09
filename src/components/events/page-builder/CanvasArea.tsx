@@ -59,16 +59,16 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-1 flex-col bg-[hsl(220,13%,6%)]">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col bg-[var(--gjs-bg-primary)]">
       {/* Device bar */}
-      <div className="flex h-10 items-center justify-between border-b border-[hsl(220,13%,18%)] bg-[hsl(220,13%,10%)] px-4">
+      <div className="flex h-10 items-center justify-between border-b border-[var(--gjs-border)] bg-[var(--gjs-bg-secondary)] px-4">
         <div className="flex items-center gap-3">
-          <button className="flex h-6 w-6 items-center justify-center rounded bg-primary/20 text-primary" type="button">
+          <button className="flex h-6 w-6 items-center justify-center rounded bg-[var(--gjs-accent)]/20 text-[var(--gjs-accent)]" type="button">
             <Play className="h-3 w-3" fill="currentColor" />
           </button>
           
           {/* Device Toggle Pills */}
-          <div className="flex items-center gap-1 rounded-lg bg-[hsl(220,13%,8%)] p-1 border border-[hsl(220,13%,18%)]">
+          <div className="flex items-center gap-1 rounded-lg bg-[var(--gjs-bg-primary)] p-1 border border-[var(--gjs-border)]">
             {DEVICES.map((d) => {
               const Icon = d.icon;
               const isActive = device === d.id;
@@ -80,14 +80,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                   className={cn(
                     'relative flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-all duration-300',
                     isActive
-                      ? 'text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-white'
+                      : 'text-[var(--gjs-text-muted)] hover:text-[var(--gjs-text-primary)]'
                   )}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="device-indicator"
-                      className="absolute inset-0 rounded-md bg-primary shadow-[0_0_12px_hsl(221,83%,53%/0.4)]"
+                      className="absolute inset-0 rounded-md bg-[var(--gjs-accent)] shadow-[0_0_12px_hsl(221,83%,53%/0.4)]"
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                     />
                   )}
@@ -105,7 +105,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 5 }}
               transition={{ duration: 0.2 }}
-              className="text-sm text-muted-foreground tabular-nums"
+              className="text-sm text-[var(--gjs-text-muted)] tabular-nums"
             >
               {deviceWidth}px
             </motion.span>
@@ -117,13 +117,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleZoomOut}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-[hsl(220,13%,15%)] hover:text-foreground transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded text-[var(--gjs-text-muted)] hover:bg-[var(--gjs-bg-hover)] hover:text-[var(--gjs-text-primary)] transition-colors"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
 
           <SimpleDropdown>
-            <SimpleDropdownTrigger className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-[hsl(220,13%,15%)] hover:text-foreground transition-colors min-w-[52px] justify-center">
+            <SimpleDropdownTrigger className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-[var(--gjs-text-muted)] hover:bg-[var(--gjs-bg-hover)] hover:text-[var(--gjs-text-primary)] transition-colors min-w-[52px] justify-center">
               {getZoomLabel()}
             </SimpleDropdownTrigger>
             <SimpleDropdownContent align="center" className="min-w-[80px]">
@@ -142,7 +142,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           <button
             type="button"
             onClick={handleZoomIn}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-[hsl(220,13%,15%)] hover:text-foreground transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded text-[var(--gjs-text-muted)] hover:bg-[var(--gjs-bg-hover)] hover:text-[var(--gjs-text-primary)] transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -153,8 +153,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
             className={cn(
               'flex h-7 w-7 items-center justify-center rounded transition-colors ml-1',
               zoom === 'fit'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-[hsl(220,13%,15%)] hover:text-foreground'
+                ? 'bg-[var(--gjs-accent)]/20 text-[var(--gjs-accent)]'
+                : 'text-[var(--gjs-text-muted)] hover:bg-[var(--gjs-bg-hover)] hover:text-[var(--gjs-text-primary)]'
             )}
           >
             <Maximize className="h-3.5 w-3.5" />
@@ -172,7 +172,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             className={cn(
-              'mx-auto h-full overflow-hidden rounded-lg bg-[hsl(220,13%,12%)] shadow-2xl ring-1 ring-[hsl(220,13%,18%)]',
+              'mx-auto h-full overflow-hidden rounded-lg bg-[var(--gjs-bg-tertiary)] shadow-2xl ring-1 ring-[var(--gjs-border)]',
               zoom === 'fit' ? 'w-full max-w-full' : ''
             )}
             style={zoom !== 'fit' ? { 
