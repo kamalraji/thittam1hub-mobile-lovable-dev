@@ -164,29 +164,24 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
 
       {/* Canvas container */}
       <div className="relative flex-1 overflow-auto p-2 sm:p-4 md:p-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={device}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className={cn(
-              'mx-auto h-full overflow-hidden rounded-lg bg-[var(--gjs-bg-tertiary)] shadow-2xl ring-1 ring-[var(--gjs-border)]',
-              zoom === 'fit' ? 'w-full max-w-full' : ''
-            )}
-            style={zoom !== 'fit' ? { 
-              width: `min(${deviceWidth * (typeof zoom === 'number' ? zoom : 1)}px, 100%)`,
-              maxWidth: '100%'
-            } : {}}
-          >
-            <div
-              ref={containerRef}
-              className="gjs-editor-container h-full w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"
-              style={getTransformStyle()}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          layout
+          initial={false}
+          animate={{ 
+            width: zoom === 'fit' ? '100%' : `min(${deviceWidth * (typeof zoom === 'number' ? zoom : 1)}px, 100%)`,
+          }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className={cn(
+            'mx-auto h-full overflow-hidden rounded-lg bg-[var(--gjs-bg-tertiary)] shadow-2xl ring-1 ring-[var(--gjs-border)]',
+            zoom === 'fit' ? 'max-w-full' : ''
+          )}
+        >
+          <div
+            ref={containerRef}
+            className="gjs-editor-container h-full w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px]"
+            style={getTransformStyle()}
+          />
+        </motion.div>
       </div>
     </div>
   );
