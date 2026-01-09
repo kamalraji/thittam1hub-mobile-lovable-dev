@@ -43,11 +43,9 @@ interface EventData {
 
 interface UsePageBuilderOptions {
   eventId?: string;
-  blocksContainerRef?: React.RefObject<HTMLDivElement>;
-  layersContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
-export function usePageBuilder({ eventId, blocksContainerRef, layersContainerRef }: UsePageBuilderOptions) {
+export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const editorRef = useRef<Editor | null>(null);
@@ -464,29 +462,7 @@ export function usePageBuilder({ eventId, blocksContainerRef, layersContainerRef
     }
 
     // =============================================
-    // 11. RENDER BLOCKS INTO CUSTOM LEFT PANEL
-    // =============================================
-    if (blocksContainerRef?.current) {
-      // Render blocks externally and append to our custom container
-      const blocksEl = editor.BlockManager.render(editor.BlockManager.getAll().models, { external: true });
-      blocksContainerRef.current.innerHTML = '';
-      if (blocksEl) {
-        blocksContainerRef.current.appendChild(blocksEl);
-      }
-    }
-
-    if (layersContainerRef?.current) {
-      // For layers, we append the default layers container
-      const layersPanel = editor.Panels.getPanel('views-container');
-      const layersEl = layersPanel?.view?.el?.querySelector('.gjs-layers');
-      if (layersEl) {
-        layersContainerRef.current.innerHTML = '';
-        layersContainerRef.current.appendChild(layersEl.cloneNode(true));
-      }
-    }
-
-    // =============================================
-    // 12. KEYBOARD SHORTCUTS
+    // 11. KEYBOARD SHORTCUTS
     // =============================================
     editor.on('load', () => {
       // Add keyboard shortcuts
