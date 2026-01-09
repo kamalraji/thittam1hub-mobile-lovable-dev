@@ -429,7 +429,7 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
     templatesPlugin(editor);
     assetUploadPlugin(editor, { eventId });
 
-    // Load existing content
+    // Load existing content or use template with styles
     if (existingLanding?.html) {
       editor.setComponents(existingLanding.html);
       if (existingLanding.css) {
@@ -442,6 +442,10 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
         description, 
         organizationName 
       }));
+      
+      // Inject the canvas styles directly into the CSS composer so they render
+      const canvasStylesCss = getCanvasStyles(primaryColor).join('\n');
+      editor.setStyle(canvasStylesCss);
     }
 
     // Keyboard shortcuts
