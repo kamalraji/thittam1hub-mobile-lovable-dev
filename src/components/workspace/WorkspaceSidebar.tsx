@@ -269,41 +269,43 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-border/50 to-transparent mx-3 my-3" />
-
-          {/* Management Section */}
-          <SidebarGroup>
-            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 mb-2">
-              Management
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {groupedItems['management']?.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={activeTab === item.id}
-                      tooltip={item.name}
-                      onClick={() => handleTabChange(item.id)}
-                      className={cn(
-                        'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
-                        'hover:bg-muted/50',
-                        activeTab === item.id && 'bg-primary/10 text-primary'
-                      )}
-                    >
-                      <item.icon
-                        className={cn(
-                          'h-4 w-4',
-                          activeTab === item.id ? 'text-primary' : 'text-muted-foreground'
-                        )}
-                      />
-                      {!isCollapsed && <span>{item.name}</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {/* Management Section - Hidden for DEPARTMENT workspaces */}
+          {workspace.workspaceType !== WorkspaceType.DEPARTMENT && (
+            <>
+              <div className="h-px bg-gradient-to-r from-transparent via-border/50 to-transparent mx-3 my-3" />
+              <SidebarGroup>
+                <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 mb-2">
+                  Management
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {groupedItems['management']?.map((item) => (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={activeTab === item.id}
+                          tooltip={item.name}
+                          onClick={() => handleTabChange(item.id)}
+                          className={cn(
+                            'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
+                            'hover:bg-muted/50',
+                            activeTab === item.id && 'bg-primary/10 text-primary'
+                          )}
+                        >
+                          <item.icon
+                            className={cn(
+                              'h-4 w-4',
+                              activeTab === item.id ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                          />
+                          {!isCollapsed && <span>{item.name}</span>}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </>
+          )}
 
           {/* Divider */}
           <div className="h-px bg-gradient-to-r from-transparent via-border/50 to-transparent mx-3 my-3" />
