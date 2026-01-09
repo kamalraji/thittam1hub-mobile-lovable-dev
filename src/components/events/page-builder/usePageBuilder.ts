@@ -44,6 +44,11 @@ interface EventData {
   existingLanding: LandingPageData | null;
   existingSlug: string;
   organizationName?: string;
+  startDate?: string;
+  endDate?: string;
+  mode?: 'in_person' | 'virtual' | 'hybrid';
+  capacity?: number | null;
+  category?: string | null;
 }
 
 interface UsePageBuilderOptions {
@@ -80,6 +85,7 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
           .from('events')
           .select(`
             id, name, description, organization_id, branding, landing_page_data, landing_page_slug,
+            start_date, end_date, mode, capacity, category,
             organizations:organization_id ( name )
           `)
           .eq('id', eventId)
@@ -105,6 +111,11 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
           existingLanding: (eventRow as any).landing_page_data ?? null,
           existingSlug: (eventRow as any).landing_page_slug ?? '',
           organizationName: org?.name,
+          startDate: eventRow.start_date,
+          endDate: eventRow.end_date,
+          mode: eventRow.mode as 'in_person' | 'virtual' | 'hybrid',
+          capacity: eventRow.capacity,
+          category: eventRow.category,
         };
 
         setEventData(data);
@@ -128,7 +139,7 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
   useEffect(() => {
     if (loading || !eventData || !containerRef.current || editorRef.current) return;
 
-    const { name, description, branding, existingLanding, organizationName } = eventData;
+    const { name, description, branding, existingLanding, organizationName, startDate, endDate, mode, capacity, category } = eventData;
     const primaryColor = branding?.primaryColor || '#2563eb';
     const logoUrl = branding?.logoUrl as string | undefined;
 
@@ -436,11 +447,16 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
         editor.setStyle(existingLanding.css);
       }
     } else {
-      // Use PublicEventPage-style template as initial canvas
+      // Use PublicEventPage-style template with real event data
       editor.setComponents(getInitialPublicEventTemplate({ 
         name, 
         description, 
-        organizationName 
+        organizationName,
+        startDate,
+        endDate,
+        mode,
+        capacity,
+        category,
       }));
       
       // Inject the canvas styles directly into the CSS composer so they render
