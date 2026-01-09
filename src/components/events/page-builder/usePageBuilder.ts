@@ -25,6 +25,7 @@ import { assetUploadPlugin } from './grapesjsAssetPlugin';
 import { TemplateData } from './TemplatesGallery';
 import { LayerData } from './LeftPanel';
 import { AnimationConfig } from './RightPanel';
+import { injectEventDataIntoTemplate } from './templates/templateDataInjector';
 
 interface LandingPageDataMeta {
   title?: string;
@@ -499,38 +500,16 @@ export function usePageBuilder({ eventId }: UsePageBuilderOptions) {
   // Apply template - inject real event data into template placeholders
   const handleSelectTemplate = useCallback((template: TemplateData) => {
     if (editorRef.current && template.html && eventData) {
-      // Replace template placeholders with real event data
-      let html = template.html;
-      
-      // Common placeholder replacements
-      const replacements: Record<string, string> = {
-        // Event name variations
-        'Design & Coffee ☕': eventData.name,
-        'Design &amp; Coffee ☕': eventData.name,
-        'Monthly Meetup': eventData.name,
-        'Build Something Amazing': eventData.name,
-        'Innovation Summit 2024': eventData.name,
-        'Product Hunt Launch': eventData.name,
-        'Networking Night': eventData.name,
-        'TechConf 2024': eventData.name,
-        'TECHCONF 2024': eventData.name,
-        'MONTHLY MEETUP': eventData.name.toUpperCase(),
-        
-        // Description variations
-        'Every first Friday of the month': eventData.description || 'Join us for an amazing event',
-        'Join developers, designers, and tech enthusiasts': eventData.description || 'Join us for an amazing event',
-        'Where Innovation Meets Opportunity': eventData.description || 'Join us for an amazing event',
-        
-        // Organization name
-        'Hosted by Design Community': eventData.organizationName ? `Hosted by ${eventData.organizationName}` : '',
-        'TechCorp Inc.': eventData.organizationName || '',
-      };
-      
-      // Apply replacements
-      Object.entries(replacements).forEach(([placeholder, value]) => {
-        if (value) {
-          html = html.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value);
-        }
+      // Inject event data into template using the utility function
+      const html = injectEventDataIntoTemplate(template.html, {
+        name: eventData.name,
+        description: eventData.description,
+        organizationName: eventData.organizationName,
+        startDate: eventData.startDate,
+        endDate: eventData.endDate,
+        mode: eventData.mode,
+        category: eventData.category ?? undefined,
+        capacity: eventData.capacity ?? undefined,
       });
       
       editorRef.current.setComponents(html);
