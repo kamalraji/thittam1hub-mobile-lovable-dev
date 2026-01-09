@@ -269,8 +269,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Management Section - Hidden for DEPARTMENT workspaces */}
-          {workspace.workspaceType !== WorkspaceType.DEPARTMENT && (
+          {/* Management Section - Hidden for DEPARTMENT and COMMITTEE workspaces */}
+          {workspace.workspaceType !== WorkspaceType.DEPARTMENT && workspace.workspaceType !== WorkspaceType.COMMITTEE && (
             <>
               <div className="h-px bg-gradient-to-r from-transparent via-border/50 to-transparent mx-3 my-3" />
               <SidebarGroup>
