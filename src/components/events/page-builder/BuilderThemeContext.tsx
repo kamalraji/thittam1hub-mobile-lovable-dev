@@ -43,4 +43,11 @@ export const getBuilderThemeVars = (isDark: boolean) => ({
   textSecondary: isDark ? 'hsl(215, 20%, 75%)' : 'hsl(215, 16%, 47%)',
   textMuted: isDark ? 'hsl(215, 20%, 55%)' : 'hsl(215, 16%, 57%)',
   accent: 'hsl(221, 83%, 53%)',
+  accentSecondary: 'hsl(199, 89%, 60%)',
 });
+
+// Export theme class names for conditional styling
+export const BUILDER_THEME_CLASSES = {
+  dark: 'builder-theme-dark',
+  light: 'builder-theme-light',
+} as const;

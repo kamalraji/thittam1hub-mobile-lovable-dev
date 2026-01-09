@@ -604,18 +604,10 @@ export const pageBuilderTheme = `
 }
 
 /* ========== Panel Containers (Custom) ========== */
+/* Inherit theme from parent builder-theme-* class */
 .panel-blocks,
 .gjs-styles-container,
 .gjs-traits-container {
-  --gjs-bg-primary: hsl(222, 47%, 7%);
-  --gjs-bg-secondary: hsl(222, 47%, 9%);
-  --gjs-bg-tertiary: hsl(222, 47%, 11%);
-  --gjs-bg-hover: hsl(217, 33%, 18%);
-  --gjs-border: hsl(217, 33%, 18%);
-  --gjs-text-primary: hsl(210, 40%, 98%);
-  --gjs-text-secondary: hsl(215, 20%, 75%);
-  --gjs-text-muted: hsl(215, 20%, 55%);
-  --gjs-accent: hsl(221, 83%, 66%);
   background-color: transparent !important;
 }
 
@@ -740,5 +732,22 @@ export const pageBuilderTheme = `
 
 .gjs-styles-container .gjs-clm-sels-info {
   color: var(--gjs-text-muted) !important;
+}
+
+/* ========== Light Mode - Canvas Checkerboard ========== */
+.builder-theme-light .gjs-frame-wrapper {
+  background: repeating-conic-gradient(
+    hsl(210, 20%, 94%) 0% 25%,
+    hsl(210, 20%, 98%) 0% 50%
+  ) 50% / 24px 24px;
+}
+
+/* ========== Light Mode - Scrollbar ========== */
+.builder-theme-light ::-webkit-scrollbar-thumb {
+  background: hsl(214, 32%, 85%);
+}
+
+.builder-theme-light ::-webkit-scrollbar-thumb:hover {
+  background: hsl(214, 32%, 75%);
 }
 `;
