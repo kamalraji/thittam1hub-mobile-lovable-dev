@@ -43,113 +43,83 @@ export function heroBlockHtml({ name, description, logoUrl }: HeroBlockProps): s
  */
 export function getInitialPublicEventTemplate({ name, description, organizationName }: Omit<HeroBlockProps, 'logoUrl'>): string {
   const safeName = name || 'Your Event Name';
-  const safeDescription = description || 'Add a compelling description that explains what your event is about and why people should attend.';
+  const safeDescription = description || 'Add a compelling description for your event.';
   const orgName = organizationName || 'Your Organization';
 
   return `
-  <!-- Hero Section - matches PublicEventPage hero -->
+  <!-- Hero Section - matches PublicEventPage with cyan-purple gradient -->
   <section id="hero" class="public-hero" data-type="hero">
     <div class="public-hero-overlay">
       <div class="public-hero-container">
-        <!-- Organization badge -->
-        <div class="org-badge">
-          <span class="org-badge-text">Hosted by ${orgName}</span>
-        </div>
-
         <h1 class="public-hero-title">${safeName}</h1>
         
         <p class="public-hero-description">${safeDescription}</p>
 
-        <!-- Quick info chips -->
+        <!-- Quick info badges -->
         <div class="info-chips">
           <div class="info-chip">
             <span class="chip-icon">📅</span>
-            <span>Jan 15, 2026</span>
+            <span>Monday, January 12, 2026 at 05:30 AM</span>
           </div>
           <div class="info-chip">
-            <span class="chip-icon">🕐</span>
-            <span>10:00 AM</span>
-          </div>
-          <div class="info-chip">
-            <span class="chip-icon">🌐</span>
+            <span class="chip-icon">📍</span>
             <span>Virtual Event</span>
           </div>
           <div class="info-chip">
-            <span class="chip-icon">👥</span>
-            <span>100 spots</span>
+            <span class="chip-icon">👤</span>
+            <span>Online</span>
           </div>
         </div>
 
-        <!-- CTA buttons -->
+        <!-- CTA row with share icons -->
         <div class="hero-cta-row">
           <a href="#register" class="cta-primary">Register Now</a>
-          <a href="#" class="cta-secondary">Share Event</a>
+          <span class="cta-secondary">Share:</span>
+          <div class="share-icons">
+            <span class="share-icon">𝕏</span>
+            <span class="share-icon">f</span>
+            <span class="share-icon">in</span>
+            <span class="share-icon">📋</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Main Content Section - matches PublicEventPage layout -->
+  <!-- Tab Navigation -->
+  <nav class="event-tabs">
+    <span class="tab-item active">Overview</span>
+    <span class="tab-item">Schedule</span>
+    <span class="tab-item">Prizes</span>
+    <span class="tab-item">Sponsors</span>
+  </nav>
+
+  <!-- Main Content Section -->
   <section id="details" class="public-details">
     <div class="details-container">
-      <!-- Main content area (2/3 width) -->
+      <!-- Main content area -->
       <div class="details-main">
         <!-- About Card -->
         <div id="about" class="content-card">
           <h2 class="card-title">About This Event</h2>
           <p class="card-content">${safeDescription}</p>
-          <p class="card-content">Join us for an incredible experience where you'll learn from industry experts, network with peers, and discover new opportunities. This event is designed to provide valuable insights and practical knowledge that you can apply immediately.</p>
-        </div>
-
-        <!-- Highlights Card -->
-        <div class="content-card">
-          <h2 class="card-title">What You'll Learn</h2>
-          <ul class="highlights-list">
-            <li class="highlight-item">✓ Industry best practices and emerging trends</li>
-            <li class="highlight-item">✓ Hands-on workshops and interactive sessions</li>
-            <li class="highlight-item">✓ Networking opportunities with peers and experts</li>
-            <li class="highlight-item">✓ Exclusive resources and takeaways</li>
-          </ul>
+          <p class="card-content">Join us for an incredible experience where you'll learn from industry experts, network with peers, and discover new opportunities.</p>
         </div>
       </div>
 
-      <!-- Sidebar (1/3 width) -->
+      <!-- Sidebar -->
       <aside class="details-sidebar">
-        <!-- Event Details Card -->
+        <!-- Registration Card -->
         <div id="register" class="sidebar-card">
-          <h3 class="sidebar-title">Event Details</h3>
-          <div class="sidebar-content">
-            <div class="detail-row">
-              <span class="detail-icon">📅</span>
-              <div class="detail-text">
-                <p class="detail-label">Date & Time</p>
-                <p class="detail-value">Wednesday, January 15, 2026</p>
-                <p class="detail-value-muted">10:00 AM - 4:00 PM</p>
-              </div>
-            </div>
-            <div class="detail-row">
-              <span class="detail-icon">📍</span>
-              <div class="detail-text">
-                <p class="detail-label">Location</p>
-                <p class="detail-value">Online Event</p>
-              </div>
-            </div>
-            <div class="detail-row">
-              <span class="detail-icon">👥</span>
-              <div class="detail-text">
-                <p class="detail-label">Capacity</p>
-                <p class="detail-value">100 attendees</p>
-              </div>
-            </div>
-          </div>
-          <a href="#" class="sidebar-cta">View Full Details</a>
+          <h3 class="sidebar-title">Registration</h3>
+          <a href="#" class="sidebar-cta">Register Now</a>
         </div>
 
         <!-- Organizer Card -->
         <div id="organizer" class="sidebar-card">
           <h3 class="sidebar-title">Organized by</h3>
           <div class="organizer-info">
-            <div class="organizer-avatar">${orgName.charAt(0)}</div>
+            <div class="organizer-avatar">${orgName.charAt(0).toUpperCase()}</div>
             <div class="organizer-details">
               <p class="organizer-name">${orgName}</p>
               <p class="organizer-link">View profile →</p>
