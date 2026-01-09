@@ -33,8 +33,8 @@ export const TemplatesGallery: React.FC<TemplatesGalleryProps> = ({
             className={cn(
               'px-2.5 py-1 text-xs rounded-md transition-colors',
               activeCategory === cat.id
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-[hsl(220,13%,15%)] text-muted-foreground hover:text-foreground'
+                ? 'bg-[var(--gjs-accent)] text-white'
+                : 'bg-[var(--gjs-bg-tertiary)] text-[var(--gjs-text-muted)] hover:text-[var(--gjs-text-primary)]'
             )}
           >
             {cat.label}
@@ -58,8 +58,8 @@ export const TemplatesGallery: React.FC<TemplatesGalleryProps> = ({
               className={cn(
                 'relative rounded-lg overflow-hidden text-left transition-all border',
                 isSelected
-                  ? 'border-primary ring-1 ring-primary'
-                  : 'border-[hsl(220,13%,20%)] hover:border-[hsl(220,13%,30%)]'
+                  ? 'border-[var(--gjs-accent)] ring-1 ring-[var(--gjs-accent)]'
+                  : 'border-[var(--gjs-border)] hover:border-[var(--gjs-text-muted)]'
               )}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
