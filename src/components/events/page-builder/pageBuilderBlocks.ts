@@ -1,12 +1,51 @@
 /**
  * GrapesJS block definitions for the Event Page Builder
  */
+import { format } from 'date-fns';
 
 interface HeroBlockProps {
   name: string;
   description: string;
   logoUrl?: string;
   organizationName?: string;
+}
+
+export interface EventTemplateData {
+  name: string;
+  description: string;
+  organizationName?: string;
+  startDate?: string;
+  endDate?: string;
+  mode?: 'in_person' | 'virtual' | 'hybrid';
+  capacity?: number | null;
+  category?: string | null;
+}
+
+function formatEventDate(dateString?: string): string {
+  if (!dateString) return 'Date TBD';
+  try {
+    return format(new Date(dateString), "EEEE, MMMM d, yyyy 'at' h:mm a");
+  } catch {
+    return 'Date TBD';
+  }
+}
+
+function getModeLabel(mode?: string): string {
+  switch (mode) {
+    case 'virtual': return 'Virtual Event';
+    case 'in_person': return 'In-Person Event';
+    case 'hybrid': return 'Hybrid Event';
+    default: return 'Event';
+  }
+}
+
+function getModeIcon(mode?: string): string {
+  switch (mode) {
+    case 'virtual': return '🌐';
+    case 'in_person': return '📍';
+    case 'hybrid': return '🔄';
+    default: return '📍';
+  }
 }
 
 export function heroBlockHtml({ name, description, logoUrl }: HeroBlockProps): string {
@@ -39,12 +78,18 @@ export function heroBlockHtml({ name, description, logoUrl }: HeroBlockProps): s
 }
 
 /**
- * Initial template that mirrors the PublicEventPage layout
+ * Initial template that mirrors the PublicEventPage layout with real event data
  */
-export function getInitialPublicEventTemplate({ name, description, organizationName }: Omit<HeroBlockProps, 'logoUrl'>): string {
-  const safeName = name || 'Your Event Name';
-  const safeDescription = description || 'Add a compelling description for your event.';
-  const orgName = organizationName || 'Your Organization';
+export function getInitialPublicEventTemplate(data: EventTemplateData): string {
+  const safeName = data.name || 'Your Event Name';
+  const safeDescription = data.description || 'Add a compelling description for your event.';
+  const orgName = data.organizationName || 'Your Organization';
+  
+  const formattedDate = formatEventDate(data.startDate);
+  const modeLabel = getModeLabel(data.mode);
+  const modeIcon = getModeIcon(data.mode);
+  const capacityText = data.capacity ? `${data.capacity} spots` : 'Limited spots';
+  const locationLabel = data.mode === 'virtual' ? 'Online' : data.mode === 'hybrid' ? 'Hybrid' : 'In-Person';
 
   return `
   <!-- Hero Section - matches PublicEventPage with cyan-purple gradient -->
@@ -55,19 +100,19 @@ export function getInitialPublicEventTemplate({ name, description, organizationN
         
         <p class="public-hero-description">${safeDescription}</p>
 
-        <!-- Quick info badges -->
+        <!-- Quick info badges with real data -->
         <div class="info-chips">
           <div class="info-chip">
             <span class="chip-icon">📅</span>
-            <span>Monday, January 12, 2026 at 05:30 AM</span>
+            <span>${formattedDate}</span>
           </div>
           <div class="info-chip">
-            <span class="chip-icon">📍</span>
-            <span>Virtual Event</span>
+            <span class="chip-icon">${modeIcon}</span>
+            <span>${modeLabel}</span>
           </div>
           <div class="info-chip">
             <span class="chip-icon">👤</span>
-            <span>Online</span>
+            <span>${locationLabel}</span>
           </div>
         </div>
 
@@ -112,6 +157,15 @@ export function getInitialPublicEventTemplate({ name, description, organizationN
         <!-- Registration Card -->
         <div id="register" class="sidebar-card">
           <h3 class="sidebar-title">Registration</h3>
+          <div class="sidebar-content">
+            <div class="detail-row">
+              <span class="detail-icon">👥</span>
+              <div class="detail-text">
+                <p class="detail-label">Capacity</p>
+                <p class="detail-value">${capacityText}</p>
+              </div>
+            </div>
+          </div>
           <a href="#" class="sidebar-cta">Register Now</a>
         </div>
 
