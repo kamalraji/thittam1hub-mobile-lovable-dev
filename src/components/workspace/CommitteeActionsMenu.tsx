@@ -226,7 +226,7 @@ function detectCommitteeType(workspaceName: string): string {
   // Direct match first
   if (committeeActions[name]) return name;
   
-  // Fuzzy matching for common variations
+  // Fuzzy matching for common variations - ORDER MATTERS (more specific first)
   if (name.includes('volunteer')) return 'volunteers';
   if (name.includes('finance') || name.includes('budget')) return 'finance';
   if (name.includes('registr') || name.includes('check-in') || name.includes('checkin')) return 'registration';
@@ -236,11 +236,14 @@ function detectCommitteeType(workspaceName: string): string {
   if (name.includes('market') || name.includes('promo')) return 'marketing';
   if (name.includes('communi') || name.includes('pr')) return 'communication';
   if (name.includes('sponsor') || name.includes('partner')) return 'sponsorship';
-  if (name.includes('social') || name.includes('media')) return 'social_media';
+  // Check social_media BEFORE media (more specific first)
+  if (name.includes('social_media') || name.includes('social media')) return 'social_media';
+  // Content detection - check before general media
   if (name.includes('content') || name.includes('editorial')) return 'content';
   if (name.includes('speaker') || name.includes('liaison')) return 'speaker_liaison';
   if (name.includes('judge') || name.includes('judging')) return 'judge';
-  if (name.includes('media') || name.includes('photo') || name.includes('video')) return 'media';
+  // Media detection - photo/video/media (but not social_media which is already handled)
+  if (name.includes('photo') || name.includes('video') || (name.includes('media') && !name.includes('social'))) return 'media';
   if (name.includes('event') || name.includes('program')) return 'event';
   if (name.includes('tech') || name.includes('av') || name.includes('audio')) return 'technical';
   if (name.includes('it') || name.includes('infra')) return 'it';
