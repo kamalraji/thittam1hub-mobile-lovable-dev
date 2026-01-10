@@ -270,10 +270,11 @@ export function CommitteeActionsMenu({ workspace, isCollapsed, onTabChange }: Co
     }
     
     // Add section ID if specified (for scrolling to specific section)
+    // Note: use lowercase 'sectionid' to match WorkspaceDashboard's useEffect
     if (action.sectionId) {
-      newParams.set('sectionId', action.sectionId);
+      newParams.set('sectionid', action.sectionId);
     } else {
-      newParams.delete('sectionId');
+      newParams.delete('sectionid');
     }
     
     newParams.delete('taskId');
