@@ -101,7 +101,13 @@ export type WorkspaceTab =
   | 'add-attendee'
   | 'export-list'
   | 'send-reminders'
-  | 'view-waitlist';
+  | 'view-waitlist'
+  // Finance Committee tabs
+  | 'record-expense'
+  | 'generate-report'
+  | 'approve-request'
+  | 'view-budget'
+  | 'export-data';
 
 interface WorkspaceSidebarProps {
   workspace: Workspace;
