@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserPlusIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Workspace, TeamMember, WorkspaceRole, WorkspaceRoleScope } from '../../types';
 import { TeamInvitation } from './TeamInvitation';
 import { TeamRosterManagement } from './TeamRosterManagement';
@@ -23,6 +24,7 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch team members from Supabase
   const { data: teamMembers, isLoading } = useQuery({
@@ -304,6 +306,7 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
             queryClient.invalidateQueries({ queryKey: ['workspace-invitations', workspace.id] });
             queryClient.invalidateQueries({ queryKey: ['workspace-team-members', workspace.id] });
           }}
+          currentUserRole={teamMembers?.find(m => m.userId === user?.id)?.role as WorkspaceRole | null}
         />
       )}
 

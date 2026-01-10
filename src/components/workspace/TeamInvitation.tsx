@@ -15,7 +15,7 @@ import { Workspace, WorkspaceRole } from '../../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useWorkspaceRBAC } from '@/hooks/useWorkspaceRBAC';
 import { WorkspaceHierarchyLevel } from '@/lib/workspaceHierarchy';
-import { useAuth } from '@/hooks/useAuth';
+
 
 interface TeamInvitationProps {
   workspace: Workspace;
@@ -46,10 +46,6 @@ interface BulkInvitationData {
 
 export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitationSent, currentUserRole }: TeamInvitationProps) {
   const rbac = useWorkspaceRBAC(currentUserRole ?? null);
-  const { user } = useAuth();
-  
-  // Check if current user is the workspace owner via the organizer_id field in the workspace
-  const isWorkspaceOwner = !!user && workspace.teamMembers?.some(m => m.userId === user.id && m.role === WorkspaceRole.WORKSPACE_OWNER);
   
   // Get the default role based on what the user can assign
   const getDefaultRole = (): WorkspaceRole => {
@@ -286,8 +282,8 @@ export function TeamInvitation({ workspace, mode, pendingInvitations, onInvitati
     return allRoleOptions.filter(option => rbac.canAssign(option.value));
   }, [allRoleOptions, currentUserRole, rbac]);
 
-  // Check if user has any assignable roles - only owner can invite
-  const canInviteAnyone = isWorkspaceOwner && roleOptions.length > 0;
+  // Check if user has any assignable roles - managers and leads can also invite subordinates
+  const canInviteAnyone = roleOptions.length > 0;
 
   const getInvitationStatusBadge = (status: string) => {
     switch (status) {
