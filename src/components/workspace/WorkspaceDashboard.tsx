@@ -69,6 +69,14 @@ import {
   ApproveRequestTab,
   ViewBudgetTab,
   ExportDataTab,
+  // Content Department tabs
+  CreateContentTab,
+  AssignJudgesTab,
+  EnterScoreTab,
+  UploadMediaTab,
+  AddSpeakerTab,
+  ScheduleSessionTab,
+  ViewRubricsTab,
 } from './committee-tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
@@ -479,6 +487,35 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'export-data' && (
           <ExportDataTab workspace={workspace} />
+        )}
+
+        {/* Content Department tabs */}
+        {activeTab === 'create-content' && (
+          <CreateContentTab workspace={workspace} />
+        )}
+
+        {activeTab === 'assign-judges' && (
+          <AssignJudgesTab workspace={workspace} />
+        )}
+
+        {activeTab === 'enter-score' && (
+          <EnterScoreTab workspace={workspace} />
+        )}
+
+        {activeTab === 'upload-media' && (
+          <UploadMediaTab workspace={workspace} />
+        )}
+
+        {activeTab === 'add-speaker' && (
+          <AddSpeakerTab workspace={workspace} />
+        )}
+
+        {activeTab === 'schedule-session' && (
+          <ScheduleSessionTab workspace={workspace} />
+        )}
+
+        {activeTab === 'view-rubrics' && (
+          <ViewRubricsTab workspace={workspace} />
         )}
       </div>
     </WorkspaceLayout>

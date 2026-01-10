@@ -73,7 +73,15 @@ export type WorkspaceTab =
   | 'generate-report'
   | 'approve-request'
   | 'view-budget'
-  | 'export-data';
+  | 'export-data'
+  // Content Department tabs
+  | 'create-content'
+  | 'assign-judges'
+  | 'enter-score'
+  | 'upload-media'
+  | 'add-speaker'
+  | 'schedule-session'
+  | 'view-rubrics';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;
