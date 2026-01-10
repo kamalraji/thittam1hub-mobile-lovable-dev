@@ -109,11 +109,11 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'performance-review', label: 'Performance Review', icon: Award, color: 'text-yellow-500', tab: 'performance-review' },
   ],
   finance: [
-    { id: 'record-expense', label: 'Record Expense', icon: Receipt, color: 'text-green-500', tab: 'overview', sectionId: 'budget-tracker' },
-    { id: 'generate-report', label: 'Generate Report', icon: FileText, color: 'text-blue-500', tab: 'reports' },
-    { id: 'approve-request', label: 'Approve Request', icon: CheckCircle, color: 'text-amber-500', tab: 'approvals' },
-    { id: 'view-budget', label: 'View Budget', icon: DollarSign, color: 'text-emerald-500', tab: 'overview', sectionId: 'budget-tracker' },
-    { id: 'export-data', label: 'Export Data', icon: Download, color: 'text-purple-500', tab: 'reports' },
+    { id: 'record-expense', label: 'Record Expense', icon: Receipt, color: 'text-green-500', tab: 'record-expense' },
+    { id: 'generate-report', label: 'Generate Report', icon: FileText, color: 'text-blue-500', tab: 'generate-report' },
+    { id: 'approve-request', label: 'Approve Request', icon: CheckCircle, color: 'text-amber-500', tab: 'approve-request' },
+    { id: 'view-budget', label: 'View Budget', icon: DollarSign, color: 'text-emerald-500', tab: 'view-budget' },
+    { id: 'export-data', label: 'Export Data', icon: Download, color: 'text-purple-500', tab: 'export-data' },
   ],
   registration: [
     { id: 'scan-checkin', label: 'Scan Check-in', icon: Scan, color: 'text-teal-500', tab: 'scan-checkin' },

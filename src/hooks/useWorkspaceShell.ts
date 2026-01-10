@@ -67,7 +67,13 @@ export type WorkspaceTab =
   | 'test-equipment'
   | 'update-runsheet'
   | 'tech-check'
-  | 'issue-report';
+  | 'issue-report'
+  // Finance Committee tabs
+  | 'record-expense'
+  | 'generate-report'
+  | 'approve-request'
+  | 'view-budget'
+  | 'export-data';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;

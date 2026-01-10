@@ -63,6 +63,12 @@ import {
   ExportListTab,
   SendRemindersTab,
   ViewWaitlistTab,
+  // Finance Committee tabs
+  RecordExpenseTab,
+  GenerateReportTab,
+  ApproveRequestTab,
+  ViewBudgetTab,
+  ExportDataTab,
 } from './committee-tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
@@ -452,6 +458,27 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'view-waitlist' && (
           <ViewWaitlistTab workspace={workspace} />
+        )}
+
+        {/* Finance Committee tabs */}
+        {activeTab === 'record-expense' && (
+          <RecordExpenseTab workspace={workspace} />
+        )}
+
+        {activeTab === 'generate-report' && (
+          <GenerateReportTab workspace={workspace} />
+        )}
+
+        {activeTab === 'approve-request' && (
+          <ApproveRequestTab workspace={workspace} />
+        )}
+
+        {activeTab === 'view-budget' && (
+          <ViewBudgetTab workspace={workspace} />
+        )}
+
+        {activeTab === 'export-data' && (
+          <ExportDataTab workspace={workspace} />
         )}
       </div>
     </WorkspaceLayout>

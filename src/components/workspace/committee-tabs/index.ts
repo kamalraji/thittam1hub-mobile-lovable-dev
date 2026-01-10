@@ -42,3 +42,9 @@ export { AddAttendeeTab } from './AddAttendeeTab';
 export { ExportListTab } from './ExportListTab';
 export { SendRemindersTab } from './SendRemindersTab';
 export { ViewWaitlistTab } from './ViewWaitlistTab';
+// Finance Committee tabs
+export { RecordExpenseTab } from './RecordExpenseTab';
+export { GenerateReportTab } from './GenerateReportTab';
+export { ApproveRequestTab } from './ApproveRequestTab';
+export { ViewBudgetTab } from './ViewBudgetTab';
+export { ExportDataTab } from './ExportDataTab';
