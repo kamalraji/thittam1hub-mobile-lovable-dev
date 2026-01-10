@@ -106,9 +106,11 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
     },
   });
 
-  // Update role mutation with optimistic UI
+  // Update role mutation with optimistic UI and audit logging
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: WorkspaceRole }) => {
+    mutationFn: async ({ memberId, role, previousRole }: { memberId: string; role: WorkspaceRole; previousRole?: WorkspaceRole }) => {
+      const member = teamMembers?.find(m => m.id === memberId);
+      
       const { error } = await supabase
         .from('workspace_team_members')
         .update({ role })
@@ -117,7 +119,7 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
 
       if (error) throw error;
 
-      // Fire-and-forget activity log; errors here shouldn't block role update
+      // Log activity
       await supabase.from('workspace_activities').insert({
         workspace_id: workspace.id,
         type: 'team',
@@ -125,6 +127,22 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
         description: `Member role changed to ${role}`,
         metadata: { memberId, role },
       });
+
+      // Log audit event for role change
+      if (user?.id) {
+        await supabase.from('workspace_audit_logs').insert([{
+          workspace_id: workspace.id,
+          actor_id: user.id,
+          action: 'ROLE_CHANGED',
+          target_user_id: member?.userId,
+          previous_value: { role: previousRole },
+          new_value: { role },
+          metadata: {
+            member_name: member?.user?.name,
+            workspace_name: workspace.name,
+          },
+        }]);
+      }
     },
     onMutate: async ({ memberId, role }) => {
       await queryClient.cancelQueries({ queryKey: ['workspace-team-members', workspace.id] });
@@ -180,7 +198,8 @@ export function TeamManagement({ workspace, roleScope }: TeamManagementProps) {
   };
 
   const handleUpdateRole = async (memberId: string, role: WorkspaceRole) => {
-    await updateRoleMutation.mutateAsync({ memberId, role });
+    const member = teamMembers?.find(m => m.id === memberId);
+    await updateRoleMutation.mutateAsync({ memberId, role, previousRole: member?.role });
   };
 
   const filteredMembers =

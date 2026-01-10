@@ -12,6 +12,43 @@ interface InviteRequest {
   custom_message?: string;
 }
 
+// Helper function to log audit events
+async function logAuditEvent(
+  supabase: any,
+  params: {
+    workspace_id: string;
+    actor_id: string;
+    actor_email?: string;
+    action: string;
+    target_user_id?: string;
+    target_email?: string;
+    previous_value?: any;
+    new_value?: any;
+    metadata?: any;
+    ip_address?: string;
+    user_agent?: string;
+  }
+) {
+  try {
+    await supabase.from('workspace_audit_logs').insert({
+      workspace_id: params.workspace_id,
+      actor_id: params.actor_id,
+      actor_email: params.actor_email,
+      action: params.action,
+      target_user_id: params.target_user_id,
+      target_email: params.target_email,
+      previous_value: params.previous_value,
+      new_value: params.new_value,
+      metadata: params.metadata,
+      ip_address: params.ip_address,
+      user_agent: params.user_agent,
+    });
+  } catch (error) {
+    console.error('Failed to log audit event:', error);
+    // Don't throw - audit logging should not block the main operation
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -23,6 +60,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Get request metadata for audit logging
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
 
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
@@ -161,6 +202,24 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Log audit event for direct member addition
+      await logAuditEvent(supabase, {
+        workspace_id,
+        actor_id: user.id,
+        actor_email: user.email,
+        action: 'MEMBER_ADDED',
+        target_user_id: targetUserId,
+        target_email: email.toLowerCase(),
+        new_value: { role, status: 'ACTIVE' },
+        metadata: {
+          workspace_name: workspace.name,
+          method: 'direct_add',
+          custom_message: custom_message || null,
+        },
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      });
+
       // Create a notification for the user
       await supabase
         .from('notifications')
@@ -208,11 +267,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Invitation created for ${email} to workspace ${workspace_id}:`, invitation.id);
+    // Log audit event for invitation sent
+    await logAuditEvent(supabase, {
+      workspace_id,
+      actor_id: user.id,
+      actor_email: user.email,
+      action: 'INVITATION_SENT',
+      target_email: email.toLowerCase(),
+      new_value: { role, status: 'PENDING', invitation_id: invitation.id },
+      metadata: {
+        workspace_name: workspace.name,
+        method: 'email_invitation',
+        custom_message: custom_message || null,
+      },
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    });
 
-    // If the invited user exists but wasn't added directly (edge case), 
-    // or for future: send email notification for external invites
-    // For now, we've handled the direct add case above with a notification
+    console.log(`Invitation created for ${email} to workspace ${workspace_id}:`, invitation.id);
 
     return new Response(
       JSON.stringify({ 
