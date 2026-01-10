@@ -1,5 +1,4 @@
 import { getCommitteeConfig, getCommitteeColors } from '@/lib/committeeConfig';
-import { Button } from '@/components/ui/button';
 import { Users, CheckCircle2, LayoutGrid } from 'lucide-react';
 
 interface CommitteeHeaderCardProps {
@@ -80,21 +79,6 @@ export function CommitteeHeaderCard({
         </div>
       </div>
 
-      {/* Quick Actions */}
-      {config.quickActions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
-          {config.quickActions.map((action) => (
-            <Button
-              key={action.action}
-              variant="outline"
-              size="sm"
-              className={`${colors.border} hover:${colors.bg}`}
-            >
-              {action.label}
-            </Button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

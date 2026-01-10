@@ -14,7 +14,7 @@ import { DietaryRequirementsTracker } from './DietaryRequirementsTracker';
 import { VendorManagement } from './VendorManagement';
 import { MealSchedule } from './MealSchedule';
 import { InventoryTracker } from './InventoryTracker';
-import { CateringQuickActions } from './CateringQuickActions';
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
@@ -131,9 +131,8 @@ export function CateringDashboard({
           <MealSchedule workspaceId={workspace.id} />
         </div>
 
-        {/* Right Column - Quick Actions & Dietary */}
+        {/* Right Column - Dietary */}
         <div className="space-y-6">
-          <CateringQuickActions workspaceId={workspace.id} />
           <DietaryRequirementsTracker workspaceId={workspace.id} />
         </div>
       </div>

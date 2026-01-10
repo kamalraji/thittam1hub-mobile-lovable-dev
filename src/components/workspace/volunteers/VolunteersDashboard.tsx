@@ -13,7 +13,7 @@ import { ResourceRequestForm } from '../committee/ResourceRequestForm';
 import { VolunteerShiftScheduler } from './VolunteerShiftScheduler';
 import { VolunteerRoster } from './VolunteerRoster';
 import { VolunteerCheckInStats } from './VolunteerCheckInStats';
-import { VolunteerQuickActions } from './VolunteerQuickActions';
+
 import { VolunteerStatsCards } from './VolunteerStatsCards';
 import { VolunteerTrainingTracker } from './VolunteerTrainingTracker';
 import { VolunteerPerformanceCard } from './VolunteerPerformanceCard';
@@ -133,14 +133,9 @@ export function VolunteersDashboard({
           <VolunteerTrainingTracker workspaceId={workspace.id} />
         </div>
 
-        {/* Right Column - Check-In Stats & Quick Actions */}
+        {/* Right Column - Check-In Stats */}
         <div className="space-y-6">
           <VolunteerCheckInStats workspaceId={workspace.id} />
-          <VolunteerQuickActions 
-            workspaceId={workspace.id} 
-            eventId={workspace.eventId}
-            orgSlug={orgSlug}
-          />
         </div>
       </div>
 

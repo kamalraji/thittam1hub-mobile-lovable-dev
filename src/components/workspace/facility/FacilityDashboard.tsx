@@ -14,7 +14,7 @@ import { RoomManager } from './RoomManager';
 import { SafetyChecklist } from './SafetyChecklist';
 import { VenueSetupTracker } from './VenueSetupTracker';
 import { MaintenanceRequests } from './MaintenanceRequests';
-import { FacilityQuickActions } from './FacilityQuickActions';
+
 
 interface FacilityDashboardProps {
   workspace: Workspace;
@@ -89,9 +89,6 @@ export function FacilityDashboard({
         tasksTotal={tasks.length}
         teamsCount={teams.length}
       />
-
-      {/* Quick Actions */}
-      <FacilityQuickActions workspaceId={workspace.id} />
 
       {/* Stats Overview */}
       <FacilityStatsCards workspaceId={workspace.id} />

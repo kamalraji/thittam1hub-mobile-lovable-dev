@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { SidebarUserFooter } from '@/components/organization/SidebarUserFooter';
 import { DepartmentActionsMenu } from './DepartmentActionsMenu';
+import { CommitteeActionsMenu } from './CommitteeActionsMenu';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -308,6 +309,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           {/* Department Actions Menu - Only for DEPARTMENT workspaces */}
           {workspace.workspaceType === WorkspaceType.DEPARTMENT && !isCollapsed && (
             <DepartmentActionsMenu workspace={workspace} isCollapsed={isCollapsed} />
+          )}
+
+          {/* Committee Actions Menu - Only for COMMITTEE workspaces */}
+          {workspace.workspaceType === WorkspaceType.COMMITTEE && !isCollapsed && (
+            <CommitteeActionsMenu workspace={workspace} isCollapsed={isCollapsed} />
           )}
 
           {/* Management Section - Hidden for DEPARTMENT and COMMITTEE workspaces */}

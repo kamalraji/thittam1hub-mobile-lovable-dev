@@ -13,7 +13,7 @@ import { EventScheduleManager } from './EventScheduleManager';
 import { VIPGuestTracker } from './VIPGuestTracker';
 import { RunOfShowChecklist } from './RunOfShowChecklist';
 import { VenueBriefing } from './VenueBriefing';
-import { EventQuickActions } from './EventQuickActions';
+
 import { EventTimeline } from './EventTimeline';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -131,10 +131,9 @@ export function EventDashboard({
           <VenueBriefing workspaceId={workspace.id} />
         </div>
 
-        {/* Right Column - VIP & Quick Actions */}
+        {/* Right Column - VIP */}
         <div className="space-y-6">
           <VIPGuestTracker workspaceId={workspace.id} />
-          <EventQuickActions workspaceId={workspace.id} />
         </div>
       </div>
 

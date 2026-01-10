@@ -11,7 +11,7 @@ import { ContentCalendar } from './ContentCalendar';
 import { SocialMediaTracker } from './SocialMediaTracker';
 import { MediaAssetsLibrary } from './MediaAssetsLibrary';
 import { BlogArticleTracker } from './BlogArticleTracker';
-import { ContentQuickActions } from './ContentQuickActions';
+
 import { PublicationPipeline } from './PublicationPipeline';
 
 interface ContentDashboardProps {
@@ -107,13 +107,8 @@ export function ContentDashboard({
         onRequestResource={onRequestResource}
       />
 
-      {/* Quick Actions and Social Media */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ContentQuickActions />
-        <div className="lg:col-span-2">
-          <SocialMediaTracker />
-        </div>
-      </div>
+      {/* Social Media */}
+      <SocialMediaTracker />
 
       {/* Content Calendar - Full Width */}
       <ContentCalendar />
