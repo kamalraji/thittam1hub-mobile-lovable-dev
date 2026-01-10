@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceType, WorkspaceStatus, WorkspaceRole } from '@/types';
+import { Workspace, WorkspaceType, WorkspaceStatus } from '@/types';
 import { BudgetTrackerConnected } from './BudgetTrackerConnected';
 import { ResourceManager } from './ResourceManager';
 import { ResourceApprovalPanel } from './ResourceApprovalPanel';
@@ -23,19 +23,13 @@ import { VolunteersDepartmentDashboard } from './volunteers';
 interface DepartmentDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks?: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
 }
 
 export function DepartmentDashboard({ 
   workspace, 
   orgSlug, 
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
 }: DepartmentDashboardProps) {
   const navigate = useNavigate();
   const { pendingRequests } = useWorkspaceBudget(workspace.id);
@@ -81,10 +75,7 @@ export function DepartmentDashboard({
       <TechDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }
@@ -94,10 +85,7 @@ export function DepartmentDashboard({
       <FinanceDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }
@@ -107,10 +95,7 @@ export function DepartmentDashboard({
       <ContentDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }
@@ -120,10 +105,7 @@ export function DepartmentDashboard({
       <OperationsDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }
@@ -133,10 +115,7 @@ export function DepartmentDashboard({
       <GrowthDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }
@@ -146,10 +125,7 @@ export function DepartmentDashboard({
       <VolunteersDepartmentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
       />
     );
   }

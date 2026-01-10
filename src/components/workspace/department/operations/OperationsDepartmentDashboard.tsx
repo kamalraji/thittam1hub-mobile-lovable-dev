@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { OperationsStatsCards } from './OperationsStatsCards';
 import { OperationsQuickActions } from './OperationsQuickActions';
 import { OperationsCommitteePanel } from './OperationsCommitteePanel';
@@ -10,7 +10,7 @@ import { DepartmentKPICard } from '../DepartmentKPICard';
 import { TaskSummaryCards } from '../../TaskSummaryCards';
 import { TeamMemberRoster } from '../../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../../RoleBasedActions';
+
 import { Settings2, Users, LayoutGrid } from 'lucide-react';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 import { useQuery } from '@tanstack/react-query';
@@ -19,19 +19,13 @@ import { supabase } from '@/integrations/supabase/client';
 interface OperationsDepartmentDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks?: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
 }
 
 export function OperationsDepartmentDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
 }: OperationsDepartmentDashboardProps) {
   const { pendingRequests } = useWorkspaceBudget(workspace.id);
 
@@ -92,14 +86,6 @@ export function OperationsDepartmentDashboard({
       {/* Quick Actions */}
       <OperationsQuickActions />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onViewReport={() => {}}
-      />
 
       {/* Task Summary */}
       <TaskSummaryCards workspace={workspace} onViewTasks={onViewTasks} />

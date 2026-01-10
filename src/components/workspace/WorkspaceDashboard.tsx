@@ -130,10 +130,7 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
               <DepartmentDashboard 
                 workspace={workspace} 
                 orgSlug={orgSlug}
-                userRole={permissions.currentMember?.role as WorkspaceRole}
                 onViewTasks={actions.handleViewTasks}
-                onDelegateRole={() => actions.setActiveTab('role-management')}
-                onInviteMember={permissions.canInviteMembers ? actions.handleInviteTeamMember : undefined}
               />
             ) : workspace.workspaceType === WorkspaceType.COMMITTEE ? (
               <CommitteeDashboard 

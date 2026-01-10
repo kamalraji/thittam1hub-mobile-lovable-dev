@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceType, WorkspaceStatus, WorkspaceRole } from '@/types';
+import { Workspace, WorkspaceType, WorkspaceStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { Users, LayoutGrid, FileText } from 'lucide-react';
 
@@ -9,7 +9,7 @@ import { BudgetTrackerConnected } from '../BudgetTrackerConnected';
 import { TaskSummaryCards } from '../../TaskSummaryCards';
 import { TeamMemberRoster } from '../../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../../RoleBasedActions';
+
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 
 import { ContentStatsConnected } from './ContentStatsConnected';
@@ -28,19 +28,13 @@ import { RegisterSpeakerModal } from './RegisterSpeakerModal';
 interface ContentDepartmentDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks?: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
 }
 
 export function ContentDepartmentDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
 }: ContentDepartmentDashboardProps) {
   const navigate = useNavigate();
   const { pendingRequests } = useWorkspaceBudget(workspace.id);
@@ -147,14 +141,6 @@ export function ContentDepartmentDashboard({
       {/* Stats Overview - Connected to real data */}
       <ContentStatsConnected workspaceId={workspace.id} />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onViewReport={() => {}}
-      />
 
       {/* Quick Actions */}
       <ContentQuickActions onAction={handleQuickAction} />

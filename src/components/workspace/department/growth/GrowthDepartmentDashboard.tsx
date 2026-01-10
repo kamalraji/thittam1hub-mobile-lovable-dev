@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceType, WorkspaceStatus, WorkspaceRole } from '@/types';
+import { Workspace, WorkspaceType, WorkspaceStatus } from '@/types';
 import { GrowthStatsCards } from './GrowthStatsCards';
 import { GrowthQuickActions } from './GrowthQuickActions';
 import { GrowthCommitteeOverview } from './GrowthCommitteeOverview';
@@ -15,26 +15,20 @@ import { ResourceApprovalPanel } from '../ResourceApprovalPanel';
 import { TaskSummaryCards } from '../../TaskSummaryCards';
 import { TeamMemberRoster } from '../../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../../RoleBasedActions';
+
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 import { TrendingUp, Users, LayoutGrid } from 'lucide-react';
 
 interface GrowthDepartmentDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks?: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
 }
 
 export function GrowthDepartmentDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
 }: GrowthDepartmentDashboardProps) {
   const navigate = useNavigate();
   const { pendingRequests } = useWorkspaceBudget(workspace.id);
@@ -109,14 +103,6 @@ export function GrowthDepartmentDashboard({
         </div>
       </div>
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onViewReport={() => {}}
-      />
 
       {/* Stats Cards */}
       <GrowthStatsCards />

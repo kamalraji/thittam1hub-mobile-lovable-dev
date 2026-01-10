@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { FinanceDepartmentStatsCards } from './FinanceDepartmentStatsCards';
 import { FinanceDepartmentQuickActions } from './FinanceDepartmentQuickActions';
 import { FinanceCommitteeConnectionsPanel } from './FinanceCommitteeConnectionsPanel';
@@ -10,7 +10,7 @@ import { DepartmentKPICard } from '../DepartmentKPICard';
 import { TaskSummaryCards } from '../../TaskSummaryCards';
 import { TeamMemberRoster } from '../../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../../RoleBasedActions';
+
 import { DollarSign, Users, LayoutGrid } from 'lucide-react';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 import { useQuery } from '@tanstack/react-query';
@@ -19,19 +19,13 @@ import { supabase } from '@/integrations/supabase/client';
 interface FinanceDepartmentDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks?: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
 }
 
 export function FinanceDepartmentDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
 }: FinanceDepartmentDashboardProps) {
   const { pendingRequests } = useWorkspaceBudget(workspace.id);
 
@@ -92,14 +86,6 @@ export function FinanceDepartmentDashboard({
       {/* Quick Actions */}
       <FinanceDepartmentQuickActions />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onViewReport={() => {}}
-      />
 
       {/* Task Summary */}
       <TaskSummaryCards workspace={workspace} onViewTasks={onViewTasks} />
