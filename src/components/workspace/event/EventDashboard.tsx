@@ -1,6 +1,5 @@
 import { Workspace, WorkspaceRole } from '@/types';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -96,15 +95,6 @@ export function EventDashboard({
         teamsCount={teams.length}
       />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Event Stats Overview */}
       <EventStatsCards workspaceId={workspace.id} />

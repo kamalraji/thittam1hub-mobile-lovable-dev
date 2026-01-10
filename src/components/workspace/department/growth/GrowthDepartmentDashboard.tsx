@@ -15,7 +15,6 @@ import { ResourceApprovalPanel } from '../ResourceApprovalPanel';
 import { TaskSummaryCards } from '../../TaskSummaryCards';
 import { TeamMemberRoster } from '../../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../../RoleBasedActions';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 import { TrendingUp, Users, LayoutGrid } from 'lucide-react';
 
@@ -109,14 +108,6 @@ export function GrowthDepartmentDashboard({
         </div>
       </div>
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onViewReport={() => {}}
-      />
 
       {/* Stats Cards */}
       <GrowthStatsCards />

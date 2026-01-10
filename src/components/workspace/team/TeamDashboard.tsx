@@ -2,7 +2,6 @@ import { Workspace, WorkspaceRole } from '@/types';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { useTeamWorkload, usePersonalProgress } from '@/hooks/useTeamDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
@@ -35,16 +34,6 @@ export function TeamDashboard({
 
   return (
     <div className="space-y-6">
-      {/* Role-Based Actions */}
-      <section id="actions">
-        <RoleBasedActions
-          workspace={workspace}
-          userRole={userRole || null}
-          onLogHours={onLogHours}
-          onSubmitForApproval={onSubmitForApproval}
-          onCreateTask={onViewTasks}
-        />
-      </section>
 
       {/* Mini-Map - Shows position in hierarchy */}
       <section id="hierarchy">

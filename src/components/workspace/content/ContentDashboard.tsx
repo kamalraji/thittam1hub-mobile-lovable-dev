@@ -2,7 +2,6 @@ import { Workspace, WorkspaceRole } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -97,15 +96,6 @@ export function ContentDashboard({
         socialReach={12500}
       />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Quick Actions and Social Media */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

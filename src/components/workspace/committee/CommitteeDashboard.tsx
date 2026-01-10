@@ -11,7 +11,6 @@ import { ResourceRequestsList } from './ResourceRequestsList';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
 import { VolunteersDashboard } from '../volunteers';
@@ -482,17 +481,6 @@ export function CommitteeDashboard({
         />
       </section>
 
-      {/* Role-Based Actions */}
-      <section id="actions">
-        <RoleBasedActions
-          workspace={workspace}
-          userRole={userRole || null}
-          onDelegateRole={onDelegateRole}
-          onInviteMember={onInviteMember}
-          onRequestBudget={onRequestBudget}
-          onRequestResource={onRequestResource}
-        />
-      </section>
 
       {/* Task Summary with Mini-Map */}
       <section id="tasks" className="grid grid-cols-1 lg:grid-cols-4 gap-4">
