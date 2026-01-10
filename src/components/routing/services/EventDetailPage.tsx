@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { PageHeader } from '../PageHeader';
 import { EventDetailSkeleton } from '../EventDetailSkeleton';
@@ -21,6 +21,7 @@ import {
 import { AttendanceList } from '@/components/attendance';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { slugify } from '@/lib/workspaceNavigation';
+import { EventSettingsTab } from '@/components/events/settings';
 
 // Extended event type for internal use
 interface EventWithSlug extends Event {
@@ -35,6 +36,7 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ defaultTab = '
   const { eventId } = useParams<{ eventId: string }>();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const { canView, canManage, isLoading: accessLoading } = useEventAccess(eventId);
+  const queryClient = useQueryClient();
 
   const { data: event, isLoading: eventLoading, error } = useQuery<EventWithSlug | null>({
     queryKey: ['organizer-event', eventId],
@@ -317,14 +319,27 @@ export const EventDetailPage: React.FC<EventDetailPageProps> = ({ defaultTab = '
 
         {/* Tab Content */}
         <div className="mt-4 sm:mt-6">
-          {tabs.map(
-            (tab) =>
-              activeTab === tab.id && (
+          {tabs.map((tab) => {
+            if (activeTab !== tab.id) return null;
+            
+            // Special handling for settings tab to pass refetch
+            if (tab.id === 'settings') {
+              return (
                 <div key={tab.id}>
-                  <tab.component event={event} />
+                  <EventSettingsTab 
+                    event={event} 
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ['organizer-event', eventId] })} 
+                  />
                 </div>
-              ),
-          )}
+              );
+            }
+            
+            return (
+              <div key={tab.id}>
+                <tab.component event={event} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
