@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Folder,
   Settings2,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -55,7 +56,8 @@ export type WorkspaceTab =
   | 'audit'
   | 'role-management'
   | 'settings'
-  | 'event-settings';
+  | 'event-settings'
+  | 'approvals';
 
 interface WorkspaceSidebarProps {
   workspace: Workspace;
@@ -81,6 +83,7 @@ const baseNavItems: NavItem[] = [
   { id: 'tasks', name: 'Tasks', icon: ClipboardList, group: 'core' },
   { id: 'team', name: 'Team', icon: Users, group: 'core' },
   { id: 'communication', name: 'Communication', icon: MessageSquare, group: 'core' },
+  { id: 'approvals', name: 'Approvals', icon: ClipboardCheck, group: 'core' },
   { id: 'event-settings', name: 'Event Settings', icon: Settings2, group: 'core' },
   { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag, group: 'management' },
   { id: 'templates', name: 'Templates', icon: FileText, group: 'management' },
@@ -138,6 +141,10 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     return baseNavItems.filter(item => {
       if (item.id === 'event-settings') {
         return showEventSettingsTab;
+      }
+      // Hide approvals for TEAM workspaces
+      if (item.id === 'approvals') {
+        return workspace.workspaceType !== WorkspaceType.TEAM;
       }
       return true;
     });
