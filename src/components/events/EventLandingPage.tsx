@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/looseClient';
 import { Event, EventMode, EventVisibility, TimelineItem, PrizeInfo, SponsorInfo } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { EventCanvasHero } from './EventCanvasHero';
+import { sanitizeLandingPageHTML, sanitizeLandingPageCSS } from '@/utils/sanitize';
 
 interface EventLandingPageProps {
   eventId?: string;
@@ -179,14 +180,18 @@ export function EventLandingPage({ eventId: propEventId }: EventLandingPageProps
   if (event.landingPageData && (event.landingPageData as any).html) {
     const lp = event.landingPageData as any as { html: string; css?: string | null; meta?: { title?: string; description?: string } };
 
+    // Sanitize HTML and CSS to prevent XSS attacks
+    const sanitizedHTML = sanitizeLandingPageHTML(lp.html);
+    const sanitizedCSS = lp.css ? sanitizeLandingPageCSS(lp.css) : null;
+
     return (
       <div className="min-h-screen bg-background">
         <section className="border-b border-border bg-background">
-          {/* Inject GrapesJS CSS into the page scope */}
-          {lp.css && <style dangerouslySetInnerHTML={{ __html: lp.css }} />}
+          {/* Inject sanitized GrapesJS CSS into the page scope */}
+          {sanitizedCSS && <style dangerouslySetInnerHTML={{ __html: sanitizedCSS }} />}
           <div
             className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-            dangerouslySetInnerHTML={{ __html: lp.html }}
+            dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
           />
         </section>
       </div>

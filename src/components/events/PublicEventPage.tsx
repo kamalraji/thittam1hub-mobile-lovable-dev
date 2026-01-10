@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { EventScrollSpy } from './EventScrollSpy';
+import { sanitizeLandingPageHTML, sanitizeLandingPageCSS } from '@/utils/sanitize';
 
 /**
  * Public Event Page - accessible via /event/:slug
@@ -294,17 +295,21 @@ export function PublicEventPage() {
               </CardContent>
             </Card>
 
-            {/* Render custom landing page if available */}
+            {/* Render custom landing page if available (sanitized to prevent XSS) */}
             {event.landing_page_data && (event.landing_page_data as any).html && (
               <Card id="custom-content">
                 <CardContent className="pt-6">
                   {(event.landing_page_data as any).css && (
                     <style
-                      dangerouslySetInnerHTML={{ __html: (event.landing_page_data as any).css }}
+                      dangerouslySetInnerHTML={{ 
+                        __html: sanitizeLandingPageCSS((event.landing_page_data as any).css) 
+                      }}
                     />
                   )}
                   <div
-                    dangerouslySetInnerHTML={{ __html: (event.landing_page_data as any).html }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: sanitizeLandingPageHTML((event.landing_page_data as any).html) 
+                    }}
                   />
                 </CardContent>
               </Card>
