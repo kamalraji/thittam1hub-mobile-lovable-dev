@@ -1068,6 +1068,7 @@ export type Database = {
           form_responses: Json
           id: string
           status: Database["public"]["Enums"]["registration_status"]
+          ticket_tier_id: string | null
           updated_at: string
           user_id: string
         }
@@ -1077,6 +1078,7 @@ export type Database = {
           form_responses?: Json
           id?: string
           status?: Database["public"]["Enums"]["registration_status"]
+          ticket_tier_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1086,6 +1088,7 @@ export type Database = {
           form_responses?: Json
           id?: string
           status?: Database["public"]["Enums"]["registration_status"]
+          ticket_tier_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1095,6 +1098,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registrations_ticket_tier_id_fkey"
+            columns: ["ticket_tier_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_tiers"
             referencedColumns: ["id"]
           },
         ]
@@ -1265,6 +1275,65 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      ticket_tiers: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          quantity: number | null
+          sale_end: string | null
+          sale_start: string | null
+          sold_count: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          quantity?: number | null
+          sale_end?: string | null
+          sale_start?: string | null
+          sold_count?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          quantity?: number | null
+          sale_end?: string | null
+          sale_start?: string | null
+          sold_count?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_tiers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_profiles: {
         Row: {

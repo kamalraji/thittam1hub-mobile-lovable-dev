@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Loader2, TicketIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/looseClient';
+import { TicketTierManager } from './TicketTierManager';
 
 interface TicketingSettings {
   isFree: boolean;
-  price: number | null;
-  currency: string;
   allowWaitlist: boolean;
   registrationType: 'OPEN' | 'INVITE_ONLY' | 'APPROVAL_REQUIRED';
 }
@@ -22,13 +20,6 @@ interface RegistrationSettingsCardProps {
   branding: Record<string, any>;
   onUpdate: () => void;
 }
-
-const CURRENCIES = [
-  { value: 'INR', label: '₹ INR' },
-  { value: 'USD', label: '$ USD' },
-  { value: 'EUR', label: '€ EUR' },
-  { value: 'GBP', label: '£ GBP' },
-];
 
 const REGISTRATION_TYPES = [
   { value: 'OPEN', label: 'Open Registration', description: 'Anyone can register' },
@@ -46,8 +37,6 @@ export const RegistrationSettingsCard: React.FC<RegistrationSettingsCardProps> =
 
   const defaultSettings: TicketingSettings = {
     isFree: true,
-    price: null,
-    currency: 'INR',
     allowWaitlist: false,
     registrationType: 'OPEN',
   };
@@ -96,73 +85,36 @@ export const RegistrationSettingsCard: React.FC<RegistrationSettingsCardProps> =
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <TicketIcon className="h-5 w-5 text-primary" />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <TicketIcon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Registration & Ticketing</CardTitle>
+              <CardDescription>Configure registration type and pricing</CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg">Registration & Ticketing</CardTitle>
-            <CardDescription>Configure registration type and pricing</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </CardHeader>
+        <CardContent className="space-y-6">
         {/* Is Free Event */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="isFree">Free Event</Label>
             <p className="text-sm text-muted-foreground">
-              Toggle off to set ticket pricing
+              Toggle off to manage ticket tiers with pricing
             </p>
           </div>
           <Switch
             id="isFree"
             checked={settings.isFree}
             onCheckedChange={(checked) =>
-              setSettings({ ...settings, isFree: checked, price: checked ? null : settings.price })
+              setSettings({ ...settings, isFree: checked })
             }
           />
         </div>
-
-        {/* Ticket Price (if not free) */}
-        {!settings.isFree && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Ticket Price</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={settings.price || ''}
-                onChange={(e) =>
-                  setSettings({ ...settings, price: parseFloat(e.target.value) || null })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select
-                value={settings.currency}
-                onValueChange={(value) => setSettings({ ...settings, currency: value })}
-              >
-                <SelectTrigger id="currency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((currency) => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
 
         {/* Registration Type */}
         <div className="space-y-2">
@@ -215,5 +167,11 @@ export const RegistrationSettingsCard: React.FC<RegistrationSettingsCardProps> =
         </div>
       </CardContent>
     </Card>
-  );
+
+    {/* Ticket Tier Manager - shown when event is not free */}
+    {!settings.isFree && (
+      <TicketTierManager eventId={eventId} />
+    )}
+  </>
+);
 };
