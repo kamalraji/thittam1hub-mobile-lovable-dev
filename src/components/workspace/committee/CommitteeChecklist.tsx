@@ -41,6 +41,7 @@ export function CommitteeChecklist({ workspaceId, committeeType }: CommitteeChec
       workspace_id: workspaceId,
       title: template.title,
       committee_type: committeeType || null,
+      phase: template.phase || 'pre_event',
       items,
       is_template: false,
     });
@@ -53,6 +54,7 @@ export function CommitteeChecklist({ workspaceId, committeeType }: CommitteeChec
       workspace_id: workspaceId,
       title: newChecklist.title,
       committee_type: committeeType || null,
+      phase: 'pre_event',
       items: [],
       is_template: false,
     });

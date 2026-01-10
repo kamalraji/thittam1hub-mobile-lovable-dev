@@ -38,11 +38,14 @@ export interface ChecklistItem {
   completedBy?: string;
 }
 
+export type EventPhase = 'pre_event' | 'during_event' | 'post_event';
+
 export interface Checklist {
   id: string;
   workspace_id: string;
   title: string;
   committee_type: string | null;
+  phase: EventPhase;
   items: ChecklistItem[];
   is_template: boolean;
   created_at: string;
@@ -306,12 +309,13 @@ export function useChecklists(workspaceId: string | undefined) {
   };
 }
 
-// Pre-built checklist templates for different committee types
-export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; items: string[] }[]> = {
+// Pre-built checklist templates for different committee types with phase info
+export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; phase: EventPhase; items: string[] }[]> = {
   // ===== OPERATIONS DEPARTMENT =====
   event: [
     {
       title: 'Event Coordination',
+      phase: 'pre_event',
       items: [
         'Finalize event schedule',
         'Brief all committee leads',
@@ -322,6 +326,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Day-of Execution',
+      phase: 'during_event',
       items: [
         'Morning team briefing',
         'Verify all stations staffed',
@@ -330,10 +335,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Conduct closing procedures',
       ],
     },
+    {
+      title: 'Post-Event Wrap-up',
+      phase: 'post_event',
+      items: [
+        'Collect feedback forms',
+        'Debrief with committee leads',
+        'Document lessons learned',
+        'Send thank you notes',
+        'Archive event materials',
+      ],
+    },
   ],
   catering: [
     {
       title: 'Vendor Setup',
+      phase: 'pre_event',
       items: [
         'Finalize menu with vendors',
         'Confirm dietary restrictions handled',
@@ -344,6 +361,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Day-of Preparation',
+      phase: 'during_event',
       items: [
         'Setup buffet stations',
         'Check food temperature',
@@ -352,10 +370,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Brief serving staff',
       ],
     },
+    {
+      title: 'Catering Wrap-up',
+      phase: 'post_event',
+      items: [
+        'Coordinate leftover food donation',
+        'Settle vendor invoices',
+        'Collect vendor feedback',
+        'Return rented equipment',
+        'Document costs and quantities',
+      ],
+    },
   ],
   logistics: [
     {
       title: 'Venue Preparation',
+      phase: 'pre_event',
       items: [
         'Confirm venue booking',
         'Arrange seating layout',
@@ -366,6 +396,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Transport & Materials',
+      phase: 'during_event',
       items: [
         'Arrange transport for equipment',
         'Prepare registration desk',
@@ -374,10 +405,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Coordinate parking',
       ],
     },
+    {
+      title: 'Logistics Teardown',
+      phase: 'post_event',
+      items: [
+        'Coordinate equipment return',
+        'Inspect venue for damages',
+        'Collect all signage',
+        'Return rented items',
+        'Complete venue walkthrough',
+      ],
+    },
   ],
   facility: [
     {
       title: 'Facility Management',
+      phase: 'pre_event',
       items: [
         'Inspect venue condition',
         'Confirm cleaning schedule',
@@ -388,6 +431,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Safety & Compliance',
+      phase: 'during_event',
       items: [
         'Review safety protocols',
         'Brief security team',
@@ -396,12 +440,24 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Verify insurance coverage',
       ],
     },
+    {
+      title: 'Facility Closeout',
+      phase: 'post_event',
+      items: [
+        'Final venue inspection',
+        'Document any damages',
+        'Coordinate deep cleaning',
+        'Return keys and access cards',
+        'Submit facility report',
+      ],
+    },
   ],
 
   // ===== GROWTH DEPARTMENT =====
   marketing: [
     {
       title: 'Pre-Event Marketing',
+      phase: 'pre_event',
       items: [
         'Design promotional materials',
         'Schedule social media posts',
@@ -412,6 +468,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Event Coverage',
+      phase: 'during_event',
       items: [
         'Arrange photographer/videographer',
         'Setup live streaming',
@@ -420,10 +477,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Collect attendee testimonials',
       ],
     },
+    {
+      title: 'Post-Event Marketing',
+      phase: 'post_event',
+      items: [
+        'Send follow-up emails',
+        'Publish event recap blog',
+        'Share highlights on social media',
+        'Create case studies',
+        'Analyze marketing metrics',
+      ],
+    },
   ],
   sponsorship: [
     {
       title: 'Sponsor Acquisition',
+      phase: 'pre_event',
       items: [
         'Create sponsorship tiers document',
         'Identify target sponsors',
@@ -434,18 +503,31 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Sponsor Deliverables',
+      phase: 'during_event',
       items: [
         'Collect sponsor logos and assets',
         'Setup sponsor booths/displays',
         'Prepare sponsor recognition slides',
         'Coordinate sponsor speaking slots',
+        'Facilitate sponsor networking',
+      ],
+    },
+    {
+      title: 'Sponsor Follow-up',
+      phase: 'post_event',
+      items: [
         'Send post-event sponsor reports',
+        'Share event photos with sponsors',
+        'Collect sponsor feedback',
+        'Discuss renewal opportunities',
+        'Send thank you gifts',
       ],
     },
   ],
   registration: [
     {
       title: 'Pre-Event Setup',
+      phase: 'pre_event',
       items: [
         'Configure registration platform',
         'Setup ticket types and pricing',
@@ -456,6 +538,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Check-in Operations',
+      phase: 'during_event',
       items: [
         'Print attendee badges',
         'Setup check-in stations',
@@ -464,10 +547,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Handle waitlist management',
       ],
     },
+    {
+      title: 'Registration Wrap-up',
+      phase: 'post_event',
+      items: [
+        'Export final attendee list',
+        'Process refunds if needed',
+        'Send attendance certificates',
+        'Archive registration data',
+        'Generate attendance report',
+      ],
+    },
   ],
   social_media: [
     {
       title: 'Content Planning',
+      phase: 'pre_event',
       items: [
         'Create content calendar',
         'Design post templates',
@@ -478,6 +573,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Live Coverage',
+      phase: 'during_event',
       items: [
         'Assign live posting shifts',
         'Capture behind-the-scenes content',
@@ -486,12 +582,59 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Create real-time stories/reels',
       ],
     },
+    {
+      title: 'Post-Event Content',
+      phase: 'post_event',
+      items: [
+        'Share event highlights',
+        'Thank followers and attendees',
+        'Compile user-generated content',
+        'Create engagement report',
+        'Plan follow-up content series',
+      ],
+    },
+  ],
+  communication: [
+    {
+      title: 'Communications Planning',
+      phase: 'pre_event',
+      items: [
+        'Create communications timeline',
+        'Draft announcement emails',
+        'Prepare media kit',
+        'Schedule press outreach',
+        'Setup communication channels',
+      ],
+    },
+    {
+      title: 'Event Communications',
+      phase: 'during_event',
+      items: [
+        'Send day-of reminders',
+        'Coordinate announcements',
+        'Handle media inquiries',
+        'Manage emergency communications',
+        'Document key moments',
+      ],
+    },
+    {
+      title: 'Post-Event Communications',
+      phase: 'post_event',
+      items: [
+        'Send thank you emails',
+        'Share event recap',
+        'Distribute press coverage',
+        'Collect testimonials',
+        'Archive communications',
+      ],
+    },
   ],
 
   // ===== CONTENT DEPARTMENT =====
   content: [
     {
       title: 'Content Development',
+      phase: 'pre_event',
       items: [
         'Define session topics and tracks',
         'Create presentation templates',
@@ -502,18 +645,31 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Session Management',
+      phase: 'during_event',
       items: [
         'Create session schedule',
         'Assign rooms and timeslots',
         'Prepare session signage',
         'Brief session moderators',
+        'Handle session logistics',
+      ],
+    },
+    {
+      title: 'Content Archive',
+      phase: 'post_event',
+      items: [
         'Collect session recordings',
+        'Edit and publish content',
+        'Create resource library',
+        'Gather presenter feedback',
+        'Document content performance',
       ],
     },
   ],
   speaker_liaison: [
     {
       title: 'Speaker Coordination',
+      phase: 'pre_event',
       items: [
         'Send speaker invitations',
         'Collect speaker bios and headshots',
@@ -524,6 +680,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Day-of Support',
+      phase: 'during_event',
       items: [
         'Setup speaker green room',
         'Prepare speaker gifts',
@@ -532,10 +689,22 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Handle speaker Q&A logistics',
       ],
     },
+    {
+      title: 'Speaker Follow-up',
+      phase: 'post_event',
+      items: [
+        'Send speaker thank you notes',
+        'Share session recordings',
+        'Collect speaker feedback',
+        'Process speaker payments',
+        'Update speaker database',
+      ],
+    },
   ],
   media: [
     {
       title: 'Pre-Production',
+      phase: 'pre_event',
       items: [
         'Book photographers/videographers',
         'Create shot list',
@@ -545,19 +714,32 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
       ],
     },
     {
-      title: 'Coverage & Post-Production',
+      title: 'Event Coverage',
+      phase: 'during_event',
       items: [
         'Capture keynote sessions',
         'Document networking moments',
         'Take VIP photos',
+        'Cover all major activities',
+        'Backup media files regularly',
+      ],
+    },
+    {
+      title: 'Post-Production',
+      phase: 'post_event',
+      items: [
         'Edit and deliver highlight reel',
+        'Process and organize photos',
+        'Create recap video',
         'Archive all media assets',
+        'Distribute to stakeholders',
       ],
     },
   ],
   judge: [
     {
       title: 'Judging Preparation',
+      phase: 'pre_event',
       items: [
         'Recruit qualified judges',
         'Create judging criteria and rubric',
@@ -568,6 +750,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Judging Execution',
+      phase: 'during_event',
       items: [
         'Distribute submissions to judges',
         'Coordinate judging rounds',
@@ -576,12 +759,24 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Prepare winner announcements',
       ],
     },
+    {
+      title: 'Judging Wrap-up',
+      phase: 'post_event',
+      items: [
+        'Finalize and announce results',
+        'Send certificates to winners',
+        'Thank judges formally',
+        'Document judging process',
+        'Archive all submissions',
+      ],
+    },
   ],
 
   // ===== TECH & FINANCE DEPARTMENT =====
   technical: [
     {
       title: 'Technical Setup',
+      phase: 'pre_event',
       items: [
         'Setup WiFi and networking',
         'Configure AV equipment',
@@ -592,6 +787,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Technical Support',
+      phase: 'during_event',
       items: [
         'Create tech support schedule',
         'Setup help desk station',
@@ -600,10 +796,57 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
         'Handle technical emergencies',
       ],
     },
+    {
+      title: 'Technical Teardown',
+      phase: 'post_event',
+      items: [
+        'Breakdown and pack equipment',
+        'Return rented equipment',
+        'Document technical issues',
+        'Archive recordings',
+        'Create tech lessons learned',
+      ],
+    },
+  ],
+  it: [
+    {
+      title: 'IT Infrastructure',
+      phase: 'pre_event',
+      items: [
+        'Setup event management systems',
+        'Configure access credentials',
+        'Test integrations',
+        'Prepare backup procedures',
+        'Document IT architecture',
+      ],
+    },
+    {
+      title: 'IT Operations',
+      phase: 'during_event',
+      items: [
+        'Monitor system performance',
+        'Handle access issues',
+        'Support registration systems',
+        'Manage data collection',
+        'Ensure security protocols',
+      ],
+    },
+    {
+      title: 'IT Wrap-up',
+      phase: 'post_event',
+      items: [
+        'Revoke temporary access',
+        'Export and backup data',
+        'Generate system reports',
+        'Document incidents',
+        'Archive configurations',
+      ],
+    },
   ],
   finance: [
     {
       title: 'Budget Management',
+      phase: 'pre_event',
       items: [
         'Create detailed budget spreadsheet',
         'Track all expenses',
@@ -613,7 +856,19 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
       ],
     },
     {
+      title: 'Financial Operations',
+      phase: 'during_event',
+      items: [
+        'Process on-site payments',
+        'Track real-time expenses',
+        'Handle emergency purchases',
+        'Document all transactions',
+        'Manage petty cash',
+      ],
+    },
+    {
       title: 'Financial Reporting',
+      phase: 'post_event',
       items: [
         'Collect all receipts',
         'Reconcile payment accounts',
@@ -628,6 +883,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
   volunteers: [
     {
       title: 'Volunteer Recruitment',
+      phase: 'pre_event',
       items: [
         'Create volunteer roles and descriptions',
         'Post volunteer opportunities',
@@ -638,6 +894,7 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Volunteer Management',
+      phase: 'pre_event',
       items: [
         'Create shift schedule',
         'Conduct volunteer training',
@@ -648,12 +905,24 @@ export const COMMITTEE_CHECKLIST_TEMPLATES: Record<string, { title: string; item
     },
     {
       title: 'Day-of Coordination',
+      phase: 'during_event',
       items: [
         'Check-in volunteers',
         'Brief team leads',
         'Monitor shift coverage',
         'Handle volunteer issues',
+        'Coordinate break rotations',
+      ],
+    },
+    {
+      title: 'Volunteer Appreciation',
+      phase: 'post_event',
+      items: [
         'Thank and recognize volunteers',
+        'Collect volunteer feedback',
+        'Issue volunteer certificates',
+        'Document volunteer hours',
+        'Plan recognition event',
       ],
     },
   ],
