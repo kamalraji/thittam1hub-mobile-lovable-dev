@@ -3459,6 +3459,23 @@ export type Database = {
     }
     Functions: {
       generate_slug: { Args: { input_text: string }; Returns: string }
+      get_public_event_by_slug: {
+        Args: { _event_slug: string; _org_slug: string }
+        Returns: {
+          branding: Json
+          capacity: number
+          category: Database["public"]["Enums"]["event_category"]
+          description: string
+          end_date: string
+          id: string
+          landing_page_data: Json
+          landing_page_slug: string
+          mode: Database["public"]["Enums"]["event_mode"]
+          name: string
+          slug: string
+          start_date: string
+        }[]
+      }
       get_public_organization: {
         Args: { _slug: string }
         Returns: {
