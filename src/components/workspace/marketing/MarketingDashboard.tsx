@@ -11,7 +11,7 @@ import { CampaignTracker } from './CampaignTracker';
 import { AdPerformancePanel } from './AdPerformancePanel';
 import { BrandingAssetsManager } from './BrandingAssetsManager';
 import { MarketingCalendar } from './MarketingCalendar';
-import { MarketingQuickActions } from './MarketingQuickActions';
+
 import { AudienceInsights } from './AudienceInsights';
 
 interface MarketingDashboardProps {
@@ -107,13 +107,8 @@ export function MarketingDashboard({
         onRequestResource={onRequestResource}
       />
 
-      {/* Quick Actions and Campaign Tracker */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <MarketingQuickActions />
-        <div className="lg:col-span-2">
-          <CampaignTracker />
-        </div>
-      </div>
+      {/* Campaign Tracker */}
+      <CampaignTracker />
 
       {/* Marketing Calendar - Full Width */}
       <MarketingCalendar />

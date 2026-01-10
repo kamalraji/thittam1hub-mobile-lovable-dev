@@ -3,7 +3,7 @@ import { FinancialSummaryCards } from './FinancialSummaryCards';
 import { ExpenseTracker } from './ExpenseTracker';
 import { InvoiceManager } from './InvoiceManager';
 import { BudgetApprovalQueue } from './BudgetApprovalQueue';
-import { FinanceQuickActions } from './FinanceQuickActions';
+
 import { SpendingByCategory } from './SpendingByCategory';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
 import { TaskSummaryCards } from '../TaskSummaryCards';
@@ -118,7 +118,6 @@ export function FinanceDashboard({
 
         {/* Right Column */}
         <div className="space-y-6">
-          <FinanceQuickActions />
           <SpendingByCategory workspaceId={workspace.id} />
           <InvoiceManager workspaceId={workspace.id} />
         </div>
