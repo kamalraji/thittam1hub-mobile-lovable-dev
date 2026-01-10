@@ -3481,6 +3481,21 @@ export type Database = {
           website: string
         }[]
       }
+      get_public_organizations_list: {
+        Args: never
+        Returns: {
+          category: string
+          city: string
+          country: string
+          description: string
+          id: string
+          logo_url: string
+          name: string
+          slug: string
+          state: string
+          verification_status: string
+        }[]
+      }
       get_public_portfolio: {
         Args: { _user_id: string }
         Returns: {
