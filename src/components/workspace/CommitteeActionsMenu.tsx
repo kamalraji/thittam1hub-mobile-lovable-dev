@@ -55,9 +55,7 @@ import {
   Hash,
   TrendingUp,
   // Content Committee
-  Layers,
   Upload,
-  Eye,
   // Speaker Liaison Committee
   Mic,
   Plane,

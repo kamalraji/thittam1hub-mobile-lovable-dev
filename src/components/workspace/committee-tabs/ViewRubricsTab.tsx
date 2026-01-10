@@ -71,12 +71,12 @@ export function ViewRubricsTab({ workspace }: ViewRubricsTabProps) {
 
       const { error } = await supabase
         .from('rubrics')
-        .insert({
+        .insert([{
           event_id: eventId,
           name: rubric.name,
           description: rubric.description,
-          criteria: rubric.criteria as unknown as Record<string, unknown>[],
-        });
+          criteria: JSON.parse(JSON.stringify(rubric.criteria)),
+        }]);
 
       if (error) throw error;
     },
@@ -98,7 +98,7 @@ export function ViewRubricsTab({ workspace }: ViewRubricsTabProps) {
         .update({
           name: rubric.name,
           description: rubric.description,
-          criteria: rubric.criteria as unknown as Record<string, unknown>[],
+          criteria: JSON.parse(JSON.stringify(rubric.criteria)),
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);
