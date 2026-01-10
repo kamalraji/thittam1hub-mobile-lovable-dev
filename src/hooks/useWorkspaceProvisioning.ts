@@ -169,6 +169,7 @@ export function useWorkspaceProvisioning() {
                 workspace_id: committee.id,
                 title: checklistTemplate.title,
                 committee_type: committeeId,
+                phase: checklistTemplate.phase || 'pre_event',
                 items: JSON.stringify(items),
                 is_template: false,
               });
