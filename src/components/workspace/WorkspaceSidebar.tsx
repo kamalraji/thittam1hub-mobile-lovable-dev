@@ -313,7 +313,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
           {/* Committee Actions Menu - Only for COMMITTEE workspaces */}
           {workspace.workspaceType === WorkspaceType.COMMITTEE && !isCollapsed && (
-            <CommitteeActionsMenu workspace={workspace} isCollapsed={isCollapsed} />
+            <CommitteeActionsMenu workspace={workspace} isCollapsed={isCollapsed} onTabChange={onTabChange} />
           )}
 
           {/* Management Section - Hidden for DEPARTMENT and COMMITTEE workspaces */}
