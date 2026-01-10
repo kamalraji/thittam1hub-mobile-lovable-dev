@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Workspace } from '@/types';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import { getCommitteeConfig, getCommitteeColors } from '@/lib/committeeConfig';
+import { CommitteeActionDialog } from './committee-actions/CommitteeActionDialog';
+import { actionConfigs } from './committee-actions/actionConfigs';
 import {
   ChevronDown,
   ChevronRight,
@@ -242,6 +243,7 @@ function detectCommitteeType(workspaceName: string): string {
 
 export function CommitteeActionsMenu({ workspace, isCollapsed }: CommitteeActionsMenuProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeAction, setActiveAction] = useState<{ type: string; id: string } | null>(null);
   
   const committeeType = detectCommitteeType(workspace.name);
   const actions = committeeActions[committeeType] || genericActions;
@@ -251,51 +253,73 @@ export function CommitteeActionsMenu({ workspace, isCollapsed }: CommitteeAction
   const colors = config ? getCommitteeColors(config.color) : null;
   const headerColor = colors?.text || 'text-amber-500';
 
-  const handleAction = (_actionId: string, label: string) => {
-    toast.info(`${label} action coming soon`);
+  const handleAction = (actionId: string) => {
+    setActiveAction({ type: committeeType, id: actionId });
   };
+
+  const handleSubmit = async (_data: Record<string, string>) => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // In a real app, you'd save the data to the database here
+  };
+
+  const activeConfig = activeAction 
+    ? actionConfigs[activeAction.type]?.[activeAction.id] 
+    : null;
 
   if (isCollapsed) {
     return null; // Don't render in collapsed state
   }
 
   return (
-    <div className="mt-1">
-      {/* Collapsible Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
-      >
-        <span className={cn('uppercase tracking-wider', headerColor)}>
-          Committee Actions
-        </span>
-        {isExpanded ? (
-          <ChevronDown className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5" />
-        )}
-      </button>
+    <>
+      <div className="mt-1">
+        {/* Collapsible Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
+        >
+          <span className={cn('uppercase tracking-wider', headerColor)}>
+            Committee Actions
+          </span>
+          {isExpanded ? (
+            <ChevronDown className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" />
+          )}
+        </button>
 
-      {/* Expanded Actions */}
-      {isExpanded && (
-        <div className="mt-1 space-y-0.5 px-1">
-          {actions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.id}
-                onClick={() => handleAction(action.id, action.label)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg hover:bg-muted/50 transition-colors text-left group"
-              >
-                <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', action.color)} />
-                <span className="truncate text-foreground/80 group-hover:text-foreground">
-                  {action.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Expanded Actions */}
+        {isExpanded && (
+          <div className="mt-1 space-y-0.5 px-1">
+            {actions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => handleAction(action.id)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                >
+                  <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', action.color)} />
+                  <span className="truncate text-foreground/80 group-hover:text-foreground">
+                    {action.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Action Dialog */}
+      {activeConfig && (
+        <CommitteeActionDialog
+          open={!!activeAction}
+          onOpenChange={(open) => !open && setActiveAction(null)}
+          config={activeConfig}
+          onSubmit={handleSubmit}
+        />
       )}
-    </div>
+    </>
   );
 }
