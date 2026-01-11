@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,10 +28,9 @@ import {
   MoreVertical,
   Edit,
   Check,
-  Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown, SimpleDropdownTrigger, SimpleDropdownContent, SimpleDropdownItem } from '@/components/ui/simple-dropdown';
 import { format, isPast, isToday, isTomorrow, differenceInDays } from 'date-fns';
 
 interface TrackDeliverablesTabProps {
@@ -436,19 +435,21 @@ export function TrackDeliverablesTab({ workspace }: TrackDeliverablesTabProps) {
                             {config.label}
                           </Badge>
                         </div>
-                        <SimpleDropdown
-                          trigger={
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          }
-                          items={[
-                            { label: 'Edit', icon: Edit, onClick: () => openEditDialog(deliverable) },
-                            ...(deliverable.status !== 'completed' ? [
-                              { label: 'Mark Complete', icon: Check, onClick: () => handleMarkComplete(deliverable.id) },
-                            ] : []),
-                          ]}
-                        />
+                        <SimpleDropdown>
+                          <SimpleDropdownTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+                            <MoreVertical className="h-4 w-4" />
+                          </SimpleDropdownTrigger>
+                          <SimpleDropdownContent align="end">
+                            <SimpleDropdownItem onClick={() => openEditDialog(deliverable)}>
+                              <Edit className="h-4 w-4 mr-2" /> Edit
+                            </SimpleDropdownItem>
+                            {deliverable.status !== 'completed' && (
+                              <SimpleDropdownItem onClick={() => handleMarkComplete(deliverable.id)}>
+                                <Check className="h-4 w-4 mr-2" /> Mark Complete
+                              </SimpleDropdownItem>
+                            )}
+                          </SimpleDropdownContent>
+                        </SimpleDropdown>
                       </div>
                     </div>
                   );

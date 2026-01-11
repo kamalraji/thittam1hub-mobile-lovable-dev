@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,6 @@ import {
   Plus, 
   ArrowRight,
   Building2, 
-  DollarSign, 
   Clock,
   CheckCircle2,
   XCircle,
@@ -32,7 +31,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown, SimpleDropdownTrigger, SimpleDropdownContent, SimpleDropdownItem } from '@/components/ui/simple-dropdown';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface SendProposalTabProps {
@@ -59,7 +58,7 @@ export function SendProposalTab({ workspace }: SendProposalTabProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProposal, setEditingProposal] = useState<SponsorProposal | null>(null);
 
-  const { data: proposals = [], isLoading } = useProposals(workspace.id);
+  const { data: proposals = [] } = useProposals(workspace.id);
   const createProposal = useCreateProposal();
   const updateProposal = useUpdateProposal();
   const moveProposalStage = useMoveProposalStage();
@@ -331,27 +330,31 @@ export function SendProposalTab({ workspace }: SendProposalTabProps) {
                               <h4 className="font-medium text-sm text-foreground line-clamp-1">
                                 {proposal.company_name}
                               </h4>
-                              <SimpleDropdown
-                                trigger={
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 -mt-1 -mr-1">
-                                    <MoreVertical className="h-3.5 w-3.5" />
-                                  </Button>
-                                }
-                                items={[
-                                  { label: 'Edit', icon: Edit, onClick: () => openEditDialog(proposal) },
-                                  ...stages
+                              <SimpleDropdown>
+                                <SimpleDropdownTrigger className="h-6 w-6 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground -mt-1 -mr-1">
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </SimpleDropdownTrigger>
+                                <SimpleDropdownContent align="end">
+                                  <SimpleDropdownItem onClick={() => openEditDialog(proposal)}>
+                                    <Edit className="h-4 w-4 mr-2" /> Edit
+                                  </SimpleDropdownItem>
+                                  {stages
                                     .filter(s => s.id !== proposal.stage && s.id !== 'closed_lost')
-                                    .map(s => ({
-                                      label: `Move to ${s.label}`,
-                                      icon: ArrowRight,
-                                      onClick: () => handleMoveStage(proposal.id, s.id),
-                                    })),
-                                  ...(proposal.stage === 'negotiation' ? [
-                                    { label: 'Convert to Sponsor', icon: UserPlus, onClick: () => handleConvertToSponsor(proposal) },
-                                  ] : []),
-                                  { label: 'Mark as Lost', icon: XCircle, onClick: () => handleMoveStage(proposal.id, 'closed_lost'), variant: 'destructive' as const },
-                                ]}
-                              />
+                                    .map(s => (
+                                      <SimpleDropdownItem key={s.id} onClick={() => handleMoveStage(proposal.id, s.id)}>
+                                        <ArrowRight className="h-4 w-4 mr-2" /> Move to {s.label}
+                                      </SimpleDropdownItem>
+                                    ))}
+                                  {proposal.stage === 'negotiation' && (
+                                    <SimpleDropdownItem onClick={() => handleConvertToSponsor(proposal)}>
+                                      <UserPlus className="h-4 w-4 mr-2" /> Convert to Sponsor
+                                    </SimpleDropdownItem>
+                                  )}
+                                  <SimpleDropdownItem onClick={() => handleMoveStage(proposal.id, 'closed_lost')} className="text-destructive">
+                                    <XCircle className="h-4 w-4 mr-2" /> Mark as Lost
+                                  </SimpleDropdownItem>
+                                </SimpleDropdownContent>
+                              </SimpleDropdown>
                             </div>
                             <div className="flex items-center gap-2 mb-2">
                               <Badge variant="outline" className={cn('text-xs capitalize', tierColors[proposal.proposed_tier])}>

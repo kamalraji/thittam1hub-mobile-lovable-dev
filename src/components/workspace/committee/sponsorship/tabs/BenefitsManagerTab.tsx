@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +31,7 @@ import {
   Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown, SimpleDropdownTrigger, SimpleDropdownContent, SimpleDropdownItem } from '@/components/ui/simple-dropdown';
 
 interface BenefitsManagerTabProps {
   workspace: Workspace;
@@ -350,22 +350,23 @@ export function BenefitsManagerTab({ workspace }: BenefitsManagerTabProps) {
                               ) : (
                                 <X className="h-4 w-4 text-muted-foreground/50" />
                               )}
-                              <SimpleDropdown
-                                trigger={
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                                    <MoreVertical className="h-3 w-3" />
-                                  </Button>
-                                }
-                                items={[
-                                  { label: 'Edit', icon: Edit, onClick: () => openEditDialog(benefit) },
-                                  { 
-                                    label: benefit.is_active ? 'Disable' : 'Enable', 
-                                    icon: benefit.is_active ? X : Check, 
-                                    onClick: () => handleToggleActive(benefit) 
-                                  },
-                                  { label: 'Delete', icon: Trash2, onClick: () => handleDeleteBenefit(benefit), variant: 'destructive' as const },
-                                ]}
-                              />
+                              <SimpleDropdown>
+                                <SimpleDropdownTrigger className="h-6 w-6 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100">
+                                  <MoreVertical className="h-3 w-3" />
+                                </SimpleDropdownTrigger>
+                                <SimpleDropdownContent align="end">
+                                  <SimpleDropdownItem onClick={() => openEditDialog(benefit)}>
+                                    <Edit className="h-4 w-4 mr-2" /> Edit
+                                  </SimpleDropdownItem>
+                                  <SimpleDropdownItem onClick={() => handleToggleActive(benefit)}>
+                                    {benefit.is_active ? <X className="h-4 w-4 mr-2" /> : <Check className="h-4 w-4 mr-2" />}
+                                    {benefit.is_active ? 'Disable' : 'Enable'}
+                                  </SimpleDropdownItem>
+                                  <SimpleDropdownItem onClick={() => handleDeleteBenefit(benefit)} className="text-destructive">
+                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                  </SimpleDropdownItem>
+                                </SimpleDropdownContent>
+                              </SimpleDropdown>
                             </div>
                           );
                         })}

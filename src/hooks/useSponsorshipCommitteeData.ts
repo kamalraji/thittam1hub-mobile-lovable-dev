@@ -123,7 +123,7 @@ export function useSponsors(workspaceId: string | undefined) {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Sponsor[];
+      return (data || []) as unknown as Sponsor[];
     },
     enabled: !!workspaceId,
   });
@@ -249,10 +249,10 @@ export function useCreateSponsor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Sponsor> & { workspace_id: string }) => {
+    mutationFn: async (data: Record<string, unknown> & { workspace_id: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsors')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
       
@@ -298,7 +298,7 @@ export function useDeleteSponsor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workspaceId }: { id: string; workspaceId: string }) => {
+    mutationFn: async ({ id, workspaceId: _workspaceId }: { id: string; workspaceId: string }) => {
       const { error } = await supabase
         .from('workspace_sponsors')
         .delete()
@@ -324,10 +324,10 @@ export function useCreateProposal() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<SponsorProposal> & { workspace_id: string }) => {
+    mutationFn: async (data: Record<string, unknown> & { workspace_id: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_proposals')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
       
@@ -373,7 +373,7 @@ export function useMoveProposalStage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workspaceId, stage }: { id: string; workspaceId: string; stage: string }) => {
+    mutationFn: async ({ id, workspaceId: _workspaceId, stage }: { id: string; workspaceId: string; stage: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_proposals')
         .update({ stage, stage_entered_at: new Date().toISOString() })
@@ -451,10 +451,10 @@ export function useCreateDeliverable() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<SponsorDeliverable> & { workspace_id: string; sponsor_id: string }) => {
+    mutationFn: async (data: Record<string, unknown> & { workspace_id: string; sponsor_id: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_deliverables')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
       
@@ -500,7 +500,7 @@ export function useMarkDeliverableComplete() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workspaceId, proofUrl }: { id: string; workspaceId: string; proofUrl?: string }) => {
+    mutationFn: async ({ id, workspaceId: _workspaceId, proofUrl }: { id: string; workspaceId: string; proofUrl?: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_deliverables')
         .update({ 
@@ -533,10 +533,10 @@ export function useCreateBenefit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<SponsorBenefit> & { workspace_id: string }) => {
+    mutationFn: async (data: Record<string, unknown> & { workspace_id: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_benefits')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
       
@@ -582,7 +582,7 @@ export function useDeleteBenefit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workspaceId }: { id: string; workspaceId: string }) => {
+    mutationFn: async ({ id, workspaceId: _workspaceId }: { id: string; workspaceId: string }) => {
       const { error } = await supabase
         .from('workspace_sponsor_benefits')
         .delete()
@@ -608,10 +608,10 @@ export function useCreateCommunication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<SponsorCommunication> & { workspace_id: string; sponsor_id: string }) => {
+    mutationFn: async (data: Record<string, unknown> & { workspace_id: string; sponsor_id: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_communications')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
       
@@ -657,7 +657,7 @@ export function useSendCommunication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, workspaceId }: { id: string; workspaceId: string }) => {
+    mutationFn: async ({ id, workspaceId: _workspaceId }: { id: string; workspaceId: string }) => {
       const { data: result, error } = await supabase
         .from('workspace_sponsor_communications')
         .update({ 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +27,9 @@ import {
   Edit,
   Trash2,
   ExternalLink,
-  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown, SimpleDropdownTrigger, SimpleDropdownContent, SimpleDropdownItem } from '@/components/ui/simple-dropdown';
 
 interface AddSponsorTabProps {
   workspace: Workspace;
@@ -41,12 +40,6 @@ const tierColors: Record<string, string> = {
   gold: 'bg-amber-100 text-amber-800 border-amber-300',
   silver: 'bg-gray-100 text-gray-800 border-gray-300',
   bronze: 'bg-orange-100 text-orange-800 border-orange-300',
-};
-
-const statusColors: Record<string, string> = {
-  active: 'bg-emerald-500/10 text-emerald-600',
-  inactive: 'bg-gray-500/10 text-gray-600',
-  pending: 'bg-amber-500/10 text-amber-600',
 };
 
 const paymentStatusColors: Record<string, string> = {
@@ -455,18 +448,24 @@ export function AddSponsorTab({ workspace }: AddSponsorTabProps) {
                           {sponsor.payment_status}
                         </Badge>
                       </div>
-                      <SimpleDropdown
-                        trigger={
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        }
-                        items={[
-                          { label: 'Edit', icon: Edit, onClick: () => openEditDialog(sponsor) },
-                          ...(sponsor.website_url ? [{ label: 'Visit Website', icon: ExternalLink, onClick: () => window.open(sponsor.website_url!, '_blank') }] : []),
-                          { label: 'Delete', icon: Trash2, onClick: () => handleDeleteSponsor(sponsor), variant: 'destructive' as const },
-                        ]}
-                      />
+                      <SimpleDropdown>
+                        <SimpleDropdownTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+                          <MoreVertical className="h-4 w-4" />
+                        </SimpleDropdownTrigger>
+                        <SimpleDropdownContent align="end">
+                          <SimpleDropdownItem onClick={() => openEditDialog(sponsor)}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit
+                          </SimpleDropdownItem>
+                          {sponsor.website_url && (
+                            <SimpleDropdownItem onClick={() => window.open(sponsor.website_url!, '_blank')}>
+                              <ExternalLink className="h-4 w-4 mr-2" /> Visit Website
+                            </SimpleDropdownItem>
+                          )}
+                          <SimpleDropdownItem onClick={() => handleDeleteSponsor(sponsor)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </SimpleDropdownItem>
+                        </SimpleDropdownContent>
+                      </SimpleDropdown>
                     </div>
                   </div>
                 ))}

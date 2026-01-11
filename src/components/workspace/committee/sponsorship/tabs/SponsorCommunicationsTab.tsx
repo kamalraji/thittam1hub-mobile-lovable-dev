@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Workspace } from '@/types';
 import { 
@@ -34,7 +33,7 @@ import {
   ArrowDownLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SimpleDropdown } from '@/components/ui/simple-dropdown';
+import { SimpleDropdown, SimpleDropdownTrigger, SimpleDropdownContent, SimpleDropdownItem } from '@/components/ui/simple-dropdown';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface SponsorCommunicationsTabProps {
@@ -295,19 +294,21 @@ export function SponsorCommunicationsTab({ workspace }: SponsorCommunicationsTab
             )}
           </div>
         </div>
-        <SimpleDropdown
-          trigger={
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          }
-          items={[
-            { label: 'Edit', icon: Edit, onClick: () => openEditDialog(comm) },
-            ...(comm.status === 'draft' ? [
-              { label: 'Mark as Sent', icon: Send, onClick: () => handleSend(comm.id) },
-            ] : []),
-          ]}
-        />
+        <SimpleDropdown>
+          <SimpleDropdownTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+            <MoreVertical className="h-4 w-4" />
+          </SimpleDropdownTrigger>
+          <SimpleDropdownContent align="end">
+            <SimpleDropdownItem onClick={() => openEditDialog(comm)}>
+              <Edit className="h-4 w-4 mr-2" /> Edit
+            </SimpleDropdownItem>
+            {comm.status === 'draft' && (
+              <SimpleDropdownItem onClick={() => handleSend(comm.id)}>
+                <Send className="h-4 w-4 mr-2" /> Mark as Sent
+              </SimpleDropdownItem>
+            )}
+          </SimpleDropdownContent>
+        </SimpleDropdown>
       </div>
     );
   };
