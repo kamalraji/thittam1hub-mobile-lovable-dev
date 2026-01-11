@@ -2819,6 +2819,149 @@ export type Database = {
           },
         ]
       }
+      workspace_judge_assignments: {
+        Row: {
+          assigned_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          judge_id: string
+          priority: number | null
+          rubric_id: string | null
+          started_at: string | null
+          status: string | null
+          submission_id: string
+          workspace_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          judge_id: string
+          priority?: number | null
+          rubric_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          submission_id: string
+          workspace_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          judge_id?: string
+          priority?: number | null
+          rubric_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          submission_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_judge_assignments_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_judge_assignments_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_rubrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_judge_assignments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_judge_assignments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_judges: {
+        Row: {
+          assigned_count: number | null
+          availability: Json | null
+          category: string | null
+          completed_count: number | null
+          confirmed_at: string | null
+          created_at: string | null
+          expertise: string | null
+          id: string
+          invited_at: string | null
+          judge_email: string | null
+          judge_name: string
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          assigned_count?: number | null
+          availability?: Json | null
+          category?: string | null
+          completed_count?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expertise?: string | null
+          id?: string
+          invited_at?: string | null
+          judge_email?: string | null
+          judge_name: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          assigned_count?: number | null
+          availability?: Json | null
+          category?: string | null
+          completed_count?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expertise?: string | null
+          id?: string
+          invited_at?: string | null
+          judge_email?: string | null
+          judge_name?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_judges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_judges_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_media_assets: {
         Row: {
           category: string | null
@@ -3120,6 +3263,149 @@ export type Database = {
           },
         ]
       }
+      workspace_rubrics: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_template: boolean | null
+          max_total_score: number | null
+          name: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_template?: boolean | null
+          max_total_score?: number | null
+          name: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_template?: boolean | null
+          max_total_score?: number | null
+          name?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_rubrics_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_scores: {
+        Row: {
+          assignment_id: string
+          comments: string | null
+          created_at: string | null
+          id: string
+          is_finalist_vote: boolean | null
+          judge_id: string
+          private_notes: string | null
+          rubric_id: string | null
+          scored_at: string | null
+          scores: Json
+          submission_id: string
+          total_score: number | null
+          updated_at: string | null
+          weighted_score: number | null
+          workspace_id: string
+        }
+        Insert: {
+          assignment_id: string
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          is_finalist_vote?: boolean | null
+          judge_id: string
+          private_notes?: string | null
+          rubric_id?: string | null
+          scored_at?: string | null
+          scores?: Json
+          submission_id: string
+          total_score?: number | null
+          updated_at?: string | null
+          weighted_score?: number | null
+          workspace_id: string
+        }
+        Update: {
+          assignment_id?: string
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          is_finalist_vote?: boolean | null
+          judge_id?: string
+          private_notes?: string | null
+          rubric_id?: string | null
+          scored_at?: string | null
+          scores?: Json
+          submission_id?: string
+          total_score?: number | null
+          updated_at?: string | null
+          weighted_score?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_scores_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_judge_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_scores_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_scores_rubric_id_fkey"
+            columns: ["rubric_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_rubrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_scores_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_scores_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_settings: {
         Row: {
           allow_member_invites: boolean
@@ -3338,6 +3624,81 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workspace_speakers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_submissions: {
+        Row: {
+          created_at: string | null
+          demo_url: string | null
+          description: string | null
+          event_id: string | null
+          id: string
+          metadata: Json | null
+          presentation_url: string | null
+          project_name: string
+          repo_url: string | null
+          status: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          table_number: string | null
+          team_name: string
+          track: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json | null
+          presentation_url?: string | null
+          project_name: string
+          repo_url?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          table_number?: string | null
+          team_name: string
+          track?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json | null
+          presentation_url?: string | null
+          project_name?: string
+          repo_url?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          table_number?: string | null
+          team_name?: string
+          track?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_submissions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_submissions_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

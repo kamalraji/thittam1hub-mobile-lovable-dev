@@ -86,7 +86,12 @@ export type WorkspaceTab =
   | 'upload-media-committee'
   | 'create-shot-list'
   | 'gallery-review'
-  | 'export-assets';
+  | 'export-assets'
+  // Judge Committee tabs (L3)
+  | 'assign-judges-committee'
+  | 'setup-rubrics-committee'
+  | 'view-scores-committee'
+  | 'export-results-committee';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;

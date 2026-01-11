@@ -177,10 +177,10 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'bio-collection', label: 'Bio Collection', icon: FileCheck, color: 'text-purple-500', tab: 'tasks' },
   ],
   judge: [
-    { id: 'assign-judges', label: 'Assign Judges', icon: Scale, color: 'text-emerald-500', tab: 'team' },
-    { id: 'setup-rubrics', label: 'Setup Rubrics', icon: ClipboardList, color: 'text-blue-500', tab: 'tasks' },
-    { id: 'view-scores', label: 'View Scores', icon: Star, color: 'text-amber-500', tab: 'analytics' },
-    { id: 'export-results', label: 'Export Results', icon: Download, color: 'text-purple-500', tab: 'reports' },
+    { id: 'assign-judges', label: 'Assign Judges', icon: Scale, color: 'text-emerald-500', tab: 'assign-judges-committee' },
+    { id: 'setup-rubrics', label: 'Setup Rubrics', icon: ClipboardList, color: 'text-blue-500', tab: 'setup-rubrics-committee' },
+    { id: 'view-scores', label: 'View Scores', icon: Star, color: 'text-amber-500', tab: 'view-scores-committee' },
+    { id: 'export-results', label: 'Export Results', icon: Download, color: 'text-purple-500', tab: 'export-results-committee' },
   ],
   media: [
     { id: 'upload-media', label: 'Upload Media', icon: Upload, color: 'text-fuchsia-500', tab: 'upload-media-committee' },
