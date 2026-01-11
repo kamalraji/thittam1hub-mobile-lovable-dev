@@ -142,7 +142,12 @@ export type WorkspaceTab =
   | 'master-checklist'
   | 'incident-report'
   | 'team-roster'
-  | 'ops-report';
+  | 'ops-report'
+  // Facility Committee tabs (L3)
+  | 'safety-check-facility'
+  | 'venue-walkthrough-facility'
+  | 'report-issue-facility'
+  | 'room-status-facility';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;

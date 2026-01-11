@@ -164,6 +164,13 @@ import {
   TeamRosterTab,
   OpsReportTab,
 } from './department/operations/tabs';
+// Facility Committee tabs (L3)
+import {
+  SafetyCheckTab,
+  VenueWalkthroughTab,
+  ReportIssueTab,
+  RoomStatusTab,
+} from './committee/facility/tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
 interface WorkspaceDashboardProps {
@@ -819,6 +826,23 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'ops-report' && (
           <OpsReportTab workspace={workspace} />
+        )}
+
+        {/* Facility Committee tabs (L3) */}
+        {activeTab === 'safety-check-facility' && (
+          <SafetyCheckTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'venue-walkthrough-facility' && (
+          <VenueWalkthroughTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'report-issue-facility' && (
+          <ReportIssueTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'room-status-facility' && (
+          <RoomStatusTab workspaceId={workspace.id} />
         )}
       </div>
     </WorkspaceLayout>
