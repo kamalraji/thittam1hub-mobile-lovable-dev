@@ -6203,6 +6203,68 @@ export type Database = {
           },
         ]
       }
+      workspace_venue_walkthroughs: {
+        Row: {
+          attendees: string[] | null
+          completed_at: string | null
+          created_at: string
+          findings: Json | null
+          id: string
+          lead_id: string | null
+          lead_name: string | null
+          name: string
+          notes: string | null
+          route_areas: string[] | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attendees?: string[] | null
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          name: string
+          notes?: string | null
+          route_areas?: string[] | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attendees?: string[] | null
+          completed_at?: string | null
+          created_at?: string
+          findings?: Json | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          name?: string
+          notes?: string | null
+          route_areas?: string[] | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_venue_walkthroughs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspaces: {
         Row: {
           created_at: string
