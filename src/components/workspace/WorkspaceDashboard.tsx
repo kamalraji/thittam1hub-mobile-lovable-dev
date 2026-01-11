@@ -137,6 +137,15 @@ import {
   ManagePlatformsSocialTab,
   ContentLibrarySocialTab,
 } from './committee/social-media/tabs';
+// Communication Committee tabs (L3)
+import {
+  SendAnnouncementTab as CommSendAnnouncementTab,
+  CreateEmailTab as CommCreateEmailTab,
+  DraftPressReleaseTab as CommDraftPressReleaseTab,
+  BroadcastMessageTab as CommBroadcastMessageTab,
+  ScheduleUpdateTab as CommScheduleUpdateTab,
+  ContactStakeholdersTab as CommContactStakeholdersTab,
+} from './committee/communication/tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
 interface WorkspaceDashboardProps {
@@ -717,6 +726,31 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'content-library-social' && (
           <ContentLibrarySocialTab workspaceId={workspace.id} />
+        )}
+
+        {/* Communication Committee tabs (L3) */}
+        {activeTab === 'send-announcement-communication' && (
+          <CommSendAnnouncementTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'create-email-communication' && (
+          <CommCreateEmailTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'draft-press-release-communication' && (
+          <CommDraftPressReleaseTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'broadcast-message-communication' && (
+          <CommBroadcastMessageTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'schedule-update-communication' && (
+          <CommScheduleUpdateTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'contact-stakeholders-communication' && (
+          <CommContactStakeholdersTab workspaceId={workspace.id} />
         )}
       </div>
     </WorkspaceLayout>

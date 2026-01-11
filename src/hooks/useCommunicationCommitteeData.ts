@@ -686,11 +686,11 @@ export function useCreateAnnouncement(workspaceId: string) {
         .insert([{
           title: announcement.title as string,
           content: announcement.content as string,
-          channels: announcement.channel,
-          target_audience: announcement.target_audience,
-          priority: announcement.priority,
-          scheduled_for: announcement.scheduled_for,
-          status: announcement.status || 'draft',
+          channels: announcement.channels as string[] | undefined,
+          target_audience: announcement.target_audience as string | undefined,
+          priority: announcement.priority as string | undefined,
+          scheduled_for: announcement.scheduled_for as string | undefined,
+          status: (announcement.status as string) || 'draft',
           workspace_id: workspaceId,
           created_by: userData.user?.id,
         }])

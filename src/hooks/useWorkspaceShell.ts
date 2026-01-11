@@ -115,13 +115,20 @@ export type WorkspaceTab =
   | 'publish-content-committee'
   | 'content-calendar-committee'
   | 'content-pipeline-committee'
-  // Social Media Committee tabs (L3)
+// Social Media Committee tabs (L3)
   | 'schedule-content-social'
   | 'monitor-hashtags-social'
   | 'engagement-report-social'
   | 'post-now-social'
   | 'manage-platforms-social'
-  | 'content-library-social';
+  | 'content-library-social'
+  // Communication Committee tabs (L3)
+  | 'send-announcement-communication'
+  | 'create-email-communication'
+  | 'draft-press-release-communication'
+  | 'broadcast-message-communication'
+  | 'schedule-update-communication'
+  | 'contact-stakeholders-communication';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;

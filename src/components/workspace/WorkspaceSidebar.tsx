@@ -155,7 +155,14 @@ export type WorkspaceTab =
   | 'engagement-report-social'
   | 'post-now-social'
   | 'manage-platforms-social'
-  | 'content-library-social';
+  | 'content-library-social'
+  // Communication Committee tabs (L3)
+  | 'send-announcement-communication'
+  | 'create-email-communication'
+  | 'draft-press-release-communication'
+  | 'broadcast-message-communication'
+  | 'schedule-update-communication'
+  | 'contact-stakeholders-communication';
 
 interface WorkspaceSidebarProps {
   workspace: Workspace;
