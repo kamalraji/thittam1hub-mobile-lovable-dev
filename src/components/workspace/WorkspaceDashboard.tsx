@@ -23,6 +23,7 @@ import { WorkspaceSettingsContent } from './WorkspaceSettingsContent';
 import { EventSettingsTabContent } from './event-settings';
 import { ApprovalsTabContent } from './approvals';
 import { ChecklistsTabContent } from './checklists';
+// Committee tabs (L3)
 import { 
   AssignShiftsTab, 
   SendBriefTab, 
@@ -30,23 +31,6 @@ import {
   CreateTeamTab, 
   TrainingStatusTab, 
   PerformanceReviewTab,
-  ViewCommitteesTab,
-  ShiftOverviewTab,
-  MassAnnouncementTab,
-  HoursReportTab,
-  ApproveTimesheetsTab,
-  TrainingScheduleTab,
-  RecognitionTab,
-  RecruitmentTab,
-  // Tech Department tabs
-  SystemHealthCheckTab,
-  NetworkStatusTab,
-  SecurityAuditTab,
-  EquipmentReportTab,
-  BackupStatusTab,
-  ReportIncidentTab,
-  ConfigReviewTab,
-  DocumentationTab,
   // IT Committee tabs
   CheckSystemsTab,
   UpdateCredentialsTab,
@@ -69,7 +53,31 @@ import {
   ApproveRequestTab,
   ViewBudgetTab,
   ExportDataTab,
-  // Content Department tabs
+} from './committee-tabs';
+// Volunteers Department tabs (L2)
+import {
+  ViewCommitteesTab,
+  ShiftOverviewTab,
+  MassAnnouncementTab,
+  HoursReportTab,
+  ApproveTimesheetsTab,
+  TrainingScheduleTab,
+  RecognitionTab,
+  RecruitmentTab,
+} from './department/volunteers/tabs';
+// Tech Department tabs (L2)
+import {
+  SystemHealthCheckTab,
+  NetworkStatusTab,
+  SecurityAuditTab,
+  EquipmentReportTab,
+  BackupStatusTab,
+  ReportIncidentTab,
+  ConfigReviewTab,
+  DocumentationTab,
+} from './department/tech/tabs';
+// Content Department tabs (L2)
+import {
   CreateContentTab,
   AssignJudgesTab,
   EnterScoreTab,
@@ -77,7 +85,7 @@ import {
   AddSpeakerTab,
   ScheduleSessionTab,
   ViewRubricsTab,
-} from './committee-tabs';
+} from './department/content/tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
 interface WorkspaceDashboardProps {

@@ -1,31 +1,15 @@
+// Committee tabs (L3) ONLY - Department tabs are in department/{type}/tabs/
 export { VolunteerCheckInTab } from './VolunteerCheckInTab';
 export { VolunteerPerformanceTab } from './VolunteerPerformanceTab';
 export { CateringInventoryTab } from './CateringInventoryTab';
 export { LogisticsShipmentsTab } from './LogisticsShipmentsTab';
+// Volunteer Committee tabs
 export { AssignShiftsTab } from './AssignShiftsTab';
 export { SendBriefTab } from './SendBriefTab';
 export { CheckInVolunteerTab } from './CheckInVolunteerTab';
 export { CreateTeamTab } from './CreateTeamTab';
 export { TrainingStatusTab } from './TrainingStatusTab';
 export { PerformanceReviewTab } from './PerformanceReviewTab';
-// Volunteer Department tabs
-export { ViewCommitteesTab } from './ViewCommitteesTab';
-export { ShiftOverviewTab } from './ShiftOverviewTab';
-export { MassAnnouncementTab } from './MassAnnouncementTab';
-export { HoursReportTab } from './HoursReportTab';
-export { ApproveTimesheetsTab } from './ApproveTimesheetsTab';
-export { TrainingScheduleTab } from './TrainingScheduleTab';
-export { RecognitionTab } from './RecognitionTab';
-export { RecruitmentTab } from './RecruitmentTab';
-// Tech Department tabs
-export { SystemHealthCheckTab } from './SystemHealthCheckTab';
-export { NetworkStatusTab } from './NetworkStatusTab';
-export { SecurityAuditTab } from './SecurityAuditTab';
-export { EquipmentReportTab } from './EquipmentReportTab';
-export { BackupStatusTab } from './BackupStatusTab';
-export { ReportIncidentTab } from './ReportIncidentTab';
-export { ConfigReviewTab } from './ConfigReviewTab';
-export { DocumentationTab } from './DocumentationTab';
 // IT Committee tabs
 export { CheckSystemsTab } from './CheckSystemsTab';
 export { UpdateCredentialsTab } from './UpdateCredentialsTab';
@@ -48,11 +32,3 @@ export { GenerateReportTab } from './GenerateReportTab';
 export { ApproveRequestTab } from './ApproveRequestTab';
 export { ViewBudgetTab } from './ViewBudgetTab';
 export { ExportDataTab } from './ExportDataTab';
-// Content Department tabs
-export { CreateContentTab } from './CreateContentTab';
-export { AssignJudgesTab } from './AssignJudgesTab';
-export { EnterScoreTab } from './EnterScoreTab';
-export { UploadMediaTab } from './UploadMediaTab';
-export { AddSpeakerTab } from './AddSpeakerTab';
-export { ScheduleSessionTab } from './ScheduleSessionTab';
-export { ViewRubricsTab } from './ViewRubricsTab';
