@@ -2683,6 +2683,68 @@ export type Database = {
           },
         ]
       }
+      workspace_broadcast_messages: {
+        Row: {
+          channels: string[]
+          content: string
+          created_at: string | null
+          delivery_stats: Json | null
+          id: string
+          message_type: string | null
+          recipient_ids: string[] | null
+          scheduled_for: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          target_audience: string | null
+          title: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          channels?: string[]
+          content: string
+          created_at?: string | null
+          delivery_stats?: Json | null
+          id?: string
+          message_type?: string | null
+          recipient_ids?: string[] | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          target_audience?: string | null
+          title: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          channels?: string[]
+          content?: string
+          created_at?: string | null
+          delivery_stats?: Json | null
+          id?: string
+          message_type?: string | null
+          recipient_ids?: string[] | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          target_audience?: string | null
+          title?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_broadcast_messages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_budget_categories: {
         Row: {
           allocated: number
@@ -3257,6 +3319,80 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workspace_custom_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_email_campaigns: {
+        Row: {
+          clicked_count: number | null
+          completed_at: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          opened_count: number | null
+          recipient_list: Json | null
+          recipients_count: number | null
+          scheduled_for: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          target_audience: string | null
+          template_id: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          clicked_count?: number | null
+          completed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          opened_count?: number | null
+          recipient_list?: Json | null
+          recipients_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          target_audience?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          clicked_count?: number | null
+          completed_at?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          opened_count?: number | null
+          recipient_list?: Json | null
+          recipients_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          target_audience?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_email_campaigns_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -4051,6 +4187,77 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workspace_pr_contacts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_press_releases: {
+        Row: {
+          attachments: Json | null
+          author_id: string | null
+          author_name: string | null
+          content: string | null
+          created_at: string | null
+          distribution_channels: string[] | null
+          distribution_date: string | null
+          embargo_date: string | null
+          id: string
+          media_contacts: string[] | null
+          notes: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
+          status: string
+          title: string
+          type: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          author_id?: string | null
+          author_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          distribution_channels?: string[] | null
+          distribution_date?: string | null
+          embargo_date?: string | null
+          id?: string
+          media_contacts?: string[] | null
+          notes?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          status?: string
+          title: string
+          type?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          author_id?: string | null
+          author_name?: string | null
+          content?: string | null
+          created_at?: string | null
+          distribution_channels?: string[] | null
+          distribution_date?: string | null
+          embargo_date?: string | null
+          id?: string
+          media_contacts?: string[] | null
+          notes?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          status?: string
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_press_releases_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -5245,6 +5452,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "workspace_sponsors_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_stakeholders: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          id: string
+          last_contacted_at: string | null
+          metadata: Json | null
+          name: string
+          notes: string | null
+          organization: string | null
+          phone: string | null
+          priority: string | null
+          role: string | null
+          tags: string[] | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          priority?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          last_contacted_at?: string | null
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          priority?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_stakeholders_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
