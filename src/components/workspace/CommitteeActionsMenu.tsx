@@ -172,10 +172,12 @@ const committeeActions: Record<string, CommitteeAction[]> = {
   ],
   speaker_liaison: [
     { id: 'speaker-roster', label: 'Speaker Roster', icon: Mic, color: 'text-rose-500', tab: 'speaker-roster-committee' },
-    { id: 'materials-collection', label: 'Materials', icon: FileCheck, color: 'text-purple-500', tab: 'materials-collection-committee' },
-    { id: 'session-schedule', label: 'Sessions', icon: Calendar, color: 'text-blue-500', tab: 'session-schedule-committee' },
+    { id: 'add-speaker', label: 'Add Speaker', icon: UserPlus, color: 'text-purple-500', tab: 'speaker-roster-committee' },
+    { id: 'materials-collection', label: 'Materials', icon: FileCheck, color: 'text-orange-500', tab: 'materials-collection-committee' },
+    { id: 'session-schedule', label: 'Sessions', icon: Calendar, color: 'text-emerald-500', tab: 'session-schedule-committee' },
     { id: 'travel-coordination', label: 'Travel', icon: Plane, color: 'text-cyan-500', tab: 'travel-coordination-committee' },
     { id: 'communication-log', label: 'Communication', icon: MessageSquare, color: 'text-amber-500', tab: 'communication-log-committee' },
+    { id: 'send-reminder', label: 'Send Reminder', icon: Mail, color: 'text-blue-500', tab: 'communication-log-committee' },
   ],
   judge: [
     { id: 'assign-judges', label: 'Assign Judges', icon: Scale, color: 'text-emerald-500', tab: 'assign-judges-committee' },

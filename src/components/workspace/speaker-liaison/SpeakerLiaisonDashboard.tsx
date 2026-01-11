@@ -11,7 +11,6 @@ import { SpeakerRoster } from './SpeakerRoster';
 import { SessionScheduleGrid } from './SessionScheduleGrid';
 import { MaterialsTracker } from './MaterialsTracker';
 import { TravelLogistics } from './TravelLogistics';
-import { SpeakerLiaisonQuickActions } from './SpeakerLiaisonQuickActions';
 import { CommunicationLog } from './CommunicationLog';
 
 interface SpeakerLiaisonDashboardProps {
@@ -107,13 +106,8 @@ export function SpeakerLiaisonDashboard({
         onRequestResource={onRequestResource}
       />
 
-      {/* Quick Actions and Speaker Roster */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <SpeakerLiaisonQuickActions />
-        <div className="lg:col-span-2">
-          <SpeakerRoster />
-        </div>
-      </div>
+      {/* Speaker Roster */}
+      <SpeakerRoster />
 
       {/* Session Schedule - Full Width */}
       <SessionScheduleGrid />
