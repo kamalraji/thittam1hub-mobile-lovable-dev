@@ -179,6 +179,88 @@ export type Database = {
           },
         ]
       }
+      catering_headcount_confirmations: {
+        Row: {
+          confirmation_deadline: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          confirmed_by_name: string | null
+          confirmed_count: number | null
+          created_at: string | null
+          event_id: string | null
+          expected_count: number
+          id: string
+          meal_date: string
+          meal_name: string
+          meal_schedule_id: string | null
+          meal_type: string
+          notes: string | null
+          status: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          confirmation_deadline?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          confirmed_count?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          expected_count?: number
+          id?: string
+          meal_date: string
+          meal_name: string
+          meal_schedule_id?: string | null
+          meal_type?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          confirmation_deadline?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          confirmed_by_name?: string | null
+          confirmed_count?: number | null
+          created_at?: string | null
+          event_id?: string | null
+          expected_count?: number
+          id?: string
+          meal_date?: string
+          meal_name?: string
+          meal_schedule_id?: string | null
+          meal_type?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_headcount_confirmations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_headcount_confirmations_meal_schedule_id_fkey"
+            columns: ["meal_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "catering_meal_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_headcount_confirmations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catering_inventory: {
         Row: {
           category: string

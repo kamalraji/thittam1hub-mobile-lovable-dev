@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 // Types
 export interface CateringMenuItem {
@@ -60,6 +61,36 @@ export interface CateringMealSchedule {
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'tea';
   notes: string | null;
   sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CateringDietaryRequirement {
+  id: string;
+  workspace_id: string;
+  event_id: string;
+  requirement_type: string;
+  count: number;
+  special_requests: Json | null;
+  updated_at: string;
+}
+
+export interface CateringHeadcountConfirmation {
+  id: string;
+  workspace_id: string;
+  event_id: string | null;
+  meal_schedule_id: string | null;
+  meal_name: string;
+  meal_date: string;
+  meal_type: string;
+  expected_count: number;
+  confirmed_count: number | null;
+  confirmation_deadline: string | null;
+  confirmed_by: string | null;
+  confirmed_by_name: string | null;
+  confirmed_at: string | null;
+  status: string;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -148,7 +179,6 @@ export function useCateringMenuMutations(workspaceId: string) {
 }
 
 // Vendors Hooks
-// Uses secure RPC function that masks contact info for non-privileged users
 export function useCateringVendors(workspaceId: string) {
   return useQuery({
     queryKey: ['catering-vendors', workspaceId],
@@ -392,6 +422,169 @@ export function useCateringMealScheduleMutations(workspaceId: string) {
   });
 
   return { createMeal, updateMeal, deleteMeal };
+}
+
+// Dietary Requirements Hooks
+export function useDietaryRequirements(workspaceId: string, eventId?: string) {
+  return useQuery({
+    queryKey: ['catering-dietary', workspaceId, eventId],
+    queryFn: async () => {
+      let query = supabase
+        .from('catering_dietary_requirements')
+        .select('*')
+        .eq('workspace_id', workspaceId);
+      
+      if (eventId) {
+        query = query.eq('event_id', eventId);
+      }
+      
+      const { data, error } = await query.order('requirement_type');
+      if (error) throw error;
+      return data as CateringDietaryRequirement[];
+    },
+    enabled: !!workspaceId,
+  });
+}
+
+export function useDietaryRequirementMutations(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  const createRequirement = useMutation({
+    mutationFn: async (req: { requirement_type: string; count: number; special_requests: Json | null; event_id: string }) => {
+      const { data, error } = await supabase
+        .from('catering_dietary_requirements')
+        .insert({ ...req, workspace_id: workspaceId })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-dietary', workspaceId] });
+      toast.success('Dietary requirement added');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  const updateRequirement = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; requirement_type?: string; count?: number; special_requests?: Json | null }) => {
+      const { data, error } = await supabase
+        .from('catering_dietary_requirements')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-dietary', workspaceId] });
+      toast.success('Requirement updated');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  const deleteRequirement = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('catering_dietary_requirements').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-dietary', workspaceId] });
+      toast.success('Requirement removed');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  return { createRequirement, updateRequirement, deleteRequirement };
+}
+
+// Headcount Confirmations Hooks
+export function useHeadcountConfirmations(workspaceId: string) {
+  return useQuery({
+    queryKey: ['catering-headcount', workspaceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catering_headcount_confirmations')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('meal_date', { ascending: true });
+      if (error) throw error;
+      return data as CateringHeadcountConfirmation[];
+    },
+    enabled: !!workspaceId,
+  });
+}
+
+export function useHeadcountMutations(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  const createConfirmation = useMutation({
+    mutationFn: async (conf: { meal_name: string; meal_date: string; meal_type: string; expected_count: number; confirmation_deadline: string | null; notes: string | null; event_id: string | null }) => {
+      const { data, error } = await supabase
+        .from('catering_headcount_confirmations')
+        .insert({ ...conf, workspace_id: workspaceId, status: 'pending' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-headcount', workspaceId] });
+      toast.success('Headcount added');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  const confirmHeadcount = useMutation({
+    mutationFn: async ({ id, confirmed_count }: { id: string; confirmed_count: number }) => {
+      const { data, error } = await supabase
+        .from('catering_headcount_confirmations')
+        .update({ confirmed_count, status: 'confirmed', confirmed_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-headcount', workspaceId] });
+      toast.success('Headcount confirmed');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  const updateConfirmation = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<CateringHeadcountConfirmation> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('catering_headcount_confirmations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-headcount', workspaceId] });
+      toast.success('Updated');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  const deleteConfirmation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('catering_headcount_confirmations').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['catering-headcount', workspaceId] });
+      toast.success('Removed');
+    },
+    onError: (error) => toast.error('Failed: ' + error.message),
+  });
+
+  return { createConfirmation, confirmHeadcount, updateConfirmation, deleteConfirmation };
 }
 
 // Stats Hook
