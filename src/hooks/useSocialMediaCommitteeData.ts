@@ -189,7 +189,7 @@ export function useCreateSocialPost(workspaceId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (post: Partial<SocialPost>) => {
+    mutationFn: async (post: Omit<Partial<SocialPost>, 'title' | 'platform'> & { title: string; platform: string }) => {
       const { data, error } = await supabase
         .from('workspace_social_posts')
         .insert([{ ...post, workspace_id: workspaceId }])
@@ -294,7 +294,7 @@ export function useCreateHashtag(workspaceId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (hashtag: Partial<Hashtag>) => {
+    mutationFn: async (hashtag: Omit<Partial<Hashtag>, 'tag'> & { tag: string }) => {
       const { data, error } = await supabase
         .from('workspace_hashtags')
         .insert([{ ...hashtag, workspace_id: workspaceId }])
@@ -366,7 +366,7 @@ export function useCreatePlatform(workspaceId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (platform: Partial<SocialPlatform>) => {
+    mutationFn: async (platform: Omit<Partial<SocialPlatform>, 'platform' | 'handle'> & { platform: string; handle: string }) => {
       const { data, error } = await supabase
         .from('workspace_social_platforms')
         .insert([{ ...platform, workspace_id: workspaceId }])
@@ -438,7 +438,7 @@ export function useCreateEngagementReport(workspaceId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (report: Partial<EngagementReport>) => {
+    mutationFn: async (report: Omit<Partial<EngagementReport>, 'platform' | 'report_date'> & { platform: string; report_date: string }) => {
       const { data, error } = await supabase
         .from('workspace_engagement_reports')
         .insert([{ ...report, workspace_id: workspaceId }])

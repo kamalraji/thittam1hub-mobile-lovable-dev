@@ -114,7 +114,14 @@ export type WorkspaceTab =
   | 'assign-reviewer-committee'
   | 'publish-content-committee'
   | 'content-calendar-committee'
-  | 'content-pipeline-committee';
+  | 'content-pipeline-committee'
+  // Social Media Committee tabs (L3)
+  | 'schedule-content-social'
+  | 'monitor-hashtags-social'
+  | 'engagement-report-social'
+  | 'post-now-social'
+  | 'manage-platforms-social'
+  | 'content-library-social';
 
 export interface WorkspaceShellState {
   workspace: Workspace | undefined;
