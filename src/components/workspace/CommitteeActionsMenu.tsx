@@ -159,10 +159,12 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'revenue-report', label: 'Revenue Report', icon: FileBarChart, color: 'text-green-500', tab: 'reports' },
   ],
   social_media: [
-    { id: 'schedule-content', label: 'Schedule Content', icon: Share2, color: 'text-indigo-500', tab: 'tasks' },
-    { id: 'monitor-hashtags', label: 'Monitor Hashtags', icon: Hash, color: 'text-blue-500', tab: 'analytics' },
-    { id: 'engagement-report', label: 'Engagement Report', icon: TrendingUp, color: 'text-emerald-500', tab: 'analytics' },
-    { id: 'post-now', label: 'Post Now', icon: Send, color: 'text-pink-500', tab: 'tasks' },
+    { id: 'schedule-content-social', label: 'Schedule Content', icon: Share2, color: 'text-indigo-500', tab: 'schedule-content-social' },
+    { id: 'monitor-hashtags-social', label: 'Monitor Hashtags', icon: Hash, color: 'text-blue-500', tab: 'monitor-hashtags-social' },
+    { id: 'engagement-report-social', label: 'Engagement Report', icon: TrendingUp, color: 'text-emerald-500', tab: 'engagement-report-social' },
+    { id: 'post-now-social', label: 'Post Now', icon: Send, color: 'text-pink-500', tab: 'post-now-social' },
+    { id: 'manage-platforms-social', label: 'Manage Platforms', icon: Monitor, color: 'text-cyan-500', tab: 'manage-platforms-social' },
+    { id: 'content-library-social', label: 'Content Library', icon: Image, color: 'text-purple-500', tab: 'content-library-social' },
   ],
   content: [
     { id: 'review-content', label: 'Review Content', icon: Eye, color: 'text-purple-500', tab: 'review-content-committee' },

@@ -128,6 +128,15 @@ import {
   ContentCalendarTab,
   ContentPipelineTab,
 } from './committee/content/tabs';
+// Social Media Committee tabs (L3)
+import {
+  ScheduleContentSocialTab,
+  MonitorHashtagsSocialTab,
+  EngagementReportSocialTab,
+  PostNowSocialTab,
+  ManagePlatformsSocialTab,
+  ContentLibrarySocialTab,
+} from './committee/social-media/tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
 interface WorkspaceDashboardProps {
@@ -683,6 +692,31 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'content-pipeline-committee' && (
           <ContentPipelineTab workspaceId={workspace.id} />
+        )}
+
+        {/* Social Media Committee tabs (L3) */}
+        {activeTab === 'schedule-content-social' && (
+          <ScheduleContentSocialTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'monitor-hashtags-social' && (
+          <MonitorHashtagsSocialTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'engagement-report-social' && (
+          <EngagementReportSocialTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'post-now-social' && (
+          <PostNowSocialTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'manage-platforms-social' && (
+          <ManagePlatformsSocialTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'content-library-social' && (
+          <ContentLibrarySocialTab workspaceId={workspace.id} />
         )}
       </div>
     </WorkspaceLayout>
