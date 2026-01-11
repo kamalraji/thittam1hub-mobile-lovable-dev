@@ -135,10 +135,10 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'create-manifest', label: 'Create Manifest', icon: ClipboardList, color: 'text-purple-500', tab: 'tasks' },
   ],
   facility: [
-    { id: 'safety-check', label: 'Safety Check', icon: Shield, color: 'text-red-500', tab: 'checklists' },
-    { id: 'venue-walkthrough', label: 'Venue Walkthrough', icon: Building, color: 'text-slate-500', tab: 'tasks' },
-    { id: 'report-issue', label: 'Report Issue', icon: AlertTriangle, color: 'text-amber-500', tab: 'tasks' },
-    { id: 'room-status', label: 'Room Status', icon: Map, color: 'text-blue-500', tab: 'overview' },
+    { id: 'safety-check-facility', label: 'Safety Check', icon: Shield, color: 'text-red-500', tab: 'safety-check-facility' },
+    { id: 'venue-walkthrough-facility', label: 'Venue Walkthrough', icon: Building, color: 'text-slate-500', tab: 'venue-walkthrough-facility' },
+    { id: 'report-issue-facility', label: 'Report Issue', icon: AlertTriangle, color: 'text-amber-500', tab: 'report-issue-facility' },
+    { id: 'room-status-facility', label: 'Room Status', icon: Map, color: 'text-blue-500', tab: 'room-status-facility' },
   ],
   marketing: [
     { id: 'schedule-post-marketing', label: 'Schedule Post', icon: Megaphone, color: 'text-pink-500', tab: 'schedule-post-marketing' },

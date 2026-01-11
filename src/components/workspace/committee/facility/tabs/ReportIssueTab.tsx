@@ -316,9 +316,6 @@ export function ReportIssueTab({ workspaceId }: ReportIssueTabProps) {
                                 {incident.location}
                               </span>
                             )}
-                            {incident.category && (
-                              <span>{incident.category}</span>
-                            )}
                             <span>{format(new Date(incident.created_at), 'MMM d, h:mm a')}</span>
                           </div>
                         </div>
