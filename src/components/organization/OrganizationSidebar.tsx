@@ -52,6 +52,7 @@ import {
   UserCheck,
   Settings,
   ExternalLink,
+  CheckSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkspaceStatus } from '@/types';
@@ -346,6 +347,59 @@ export const OrganizationSidebar: React.FC = () => {
                       </div>
                     )}
                     {isDashboardActive && !isCollapsed && (
+                      <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* My Assignments */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={currentPath.includes('/my-assignments')}
+                  tooltip="My Assignments"
+                  className={cn(
+                    'group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-all duration-300',
+                    'hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5',
+                    currentPath.includes('/my-assignments') && 'bg-gradient-to-r from-primary/15 to-primary/8 shadow-sm'
+                  )}
+                >
+                  <a
+                    href={`${base}/my-assignments`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`${base}/my-assignments`);
+                    }}
+                    className="flex w-full items-center gap-3"
+                  >
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300',
+                        currentPath.includes('/my-assignments')
+                          ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25'
+                          : 'bg-muted/50 text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary'
+                      )}
+                    >
+                      <CheckSquare className="h-[18px] w-[18px]" />
+                    </div>
+                    {!isCollapsed && (
+                      <div className="flex flex-col items-start animate-fade-in">
+                        <span className={cn("text-sm font-semibold tracking-tight", currentPath.includes('/my-assignments') && "text-primary")}>
+                          My Assignments
+                        </span>
+                        <span className="text-[10px] text-muted-foreground/80 font-medium">
+                          Tasks & deadlines
+                        </span>
+                      </div>
+                    )}
+                    {currentPath.includes('/my-assignments') && !isCollapsed && (
                       <div className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                     )}
                   </a>

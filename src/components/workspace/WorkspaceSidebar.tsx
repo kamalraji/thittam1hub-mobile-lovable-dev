@@ -40,6 +40,7 @@ import {
   Settings2,
   ClipboardCheck,
   ListChecks,
+  Contact,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -62,6 +63,7 @@ export type WorkspaceTab =
   | 'event-settings'
   | 'approvals'
   | 'checklists'
+  | 'directory'
   | 'assign-shifts'
   | 'send-brief'
   | 'check-in'
@@ -228,6 +230,7 @@ const baseNavItems: NavItem[] = [
   { id: 'communication', name: 'Communication', icon: MessageSquare, group: 'core' },
   { id: 'approvals', name: 'Requests & Approvals', icon: ClipboardCheck, group: 'core' },
   { id: 'checklists', name: 'Checklists', icon: ListChecks, group: 'core' },
+  { id: 'directory', name: 'Member Directory', icon: Contact, group: 'core' },
   { id: 'event-settings', name: 'Event Settings', icon: Settings2, group: 'core' },
   { id: 'marketplace', name: 'Marketplace', icon: ShoppingBag, group: 'management' },
   { id: 'templates', name: 'Templates', icon: FileText, group: 'management' },
@@ -290,9 +293,14 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
       if (item.id === 'approvals' || item.id === 'checklists') {
         return workspace.workspaceType !== WorkspaceType.TEAM;
       }
+      // Show directory only for ROOT and DEPARTMENT workspaces
+      if (item.id === 'directory') {
+        return workspace.workspaceType === WorkspaceType.ROOT || 
+               workspace.workspaceType === WorkspaceType.DEPARTMENT;
+      }
       return true;
     });
-  }, [showEventSettingsTab]);
+  }, [showEventSettingsTab, workspace.workspaceType]);
 
   // Fetch child workspaces for hierarchy (only for ROOT workspaces)
   const { data: childWorkspaces } = useQuery({

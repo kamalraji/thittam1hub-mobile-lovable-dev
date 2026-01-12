@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useMyAssignments, MyAssignment } from '@/hooks/useMyAssignments';
-import { useCurrentOrganization } from '@/components/organization/OrganizationContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -171,7 +170,6 @@ function StatsCard({
 }
 
 export function MyAssignmentsDashboard() {
-  const organization = useCurrentOrganization();
   const { assignments, tasks, checklists, overdue, stats, isLoading } = useMyAssignments();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');

@@ -28,6 +28,7 @@ export type WorkspaceTab =
   | 'event-settings'
   | 'approvals'
   | 'checklists'
+  | 'directory'
   | 'assign-shifts'
   | 'send-brief'
   | 'check-in'
