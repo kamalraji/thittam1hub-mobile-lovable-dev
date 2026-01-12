@@ -1,6 +1,5 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -8,12 +7,10 @@ import { MilestoneTimeline } from '../committee/MilestoneTimeline';
 import { GoalTracker } from '../committee/GoalTracker';
 import { BudgetTrackerConnected } from '../department/BudgetTrackerConnected';
 import { BudgetRequestForm } from '../committee/BudgetRequestForm';
-
 import { ResourceRequestForm } from '../committee/ResourceRequestForm';
 import { VolunteerShiftScheduler } from './VolunteerShiftScheduler';
 import { VolunteerRoster } from './VolunteerRoster';
 import { VolunteerCheckInStats } from './VolunteerCheckInStats';
-
 import { VolunteerStatsCards } from './VolunteerStatsCards';
 import { VolunteerTrainingTracker } from './VolunteerTrainingTracker';
 import { VolunteerPerformanceCard } from './VolunteerPerformanceCard';
@@ -24,23 +21,13 @@ import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 interface VolunteersDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function VolunteersDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: VolunteersDashboardProps) {
   const { isLoading: isBudgetLoading } = useWorkspaceBudget(workspace.id);
 
@@ -100,16 +87,6 @@ export function VolunteersDashboard({
 
       {/* Volunteer Stats Cards */}
       <VolunteerStatsCards workspaceId={workspace.id} />
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Task Summary with Mini-Map */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

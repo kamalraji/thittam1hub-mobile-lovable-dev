@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { JudgeStatsCards } from './JudgeStatsCards';
 import { JudgeRoster } from './JudgeRoster';
 import { SubmissionAssignments } from './SubmissionAssignments';
@@ -9,28 +9,17 @@ import { LeaderboardPreview } from './LeaderboardPreview';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 
 interface JudgeDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function JudgeDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: JudgeDashboardProps) {
   // Mock stats - in production, fetch from database
   const stats = {
@@ -56,16 +45,6 @@ export function JudgeDashboard({
 
       {/* Quick Actions */}
       <JudgeQuickActions workspaceId={workspace.id} onViewTasks={onViewTasks} />
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Task Summary with Mini-Map */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

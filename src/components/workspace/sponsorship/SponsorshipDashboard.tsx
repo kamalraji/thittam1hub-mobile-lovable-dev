@@ -1,8 +1,7 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -17,23 +16,13 @@ import { SponsorCommunications } from './SponsorCommunications';
 interface SponsorshipDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function SponsorshipDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: SponsorshipDashboardProps) {
   // Fetch team members count
   const { data: teamMembers = [] } = useQuery({
@@ -95,16 +84,6 @@ export function SponsorshipDashboard({
         totalRevenue={125000}
         pendingProposals={5}
         deliverablesDue={8}
-      />
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
 
       {/* Quick Actions and Sponsor Tracker */}

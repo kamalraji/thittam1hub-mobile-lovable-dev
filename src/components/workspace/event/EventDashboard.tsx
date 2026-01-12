@@ -1,6 +1,5 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { TeamMemberRoster } from '../TeamMemberRoster';
@@ -13,7 +12,6 @@ import { EventScheduleManager } from './EventScheduleManager';
 import { VIPGuestTracker } from './VIPGuestTracker';
 import { RunOfShowChecklist } from './RunOfShowChecklist';
 import { VenueBriefing } from './VenueBriefing';
-
 import { EventTimeline } from './EventTimeline';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,23 +20,13 @@ import { useWorkspaceBudget } from '@/hooks/useWorkspaceBudget';
 interface EventDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function EventDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: EventDashboardProps) {
   const { isLoading: isBudgetLoading } = useWorkspaceBudget(workspace.id);
 
@@ -94,16 +82,6 @@ export function EventDashboard({
         tasksCompleted={tasksCompleted}
         tasksTotal={tasks.length}
         teamsCount={teams.length}
-      />
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
 
       {/* Event Stats Overview */}

@@ -175,12 +175,7 @@ export function CommitteeDashboard({
       <VolunteersDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -229,12 +224,7 @@ export function CommitteeDashboard({
       <ITDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -279,12 +269,7 @@ export function CommitteeDashboard({
       <JudgeDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -304,12 +289,7 @@ export function CommitteeDashboard({
       <EventDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -329,12 +309,7 @@ export function CommitteeDashboard({
       <LogisticsDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -354,12 +329,7 @@ export function CommitteeDashboard({
       <MarketingDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -369,12 +339,7 @@ export function CommitteeDashboard({
       <SponsorshipDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }

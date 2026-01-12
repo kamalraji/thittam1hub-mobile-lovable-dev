@@ -1,6 +1,5 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
 import { MilestoneTimeline, GoalTracker, BudgetRequestForm, ResourceRequestForm, ResourceRequestsList } from '../committee';
@@ -15,27 +14,16 @@ import { EquipmentManager } from './EquipmentManager';
 import { TransportSchedule } from './TransportSchedule';
 import { VenueLogistics } from './VenueLogistics';
 
-
 interface LogisticsDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function LogisticsDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: LogisticsDashboardProps) {
   const { isLoading: isBudgetLoading } = useWorkspaceBudget(workspace.id);
 
@@ -92,16 +80,6 @@ export function LogisticsDashboard({
 
       {/* Stats Overview */}
       <LogisticsStatsCards workspaceId={workspace.id} />
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Task Summary with Mini-Map */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

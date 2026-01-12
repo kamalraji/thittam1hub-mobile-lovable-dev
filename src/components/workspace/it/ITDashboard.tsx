@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { ITStatsCards } from './ITStatsCards';
 import { ITQuickActions } from './ITQuickActions';
 import { SystemHealthMonitor } from './SystemHealthMonitor';
@@ -7,30 +7,19 @@ import { SecurityAlerts } from './SecurityAlerts';
 import { AccessManagement } from './AccessManagement';
 import { SoftwareLicenses } from './SoftwareLicenses';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { useITDashboardData } from '@/hooks/useITDashboardData';
 
 interface ITDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function ITDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks: _onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: ITDashboardProps) {
   const { tickets, accessRequests, systems, securityAlerts, stats, isLoading } = useITDashboardData(workspace.id);
 
@@ -43,16 +32,6 @@ export function ITDashboard({
       <div className="touch-pan-x">
         <ITQuickActions />
       </div>
-
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Main Grid with Mini-Map - improved responsive breakpoints */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
