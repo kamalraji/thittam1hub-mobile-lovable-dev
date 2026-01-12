@@ -405,9 +405,13 @@ export function useWorkspaceShell({
       }
     }
     
-    // Fallback - redirect to dashboard if hierarchical URL cannot be built
-    console.warn('[WorkspaceShell] Cannot build workspace URL, redirecting to dashboard');
-    navigate('/dashboard');
+    // Fallback - redirect to org dashboard if hierarchical URL cannot be built
+    console.warn('[WorkspaceShell] Cannot build workspace URL, redirecting to org dashboard');
+    if (orgSlug) {
+      navigate(`/${orgSlug}/dashboard`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleTaskStatusChange = (taskId: string, status: TaskStatus) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../PageHeader';
 import { OrganizationAnalyticsDashboard } from '../../organization/OrganizationAnalyticsDashboard';
 import { useAuth } from '../../../hooks/useAuth';
@@ -14,6 +14,7 @@ import { useAuth } from '../../../hooks/useAuth';
  */
 export const OrganizationAnalyticsPage: React.FC = () => {
   const { organizationId } = useParams<{ organizationId: string }>();
+  const navigate = useNavigate();
   useAuth();
   const [organization, setOrganization] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -88,17 +89,17 @@ export const OrganizationAnalyticsPage: React.FC = () => {
   const pageActions = [
     {
       label: 'View Organization',
-      action: () => { window.location.href = `/console/organizations/${organizationId}`; },
+      action: () => navigate(`/console/organizations/${organizationId}`),
       variant: 'secondary' as const,
     },
     {
       label: 'Manage Members',
-      action: () => { window.location.href = `/console/organizations/${organizationId}/members`; },
+      action: () => navigate(`/console/organizations/${organizationId}/members`),
       variant: 'secondary' as const,
     },
     {
       label: 'Organization Settings',
-      action: () => { window.location.href = `/console/organizations/${organizationId}/settings`; },
+      action: () => navigate(`/console/organizations/${organizationId}/settings`),
       variant: 'secondary' as const,
     },
   ];

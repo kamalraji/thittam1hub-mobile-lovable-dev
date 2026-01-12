@@ -113,8 +113,29 @@ export const OrgScopedLayout: React.FC = () => {
     organization.owner_id === user.id;
 
   if (!isMemberOfOrg) {
-    // User is authenticated but not a member of this organization; send them to generic dashboard
-    return <Navigate to="/dashboard" replace />;
+    // User is authenticated but not a member of this organization
+    // Show access denied instead of redirecting (which could cause loops)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95 px-4">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="mx-auto h-12 w-12 text-destructive/80">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+          <p className="text-sm text-muted-foreground">
+            You don't have access to this organization. Please contact the organization administrator if you believe this is an error.
+          </p>
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Go to Your Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Render page builder fullscreen without sidebar/header

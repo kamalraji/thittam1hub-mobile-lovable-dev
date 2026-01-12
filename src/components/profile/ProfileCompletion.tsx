@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { profileSchema, type ProfileFormData } from './profileSchema';
+import { usePrimaryOrganization } from '@/hooks/usePrimaryOrganization';
 
 export function ProfileCompletion() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,6 +14,7 @@ export function ProfileCompletion() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: primaryOrg } = usePrimaryOrganization();
 
   const {
     register,
@@ -36,7 +38,12 @@ export function ProfileCompletion() {
     onSuccess: () => {
       // Update the auth context with the new user data
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      navigate('/dashboard');
+      // Navigate to primary org dashboard to avoid redirect chain
+      if (primaryOrg?.slug) {
+        navigate(`/${primaryOrg.slug}/dashboard`);
+      } else {
+        navigate('/dashboard');
+      }
     },
   });
 
@@ -54,7 +61,11 @@ export function ProfileCompletion() {
   };
 
   const skipProfile = () => {
-    navigate('/dashboard');
+    if (primaryOrg?.slug) {
+      navigate(`/${primaryOrg.slug}/dashboard`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (

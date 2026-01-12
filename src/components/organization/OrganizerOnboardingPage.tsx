@@ -66,7 +66,12 @@ export const OrganizerOnboardingPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizer-onboarding-checklist', user?.id] });
-      navigate('/dashboard', { replace: true });
+      // Navigate to primary org dashboard to avoid redirect chain
+      if (primaryOrganization?.slug) {
+        navigate(`/${primaryOrganization.slug}/dashboard`, { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     },
   });
 
