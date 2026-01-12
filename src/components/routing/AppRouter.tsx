@@ -386,7 +386,7 @@ export const ConsoleDashboard = () => {
               </div>
             </div>
             <button
-              onClick={() => window.location.href = '/marketplace'}
+              onClick={() => navigate('/marketplace')}
               className="w-full bg-gradient-to-r from-sunny to-sunny/80 text-white font-semibold py-3 px-6 rounded-xl hover:shadow-soft transition-all duration-200 hover:scale-105"
             >
               Go to Marketplace

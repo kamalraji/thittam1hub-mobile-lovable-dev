@@ -232,8 +232,12 @@ export function WorkspaceHierarchyTree({
       
       navigate(url);
     } else {
-      console.warn('[HierarchyTree] Missing data for hierarchical URL, redirecting to dashboard');
-      navigate('/dashboard');
+      console.warn('[HierarchyTree] Missing data for hierarchical URL, redirecting to org dashboard');
+      if (orgSlug) {
+        navigate(`/${orgSlug}/dashboard`);
+      } else {
+        navigate('/dashboard');
+      }
     }
   };
 
