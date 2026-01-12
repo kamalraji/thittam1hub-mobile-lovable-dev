@@ -22,6 +22,7 @@ import { UserRole } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileAppShell } from '@/components/mobile/MobileAppShell';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { MyAssignmentsDashboard } from '@/components/dashboard/MyAssignmentsDashboard';
 
 // Lazy-load admin components - only downloaded when SUPER_ADMIN accesses admin routes
 const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
@@ -97,7 +98,8 @@ export const OrgScopedLayout: React.FC = () => {
                        location.pathname.includes('/analytics') ||
                        location.pathname.includes('/eventmanagement') ||
                        location.pathname.includes('/admin') ||
-                       location.pathname.includes('/organizations/members');
+                       location.pathname.includes('/organizations/members') ||
+                       location.pathname.includes('/my-assignments');
   
   // Check if user has SUPER_ADMIN role (for admin routes)
   const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
@@ -189,6 +191,7 @@ export const OrgScopedLayout: React.FC = () => {
           {/* Mobile renders the same routes as desktop, just wrapped in mobile shell */}
           <Routes>
             <Route path="dashboard" element={<OrganizerDashboard />} />
+            <Route path="my-assignments" element={<MyAssignmentsDashboard />} />
             <Route path="settings" element={<Navigate to="settings/dashboard" replace />} />
             <Route path="settings/dashboard" element={<OrgSettingsDashboard />} />
             <Route path="settings/story" element={<OrgStorySettingsPage />} />
@@ -246,6 +249,7 @@ export const OrgScopedLayout: React.FC = () => {
                 {isNarrowPage && <OrgScopedBreadcrumbs className="mb-4" />}
                 <Routes>
                   <Route path="dashboard" element={<OrganizerDashboard />} />
+                  <Route path="my-assignments" element={<MyAssignmentsDashboard />} />
                   <Route path="settings" element={<Navigate to="settings/dashboard" replace />} />
                   <Route path="settings/dashboard" element={<OrgSettingsDashboard />} />
                   <Route path="settings/story" element={<OrgStorySettingsPage />} />

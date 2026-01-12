@@ -5,12 +5,26 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { TeamMember, WorkspaceRole } from '@/types';
 
+export interface ChildWorkspaceMember {
+  userId: string;
+  fullName: string;
+  avatarUrl: string | null;
+  workspaceId: string;
+  workspaceName: string;
+  workspaceType: string;
+  role: string;
+  path: string[];
+}
+
 interface MultiAssigneeSelectorProps {
   teamMembers: TeamMember[];
   selectedIds: string[];
   onChange: (selectedIds: string[]) => void;
   disabled?: boolean;
   maxDisplay?: number;
+  enableCrossWorkspace?: boolean;
+  childWorkspaceMembers?: ChildWorkspaceMember[];
+  onCrossWorkspaceChange?: (members: { userId: string; targetWorkspaceId: string }[]) => void;
 }
 
 // Group roles by department for quick assign
@@ -52,9 +66,14 @@ export function MultiAssigneeSelector({
   onChange,
   disabled = false,
   maxDisplay = 3,
+  enableCrossWorkspace: _enableCrossWorkspace = false,
+  childWorkspaceMembers = [],
+  onCrossWorkspaceChange,
 }: MultiAssigneeSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedCrossWorkspace, setSelectedCrossWorkspace] = useState<{ userId: string; targetWorkspaceId: string }[]>([]);
+  void _enableCrossWorkspace; // Mark as intentionally unused for now
 
   const filteredMembers = teamMembers.filter(member =>
     member.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -62,12 +81,39 @@ export function MultiAssigneeSelector({
     member.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredChildMembers = childWorkspaceMembers.filter(member =>
+    member.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.workspaceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Group child members by workspace (for future expansion UI)
+  void filteredChildMembers; // Mark as used to prevent unused warning
+
   const handleToggle = (userId: string) => {
     if (selectedIds.includes(userId)) {
       onChange(selectedIds.filter(id => id !== userId));
     } else {
       onChange([...selectedIds, userId]);
     }
+  };
+
+  const handleCrossWorkspaceToggle = (userId: string, workspaceId: string) => {
+    const existing = selectedCrossWorkspace.find(
+      s => s.userId === userId && s.targetWorkspaceId === workspaceId
+    );
+    
+    let updated: { userId: string; targetWorkspaceId: string }[];
+    if (existing) {
+      updated = selectedCrossWorkspace.filter(
+        s => !(s.userId === userId && s.targetWorkspaceId === workspaceId)
+      );
+    } else {
+      updated = [...selectedCrossWorkspace, { userId, targetWorkspaceId: workspaceId }];
+    }
+    
+    setSelectedCrossWorkspace(updated);
+    onCrossWorkspaceChange?.(updated);
   };
 
   const handleSelectByRole = (roles: WorkspaceRole[]) => {
@@ -81,11 +127,14 @@ export function MultiAssigneeSelector({
 
   const handleClearAll = () => {
     onChange([]);
+    setSelectedCrossWorkspace([]);
+    onCrossWorkspaceChange?.([]);
   };
 
   const selectedMembers = teamMembers.filter(m => selectedIds.includes(m.userId));
   const displayedMembers = selectedMembers.slice(0, maxDisplay);
   const remainingCount = selectedMembers.length - maxDisplay;
+  const totalSelected = selectedIds.length + selectedCrossWorkspace.length;
 
   return (
     <div className="space-y-2">
@@ -125,6 +174,41 @@ export function MultiAssigneeSelector({
         </div>
       )}
 
+      {/* Cross-workspace selected badges */}
+      {selectedCrossWorkspace.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {selectedCrossWorkspace.slice(0, 2).map(({ userId, targetWorkspaceId }) => {
+            const member = childWorkspaceMembers.find(
+              m => m.userId === userId && m.workspaceId === targetWorkspaceId
+            );
+            if (!member) return null;
+            return (
+              <Badge
+                key={`${userId}-${targetWorkspaceId}`}
+                variant="outline"
+                className="pl-2 pr-1 py-0.5 gap-1 text-xs h-6 border-dashed"
+              >
+                <span className="truncate max-w-[60px]">{member.fullName}</span>
+                <span className="text-muted-foreground">@ {member.workspaceName}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCrossWorkspaceToggle(userId, targetWorkspaceId)}
+                  disabled={disabled}
+                  className="hover:bg-foreground/10 rounded-full p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </Badge>
+            );
+          })}
+          {selectedCrossWorkspace.length > 2 && (
+            <Badge variant="outline" className="text-xs h-6 border-dashed">
+              +{selectedCrossWorkspace.length - 2} cross-workspace
+            </Badge>
+          )}
+        </div>
+      )}
+
       {/* Toggle expand/collapse */}
       <button
         type="button"
@@ -132,7 +216,7 @@ export function MultiAssigneeSelector({
         className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
       >
         <Users className="h-3 w-3" />
-        {isExpanded ? 'Hide team members' : `Select assignees (${selectedIds.length} selected)`}
+        {isExpanded ? 'Hide team members' : `Select assignees (${totalSelected} selected)`}
       </button>
 
       {/* Expanded member list */}
