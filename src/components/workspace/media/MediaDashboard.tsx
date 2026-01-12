@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { MediaStatsCards } from './MediaStatsCards';
 import { PhotographerRoster } from './PhotographerRoster';
 import { PressCredentialManager } from './PressCredentialManager';
@@ -9,28 +9,17 @@ import { DeliverableTracker } from './DeliverableTracker';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 
 interface MediaDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function MediaDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: MediaDashboardProps) {
   // Mock stats - in production, fetch from database
   const stats = {
@@ -57,15 +46,6 @@ export function MediaDashboard({
       {/* Quick Actions */}
       <MediaQuickActions workspaceId={workspace.id} onViewTasks={onViewTasks} />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Task Summary with Mini-Map */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

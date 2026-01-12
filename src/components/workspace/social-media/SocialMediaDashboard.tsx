@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceRole } from '@/types';
+import { Workspace } from '@/types';
 import { SocialMediaStatsCards } from './SocialMediaStatsCards';
 import { PlatformManager } from './PlatformManager';
 import { ContentCalendar } from './ContentCalendar';
@@ -10,7 +10,6 @@ import { ContentLibrary } from './ContentLibrary';
 import { CommitteeHeaderCard } from '../committee/CommitteeHeaderCard';
 import { TaskSummaryCards } from '../TaskSummaryCards';
 import { WorkspaceHierarchyMiniMap } from '../WorkspaceHierarchyMiniMap';
-import { RoleBasedActions } from '../RoleBasedActions';
 import { TeamMemberRoster } from '../TeamMemberRoster';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,23 +17,13 @@ import { supabase } from '@/integrations/supabase/client';
 interface SocialMediaDashboardProps {
   workspace: Workspace;
   orgSlug?: string;
-  userRole?: WorkspaceRole | null;
   onViewTasks: () => void;
-  onDelegateRole?: () => void;
-  onInviteMember?: () => void;
-  onRequestBudget?: () => void;
-  onRequestResource?: () => void;
 }
 
 export function SocialMediaDashboard({
   workspace,
   orgSlug,
-  userRole,
   onViewTasks,
-  onDelegateRole,
-  onInviteMember,
-  onRequestBudget,
-  onRequestResource,
 }: SocialMediaDashboardProps) {
   // Fetch team members count
   const { data: teamMembers = [] } = useQuery({
@@ -90,15 +79,6 @@ export function SocialMediaDashboard({
         teamsCount={teams.length}
       />
 
-      {/* Role-Based Actions */}
-      <RoleBasedActions
-        workspace={workspace}
-        userRole={userRole || null}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
-      />
 
       {/* Stats Cards */}
       <SocialMediaStatsCards />

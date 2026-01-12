@@ -220,12 +220,6 @@ export function CommitteeDashboard({
       <TechnicalDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
-        onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -250,12 +244,7 @@ export function CommitteeDashboard({
       <SocialMediaDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -265,12 +254,7 @@ export function CommitteeDashboard({
       <ContentDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -310,12 +294,7 @@ export function CommitteeDashboard({
       <MediaDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -340,12 +319,7 @@ export function CommitteeDashboard({
       <CateringDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -370,12 +344,7 @@ export function CommitteeDashboard({
       <FacilityDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
@@ -415,12 +384,7 @@ export function CommitteeDashboard({
       <CommunicationDashboard
         workspace={workspace}
         orgSlug={orgSlug}
-        userRole={userRole}
         onViewTasks={onViewTasks}
-        onDelegateRole={onDelegateRole}
-        onInviteMember={onInviteMember}
-        onRequestBudget={onRequestBudget}
-        onRequestResource={onRequestResource}
       />
     );
   }
