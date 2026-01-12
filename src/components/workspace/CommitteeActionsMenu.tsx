@@ -18,9 +18,10 @@ import {
   // Finance Committee
   Receipt,
   FileText,
-  CheckCircle,
   DollarSign,
   Download,
+  PieChart,
+  History,
   // Registration Committee
   Scan,
   UserPlus,
@@ -109,11 +110,14 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'performance-review', label: 'Performance Review', icon: Award, color: 'text-yellow-500', tab: 'performance-review' },
   ],
   finance: [
-    { id: 'record-expense', label: 'Record Expense', icon: Receipt, color: 'text-green-500', tab: 'record-expense' },
-    { id: 'generate-report', label: 'Generate Report', icon: FileText, color: 'text-blue-500', tab: 'generate-report' },
-    { id: 'approve-request', label: 'Approve Request', icon: CheckCircle, color: 'text-amber-500', tab: 'approve-request' },
-    { id: 'view-budget', label: 'View Budget', icon: DollarSign, color: 'text-emerald-500', tab: 'view-budget' },
-    { id: 'export-data', label: 'Export Data', icon: Download, color: 'text-purple-500', tab: 'export-data' },
+    { id: 'budget-overview-finance', label: 'Budget Overview', icon: DollarSign, color: 'text-green-500', tab: 'budget-overview-finance' },
+    { id: 'expense-management-finance', label: 'Expense Management', icon: Receipt, color: 'text-blue-500', tab: 'expense-management-finance' },
+    { id: 'invoice-management-finance', label: 'Invoice Management', icon: FileText, color: 'text-purple-500', tab: 'invoice-management-finance' },
+    { id: 'budget-approvals-finance', label: 'Budget Approvals', icon: ClipboardList, color: 'text-orange-500', tab: 'budget-approvals-finance' },
+    { id: 'spending-analysis-finance', label: 'Spending Analysis', icon: PieChart, color: 'text-amber-500', tab: 'spending-analysis-finance' },
+    { id: 'financial-reports-finance', label: 'Financial Reports', icon: BarChart3, color: 'text-cyan-500', tab: 'financial-reports-finance' },
+    { id: 'budget-forecast-finance', label: 'Budget Forecast', icon: TrendingUp, color: 'text-emerald-500', tab: 'budget-forecast-finance' },
+    { id: 'finance-audit-trail', label: 'Audit Trail', icon: History, color: 'text-indigo-500', tab: 'finance-audit-trail' },
   ],
   registration: [
     { id: 'scan-checkin', label: 'Scan Check-in', icon: Scan, color: 'text-teal-500', tab: 'scan-checkin' },
