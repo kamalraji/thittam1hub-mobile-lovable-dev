@@ -203,10 +203,10 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'export-assets', label: 'Export Assets', icon: Download, color: 'text-emerald-500', tab: 'export-assets' },
   ],
   event: [
-    { id: 'update-schedule', label: 'Update Schedule', icon: Clock, color: 'text-blue-500', tab: 'tasks' },
-    { id: 'brief-teams', label: 'Brief Teams', icon: BellRing, color: 'text-amber-500', tab: 'communication' },
-    { id: 'vip-tracker', label: 'VIP Tracker', icon: Crown, color: 'text-purple-500', tab: 'overview' },
-    { id: 'run-of-show', label: 'Run of Show', icon: Activity, color: 'text-emerald-500', tab: 'overview' },
+    { id: 'update-schedule', label: 'Update Schedule', icon: Clock, color: 'text-blue-500', tab: 'update-schedule-event' },
+    { id: 'brief-teams', label: 'Brief Teams', icon: BellRing, color: 'text-amber-500', tab: 'brief-teams-event' },
+    { id: 'vip-tracker', label: 'VIP Tracker', icon: Crown, color: 'text-purple-500', tab: 'vip-tracker-event' },
+    { id: 'run-of-show', label: 'Run of Show', icon: Activity, color: 'text-emerald-500', tab: 'run-of-show-event' },
   ],
   technical: [
     { id: 'test-equipment', label: 'Test Equipment', icon: Monitor, color: 'text-sky-500', tab: 'test-equipment' },

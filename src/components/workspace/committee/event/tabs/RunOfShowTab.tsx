@@ -31,7 +31,8 @@ const PHASES = [
   { value: 'post-event', label: 'Post-Event', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
 ];
 
-interface ChecklistItem {
+// Use same item type as hook
+interface ChecklistItemLocal {
   id: string;
   text: string;
   completed: boolean;
@@ -49,7 +50,11 @@ export const RunOfShowTab: React.FC<RunOfShowTabProps> = ({ workspaceId }) => {
   const [activePhase, setActivePhase] = useState('pre-event');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    phase: string;
+    items: ChecklistItemLocal[];
+  }>({
     title: '',
     phase: 'pre-event',
     items: [{ id: crypto.randomUUID(), text: '', completed: false, critical: false }],
@@ -61,7 +66,9 @@ export const RunOfShowTab: React.FC<RunOfShowTabProps> = ({ workspaceId }) => {
       setFormData({
         title: checklist.title,
         phase: checklist.phase,
-        items: checklist.items?.length > 0 ? checklist.items : [{ id: crypto.randomUUID(), text: '', completed: false, critical: false }],
+        items: checklist.items?.length > 0 
+          ? checklist.items.map(i => ({ id: i.id, text: i.text, completed: i.completed, critical: i.critical }))
+          : [{ id: crypto.randomUUID(), text: '', completed: false, critical: false }],
       });
     } else {
       setEditingChecklist(null);
@@ -108,12 +115,9 @@ export const RunOfShowTab: React.FC<RunOfShowTabProps> = ({ workspaceId }) => {
     const payload: RunOfShowChecklistInsert = {
       workspace_id: workspaceId,
       title: formData.title,
-      description: null,
       phase: formData.phase,
-      status: 'pending',
       items: validItems,
       due_date: null,
-      assigned_to: null,
     };
 
     if (editingChecklist) {
@@ -137,8 +141,8 @@ export const RunOfShowTab: React.FC<RunOfShowTabProps> = ({ workspaceId }) => {
     await updateMutation.mutateAsync({ id: checklist.id, items: updatedItems });
   };
 
-  const getPhaseConfig = (phase: string) =>
-    PHASES.find(p => p.value === phase) || PHASES[0];
+  // Phase config helper (available for future use)
+  // const getPhaseConfig = (phase: string) => PHASES.find(p => p.value === phase) || PHASES[0];
 
   const toggleSection = (id: string) => {
     const newExpanded = new Set(expandedSections);
@@ -150,7 +154,7 @@ export const RunOfShowTab: React.FC<RunOfShowTabProps> = ({ workspaceId }) => {
     setExpandedSections(newExpanded);
   };
 
-  const getCompletionStats = (items: ChecklistItem[]) => {
+  const getCompletionStats = (items: Array<{ completed: boolean }>) => {
     const total = items.length;
     const completed = items.filter(i => i.completed).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;

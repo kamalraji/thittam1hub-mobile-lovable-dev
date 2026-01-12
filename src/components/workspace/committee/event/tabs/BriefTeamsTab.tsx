@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BellRing, Calendar, Clock, MapPin, Plus, Pencil, Trash2, Loader2, CheckCircle2, Link } from 'lucide-react';
-import { format, isToday, isFuture } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import {
   useTeamBriefings,
   useCreateTeamBriefing,

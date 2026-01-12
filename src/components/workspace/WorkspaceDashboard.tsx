@@ -189,6 +189,13 @@ import {
   DietaryReportTab as CateringDietaryReportTab,
   ConfirmHeadcountTab as CateringConfirmHeadcountTab,
 } from './committee/catering/tabs';
+// Event Committee tabs (L3)
+import {
+  UpdateScheduleTab,
+  BriefTeamsTab,
+  VIPTrackerTab,
+  RunOfShowTab,
+} from './committee/event/tabs';
 import { useWorkspaceShell } from '@/hooks/useWorkspaceShell';
 
 interface WorkspaceDashboardProps {
@@ -911,6 +918,23 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'confirm-headcount-catering' && (
           <CateringConfirmHeadcountTab workspaceId={workspace.id} />
+        )}
+
+        {/* Event Committee tabs (L3) */}
+        {activeTab === 'update-schedule-event' && (
+          <UpdateScheduleTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'brief-teams-event' && (
+          <BriefTeamsTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'vip-tracker-event' && (
+          <VIPTrackerTab workspaceId={workspace.id} />
+        )}
+
+        {activeTab === 'run-of-show-event' && (
+          <RunOfShowTab workspaceId={workspace.id} />
         )}
       </div>
     </WorkspaceLayout>

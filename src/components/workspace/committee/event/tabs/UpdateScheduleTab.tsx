@@ -24,13 +24,13 @@ interface UpdateScheduleTabProps {
   workspaceId: string;
 }
 
-const SESSION_TYPES = [
-  { value: 'keynote', label: 'Keynote', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
-  { value: 'session', label: 'Session', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-  { value: 'break', label: 'Break', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' },
-  { value: 'networking', label: 'Networking', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' },
-  { value: 'registration', label: 'Registration', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' },
-];
+// Session types (available for future use/enhancement)
+// const SESSION_TYPES = [
+//   { value: 'keynote', label: 'Keynote', color: 'bg-purple-100 text-purple-800' },
+//   { value: 'session', label: 'Session', color: 'bg-blue-100 text-blue-800' },
+//   { value: 'break', label: 'Break', color: 'bg-amber-100 text-amber-800' },
+//   { value: 'networking', label: 'Networking', color: 'bg-emerald-100 text-emerald-800' },
+// ];
 
 const STATUSES = [
   { value: 'upcoming', label: 'Upcoming', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },

@@ -195,7 +195,12 @@ export type WorkspaceTab =
   | 'update-menu-catering'
   | 'check-inventory-catering'
   | 'dietary-report-catering'
-  | 'confirm-headcount-catering';
+  | 'confirm-headcount-catering'
+  // Event Committee tabs (L3)
+  | 'update-schedule-event'
+  | 'brief-teams-event'
+  | 'vip-tracker-event'
+  | 'run-of-show-event';
 
 interface WorkspaceSidebarProps {
   workspace: Workspace;
