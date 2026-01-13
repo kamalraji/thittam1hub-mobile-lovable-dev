@@ -55,7 +55,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Console Header */}
       <ConsoleHeader
         user={user}
@@ -86,10 +86,10 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             {isMobileMenuOpen && (
               <div className="lg:hidden fixed inset-0 z-50 flex">
                 <div
-                  className="fixed inset-0 bg-gray-600 bg-opacity-75"
+                  className="fixed inset-0 bg-black/60"
                   onClick={toggleMobileMenu}
                 />
-                <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
+                <div className="relative flex-1 flex flex-col max-w-xs w-full bg-card">
                   <ServiceNavigation
                     user={user}
                     collapsed={false}
