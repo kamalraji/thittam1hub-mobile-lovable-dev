@@ -93,6 +93,22 @@ export const CERTIFICATE_PLACEHOLDERS: PlaceholderDefinition[] = [
     sampleValue: 'TechCorp Events',
   },
 
+  // QR Code placeholder
+  {
+    key: '{qr_code}',
+    label: 'QR Code',
+    category: 'certificate',
+    description: 'QR code for certificate verification',
+    sampleValue: 'QR_PLACEHOLDER',
+  },
+  {
+    key: '{verification_url}',
+    label: 'Verification URL',
+    category: 'certificate',
+    description: 'Full URL for certificate verification',
+    sampleValue: 'https://verify.example.com/CERT-2024-ABC123',
+  },
+
   // Custom/Score placeholders
   {
     key: '{score}',
@@ -136,6 +152,8 @@ export interface PlaceholderData {
   certificate_type?: string;
   issue_date?: string;
   issuer_name?: string;
+  qr_code?: string;
+  verification_url?: string;
   score?: string;
   rank?: string;
   custom_field_1?: string;
@@ -160,6 +178,8 @@ export function replacePlaceholders(text: string, data: PlaceholderData): string
   result = result.replace(/\{certificate_type\}/g, data.certificate_type || '');
   result = result.replace(/\{issue_date\}/g, data.issue_date || '');
   result = result.replace(/\{issuer_name\}/g, data.issuer_name || '');
+  result = result.replace(/\{qr_code\}/g, data.qr_code || '');
+  result = result.replace(/\{verification_url\}/g, data.verification_url || '');
   result = result.replace(/\{score\}/g, data.score || '');
   result = result.replace(/\{rank\}/g, data.rank || '');
   result = result.replace(/\{custom_field_1\}/g, data.custom_field_1 || '');

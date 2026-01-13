@@ -6,22 +6,18 @@ import { DesignCanvas, DesignCanvasRef } from './designer/DesignCanvas';
 import { DesignToolbar } from './designer/DesignToolbar';
 import { PropertiesPanel } from './designer/PropertiesPanel';
 import { TemplateGallery } from './designer/TemplateGallery';
+import { PreviewPanel } from './designer/PreviewPanel';
+import { ExportDialog, ExportOptions } from './designer/ExportDialog';
 import { CertificateTemplatePreset } from './templates';
-import { downloadCertificatePDF, downloadCertificatePNG } from '@/lib/certificate-pdf';
+import { exportWithOptions } from '@/lib/certificate-pdf';
 import { toast } from 'sonner';
 import {
   Save,
   Download,
-  FileImage,
   X,
   Loader2,
+  Eye,
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface CertificateDesignStudioProps {
   initialData?: object;
@@ -42,6 +38,8 @@ export function CertificateDesignStudio({
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [selectedObject, setSelectedObject] = useState<FabricObject | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(!initialData);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [name, setName] = useState(templateName);
@@ -66,6 +64,15 @@ export function CertificateDesignStudio({
     }
   };
 
+  const handleAddImage = async (url: string, isBackground?: boolean) => {
+    await canvasRef.current?.addImage(url, { isBackground });
+  };
+
+  const handleAddQrPlaceholder = async () => {
+    await canvasRef.current?.addQrPlaceholder();
+    toast.success('QR code placeholder added');
+  };
+
   const handleSave = async () => {
     if (!canvasRef.current) return;
     setIsSaving(true);
@@ -80,28 +87,21 @@ export function CertificateDesignStudio({
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleExport = async (options: ExportOptions) => {
     if (!fabricCanvas) return;
     setIsExporting(true);
     try {
-      await downloadCertificatePDF(fabricCanvas, {
-        format: 'A4',
-        orientation: 'landscape',
-        quality: 'high',
-        filename: `${name}-sample.pdf`,
+      await exportWithOptions(fabricCanvas, {
+        ...options,
+        filename: name,
       });
-      toast.success('PDF downloaded');
+      toast.success('Export completed');
+      setExportDialogOpen(false);
     } catch (error) {
-      toast.error('Failed to export PDF');
+      toast.error('Failed to export');
     } finally {
       setIsExporting(false);
     }
-  };
-
-  const handleExportPNG = () => {
-    if (!fabricCanvas) return;
-    downloadCertificatePNG(fabricCanvas, `${name}-sample.png`, 'high');
-    toast.success('PNG downloaded');
   };
 
   const handleUpdate = () => {
@@ -125,32 +125,28 @@ export function CertificateDesignStudio({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+            <Eye className="h-4 w-4 mr-2" />
+            Preview
+          </Button>
+
           <Button variant="outline" size="sm" onClick={() => setGalleryOpen(true)}>
             Templates
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isExporting}>
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPNG}>
-                <FileImage className="h-4 w-4 mr-2" />
-                Download PNG
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExportDialogOpen(true)}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Export
+          </Button>
 
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? (
@@ -171,6 +167,8 @@ export function CertificateDesignStudio({
           onAddRect={() => canvasRef.current?.addRect()}
           onAddCircle={() => canvasRef.current?.addCircle()}
           onAddLine={() => canvasRef.current?.addLine()}
+          onAddImage={handleAddImage}
+          onAddQrPlaceholder={handleAddQrPlaceholder}
           onOpenGallery={() => setGalleryOpen(true)}
           onDeleteSelected={() => canvasRef.current?.deleteSelected()}
           onClearCanvas={() => canvasRef.current?.clearCanvas()}
@@ -196,6 +194,22 @@ export function CertificateDesignStudio({
         open={galleryOpen}
         onOpenChange={setGalleryOpen}
         onSelectTemplate={handleSelectTemplate}
+      />
+
+      {/* Preview panel */}
+      <PreviewPanel
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        sourceCanvas={fabricCanvas}
+      />
+
+      {/* Export dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExport={handleExport}
+        isExporting={isExporting}
+        templateName={name}
       />
     </div>
   );

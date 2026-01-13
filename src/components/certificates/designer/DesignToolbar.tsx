@@ -10,6 +10,8 @@ import {
   LayoutTemplate,
   Trash2,
   Sparkles,
+  Image,
+  QrCode,
 } from 'lucide-react';
 import { getPlaceholdersByCategory } from '@/lib/certificate-placeholders';
 import {
@@ -19,12 +21,15 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { AIDesignDialog } from './AIDesignDialog';
+import { ImageUploader } from './ImageUploader';
 
 interface DesignToolbarProps {
   onAddText: (text: string) => void;
   onAddRect: () => void;
   onAddCircle: () => void;
   onAddLine: () => void;
+  onAddImage?: (url: string, isBackground?: boolean) => Promise<void>;
+  onAddQrPlaceholder?: () => Promise<void>;
   onOpenGallery: () => void;
   onDeleteSelected: () => void;
   onClearCanvas: () => void;
@@ -37,6 +42,8 @@ export function DesignToolbar({
   onAddRect,
   onAddCircle,
   onAddLine,
+  onAddImage,
+  onAddQrPlaceholder,
   onOpenGallery,
   onDeleteSelected,
   onClearCanvas,
@@ -44,6 +51,7 @@ export function DesignToolbar({
   workspaceId,
 }: DesignToolbarProps) {
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const placeholdersByCategory = getPlaceholdersByCategory();
 
   const categoryLabels: Record<string, string> = {
@@ -55,6 +63,10 @@ export function DesignToolbar({
 
   const handleAIDesignGenerated = (canvasJSON: object) => {
     onLoadAIDesign?.(canvasJSON);
+  };
+
+  const handleImageSelected = async (url: string, isBackground?: boolean) => {
+    await onAddImage?.(url, isBackground);
   };
 
   return (
@@ -132,6 +144,24 @@ export function DesignToolbar({
                 <Minus className="h-4 w-4" />
                 Line
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="justify-start gap-2"
+                onClick={() => setImageDialogOpen(true)}
+              >
+                <Image className="h-4 w-4" />
+                Image
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="justify-start gap-2"
+                onClick={onAddQrPlaceholder}
+              >
+                <QrCode className="h-4 w-4" />
+                QR Code
+              </Button>
             </div>
           </div>
 
@@ -197,6 +227,14 @@ export function DesignToolbar({
         open={aiDialogOpen}
         onOpenChange={setAiDialogOpen}
         onDesignGenerated={handleAIDesignGenerated}
+        workspaceId={workspaceId}
+      />
+
+      {/* Image Uploader Dialog */}
+      <ImageUploader
+        open={imageDialogOpen}
+        onOpenChange={setImageDialogOpen}
+        onImageSelected={handleImageSelected}
         workspaceId={workspaceId}
       />
     </div>
