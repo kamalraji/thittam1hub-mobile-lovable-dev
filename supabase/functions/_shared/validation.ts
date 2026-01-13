@@ -297,10 +297,24 @@ export const passwordConfirmSchema = z.object({
 
 // ============= Common Enums =============
 
-// App roles
+// App roles - Core authentication roles only
+// Note: judge, speaker, volunteer roles are handled by workspace role hierarchy
 export const appRoleSchema = z
+  .enum(["admin", "organizer", "participant"])
+  .describe("User application role (core authentication only)");
+
+// Legacy app role schema for backward compatibility with existing data
+export const legacyAppRoleSchema = z
   .enum(["admin", "organizer", "participant", "judge", "volunteer", "speaker"])
-  .describe("User application role");
+  .describe("Legacy app role (includes workspace-handled roles)");
+
+// Organization category (matches database enum)
+export const organizationCategorySchema = z.enum([
+  "COLLEGE",
+  "COMPANY",
+  "INDUSTRY",
+  "NON_PROFIT",
+]).describe("Organization category type");
 
 // Workspace roles - Complete 4-level hierarchy (35 roles)
 export const workspaceRoleSchema = z.enum([
@@ -430,6 +444,7 @@ export const designStyleSchema = z.enum([
 
 // Vendor status
 export const vendorStatusSchema = z.enum([
+  "PENDING",
   "VERIFIED",
   "REJECTED",
   "SUSPENDED",

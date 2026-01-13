@@ -7,6 +7,8 @@ import {
   phoneSchema,
   optionalUrlSchema,
   optionalLongStringSchema,
+  slugSchema,
+  organizationCategorySchema,
   parseAndValidate,
 } from "../_shared/validation.ts";
 
@@ -19,12 +21,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 // Zod schema for organization creation (strict mode)
-import { slugSchema } from "../_shared/validation.ts";
-
 const createOrganizationSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(200, "Name must be less than 200 characters"),
   slug: slugSchema,
-  category: z.string().trim().min(1, "Category is required").max(50, "Category must be less than 50 characters"),
+  category: organizationCategorySchema,
   description: optionalLongStringSchema,
   website: optionalUrlSchema,
   email: emailSchema.optional().nullable(),
