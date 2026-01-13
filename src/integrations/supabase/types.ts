@@ -484,6 +484,7 @@ export type Database = {
           id: string
           type: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           conditions?: Json
@@ -492,6 +493,7 @@ export type Database = {
           id?: string
           type: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           conditions?: Json
@@ -500,6 +502,7 @@ export type Database = {
           id?: string
           type?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -507,6 +510,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_criteria_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -525,6 +535,7 @@ export type Database = {
           recipient_id: string
           type: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           certificate_id: string
@@ -539,6 +550,7 @@ export type Database = {
           recipient_id: string
           type: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           certificate_id?: string
@@ -553,6 +565,7 @@ export type Database = {
           recipient_id?: string
           type?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -560,6 +573,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -7075,6 +7095,10 @@ export type Database = {
         Returns: boolean
       }
       has_workspace_access: {
+        Args: { _user_id?: string; _workspace_id: string }
+        Returns: boolean
+      }
+      has_workspace_management_access: {
         Args: { _user_id?: string; _workspace_id: string }
         Returns: boolean
       }

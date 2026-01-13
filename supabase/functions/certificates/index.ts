@@ -23,8 +23,21 @@ function generateCertificateId(eventId: string): string {
 }
 
 function buildQrPayload(certificateId: string): string {
-  // We only encode the certificateId in the QR; frontend knows to hit /verify-certificate/:id
   return certificateId;
+}
+
+function errorResponse(message: string, status = 400) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function successResponse(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 serve(async (req) => {
@@ -47,10 +60,7 @@ serve(async (req) => {
     const { action } = body as { action?: string };
 
     if (!action) {
-      return new Response(JSON.stringify({ error: "Missing action" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return errorResponse("Missing action");
     }
 
     // Resolve current user for authenticated actions
@@ -66,95 +76,105 @@ serve(async (req) => {
       }
     }
 
-    // Organizer/admin utility
-    async function ensureOrganizerForEvent(eventId: string) {
+    // NEW: Workspace-based authorization - replaces old ensureOrganizerForEvent
+    async function ensureWorkspaceManager(workspaceId: string) {
       await requireUser();
 
-      // If user has admin/organizer app_role, let RLS handle the rest for most queries.
-      // We do not bypass RLS here; this is just a lightweight sanity check using existing has_role.
-      const { data: isOrganizer, error } = await serviceClient
-        .rpc("has_role", { _user_id: user!.id, _role: "organizer" })
+      const { data: hasAccess, error } = await serviceClient
+        .rpc("has_workspace_management_access", {
+          _workspace_id: workspaceId,
+          _user_id: user!.id,
+        })
         .single();
 
-      if (error || !isOrganizer) {
-        throw new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (error || !hasAccess) {
+        console.error("Workspace management access denied", { workspaceId, userId: user!.id, error });
+        throw new Response(
+          JSON.stringify({ error: "Forbidden: You don't have permission to manage certificates for this workspace" }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      return true;
+    }
+
+    // Helper: Get workspace details including event_id
+    async function getWorkspaceWithEvent(workspaceId: string) {
+      const { data, error } = await supabaseClient
+        .from("workspaces")
+        .select("id, event_id, name")
+        .eq("id", workspaceId)
+        .single();
+
+      if (error || !data) {
+        throw errorResponse("Workspace not found", 404);
       }
 
-      return true;
+      if (!data.event_id) {
+        throw errorResponse("Workspace has no linked event", 400);
+      }
+
+      return data;
     }
 
     // ========== ACTION: getCriteria ==========
     if (action === "getCriteria") {
       await requireUser();
-      const { eventId } = body as { eventId?: string };
-      if (!eventId) {
-        return new Response(JSON.stringify({ error: "Missing eventId" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const { workspaceId } = body as { workspaceId?: string };
+
+      if (!workspaceId) {
+        return errorResponse("Missing workspaceId");
       }
+
+      const workspace = await getWorkspaceWithEvent(workspaceId);
 
       const { data, error } = await supabaseClient
         .from("certificate_criteria")
         .select("type, conditions")
-        .eq("event_id", eventId);
+        .eq("workspace_id", workspaceId);
 
       if (error) {
         console.error("certificates:getCriteria error", error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(error.message, 500);
       }
 
-      return new Response(JSON.stringify({ data: data ?? [] }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ data: data ?? [], eventId: workspace.event_id });
     }
 
     // ========== ACTION: saveCriteria ==========
     if (action === "saveCriteria") {
-      await requireUser();
-      const { eventId, criteria } = body as {
-        eventId?: string;
+      const { workspaceId, criteria } = body as {
+        workspaceId?: string;
         criteria?: Array<{ type: string; conditions: Record<string, unknown> }>;
       };
 
-      if (!eventId || !criteria) {
-        return new Response(JSON.stringify({ error: "Missing eventId or criteria" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!workspaceId || !criteria) {
+        return errorResponse("Missing workspaceId or criteria");
       }
 
-      await ensureOrganizerForEvent(eventId);
+      await ensureWorkspaceManager(workspaceId);
+      const workspace = await getWorkspaceWithEvent(workspaceId);
 
+      // Delete existing criteria for this workspace
       const { error: deleteError } = await supabaseClient
         .from("certificate_criteria")
         .delete()
-        .eq("event_id", eventId);
+        .eq("workspace_id", workspaceId);
 
       if (deleteError) {
         console.error("certificates:saveCriteria delete error", deleteError);
-        return new Response(JSON.stringify({ error: deleteError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(deleteError.message, 500);
       }
 
       if (criteria.length === 0) {
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return successResponse({ success: true });
       }
 
       const insertRows = criteria.map((c) => ({
-        event_id: eventId,
+        event_id: workspace.event_id,
+        workspace_id: workspaceId,
         type: c.type,
         conditions: c.conditions ?? {},
       }));
@@ -165,16 +185,10 @@ serve(async (req) => {
 
       if (insertError) {
         console.error("certificates:saveCriteria insert error", insertError);
-        return new Response(JSON.stringify({ error: insertError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(insertError.message, 500);
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ success: true });
     }
 
     // ========== ACTION: getMyCertificates ==========
@@ -192,10 +206,7 @@ serve(async (req) => {
 
       if (error) {
         console.error("certificates:getMyCertificates error", error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(error.message, 500);
       }
 
       const mapped = (data ?? []).map((row: any) => ({
@@ -208,24 +219,19 @@ serve(async (req) => {
         },
       }));
 
-      return new Response(JSON.stringify({ certificates: mapped }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ certificates: mapped });
     }
 
-    // ========== ACTION: listEventCertificates ==========
-    if (action === "listEventCertificates") {
-      await requireUser();
-      const { eventId } = body as { eventId?: string };
-      if (!eventId) {
-        return new Response(JSON.stringify({ error: "Missing eventId" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    // ========== ACTION: listWorkspaceCertificates ==========
+    if (action === "listWorkspaceCertificates") {
+      const { workspaceId } = body as { workspaceId?: string };
+      
+      if (!workspaceId) {
+        return errorResponse("Missing workspaceId");
       }
 
-      await ensureOrganizerForEvent(eventId);
+      await ensureWorkspaceManager(workspaceId);
+      const workspace = await getWorkspaceWithEvent(workspaceId);
 
       const { data, error } = await supabaseClient
         .from("certificates")
@@ -234,15 +240,12 @@ serve(async (req) => {
            user_profiles!inner ( full_name, id ),
            events!inner ( id, name )`
         )
-        .eq("event_id", eventId)
+        .eq("workspace_id", workspaceId)
         .order("issued_at", { ascending: false });
 
       if (error) {
-        console.error("certificates:listEventCertificates error", error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.error("certificates:listWorkspaceCertificates error", error);
+        return errorResponse(error.message, 500);
       }
 
       const mapped = (data ?? []).map((row: any) => ({
@@ -252,26 +255,23 @@ serve(async (req) => {
         eventId: row.event_id,
         type: row.type,
         pdfUrl: row.pdf_url ?? "",
-        qrCodeUrl: "", // front-end can generate QR image from certificateId
+        qrCodeUrl: "",
         issuedAt: row.issued_at,
         distributedAt: row.distributed_at ?? undefined,
         recipient: {
           name: row.user_profiles.full_name ?? "Participant",
-          email: "", // email is not stored in user_profiles; can be extended later if needed
+          email: "",
         },
       }));
 
-      return new Response(JSON.stringify({ data: mapped }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ data: mapped, eventId: workspace.event_id });
     }
 
     // Helper: evaluate criteria for a participant
     function participantMeetsCriteria(
       criteria: any[],
       context: { score?: number | null; rank?: number | null; attended: boolean; roles: string[] },
-      type: string,
+      type: string
     ): boolean {
       const relevant = criteria.filter((c) => c.type === type);
       if (!relevant.length) return false;
@@ -297,35 +297,28 @@ serve(async (req) => {
 
     // ========== ACTION: batchGenerate ==========
     if (action === "batchGenerate") {
-      await requireUser();
-      const { eventId } = body as { eventId?: string };
-      if (!eventId) {
-        return new Response(JSON.stringify({ error: "Missing eventId" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const { workspaceId } = body as { workspaceId?: string };
+      
+      if (!workspaceId) {
+        return errorResponse("Missing workspaceId");
       }
 
-      await ensureOrganizerForEvent(eventId);
+      await ensureWorkspaceManager(workspaceId);
+      const workspace = await getWorkspaceWithEvent(workspaceId);
+      const eventId = workspace.event_id;
 
       const { data: criteria, error: criteriaError } = await supabaseClient
         .from("certificate_criteria")
         .select("type, conditions")
-        .eq("event_id", eventId);
+        .eq("workspace_id", workspaceId);
 
       if (criteriaError) {
         console.error("certificates:batchGenerate criteria error", criteriaError);
-        return new Response(JSON.stringify({ error: criteriaError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(criteriaError.message, 500);
       }
 
       if (!criteria || criteria.length === 0) {
-        return new Response(JSON.stringify({ error: "No certificate criteria configured for this event" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse("No certificate criteria configured for this workspace");
       }
 
       const { data: registrations, error: registrationsError } = await supabaseClient
@@ -336,10 +329,7 @@ serve(async (req) => {
 
       if (registrationsError) {
         console.error("certificates:batchGenerate registrations error", registrationsError);
-        return new Response(JSON.stringify({ error: registrationsError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(registrationsError.message, 500);
       }
 
       const registrationIds = (registrations ?? []).map((r: any) => r.id);
@@ -354,10 +344,7 @@ serve(async (req) => {
 
       if (attendanceError) {
         console.error("certificates:batchGenerate attendance error", attendanceError);
-        return new Response(JSON.stringify({ error: attendanceError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(attendanceError.message, 500);
       }
 
       const attendedByRegistration = new Set<string>();
@@ -369,10 +356,7 @@ serve(async (req) => {
 
       if (rolesError) {
         console.error("certificates:batchGenerate roles error", rolesError);
-        return new Response(JSON.stringify({ error: rolesError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(rolesError.message, 500);
       }
 
       const rolesByUserId = new Map<string, string[]>();
@@ -385,18 +369,18 @@ serve(async (req) => {
       const certificatesToInsert: any[] = [];
 
       for (const reg of registrations ?? []) {
-        const roles = rolesByUserId.get(reg.user_id) ?? [];
+        const userRoles = rolesByUserId.get(reg.user_id) ?? [];
         const attended = attendedByRegistration.has(reg.id);
 
         const context = {
           score: null,
           rank: null,
           attended,
-          roles,
+          roles: userRoles,
         };
 
         const typesToIssue = ["COMPLETION", "MERIT", "APPRECIATION"].filter((t) =>
-          participantMeetsCriteria(criteria ?? [], context, t),
+          participantMeetsCriteria(criteria ?? [], context, t)
         );
 
         for (const type of typesToIssue) {
@@ -407,6 +391,7 @@ serve(async (req) => {
             certificate_id: certificateId,
             recipient_id: reg.user_id,
             event_id: eventId,
+            workspace_id: workspaceId,
             type,
             qr_payload: qrPayload,
             metadata: {},
@@ -415,87 +400,68 @@ serve(async (req) => {
       }
 
       if (!certificatesToInsert.length) {
-        return new Response(JSON.stringify({ success: true, generatedCount: 0 }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return successResponse({ success: true, generatedCount: 0 });
       }
 
       const { error: insertError } = await supabaseClient.from("certificates").insert(certificatesToInsert);
 
       if (insertError) {
         console.error("certificates:batchGenerate insert error", insertError);
-        return new Response(JSON.stringify({ error: insertError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(insertError.message, 500);
       }
 
-      return new Response(
-        JSON.stringify({ success: true, generatedCount: certificatesToInsert.length, eventId }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return successResponse({ success: true, generatedCount: certificatesToInsert.length, eventId, workspaceId });
     }
 
     // ========== ACTION: distribute ==========
     if (action === "distribute") {
-      await requireUser();
-      const { certificateIds } = body as { certificateIds?: string[] };
-      if (!certificateIds || certificateIds.length === 0) {
-        return new Response(JSON.stringify({ error: "No certificates selected" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      const { workspaceId, certificateIds } = body as { workspaceId?: string; certificateIds?: string[] };
+      
+      if (!workspaceId) {
+        return errorResponse("Missing workspaceId");
       }
+      
+      if (!certificateIds || certificateIds.length === 0) {
+        return errorResponse("No certificates selected");
+      }
+
+      await ensureWorkspaceManager(workspaceId);
 
       const { error } = await supabaseClient
         .from("certificates")
         .update({ distributed_at: new Date().toISOString() })
+        .eq("workspace_id", workspaceId)
         .in("id", certificateIds);
 
       if (error) {
         console.error("certificates:distribute error", error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse(error.message, 500);
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ success: true });
     }
 
     // ========== ACTION: verify (public via service role) ==========
     if (action === "verify") {
       const { certificateId } = body as { certificateId?: string };
       if (!certificateId) {
-        return new Response(JSON.stringify({ error: "Missing certificateId" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse("Missing certificateId");
       }
 
       const { data, error } = await serviceClient
         .from("certificates")
         .select(
-          `id, certificate_id, type, issued_at, recipient_id, event_id,
+          `id, certificate_id, type, issued_at, recipient_id, event_id, workspace_id,
            events!inner ( name ),
-           user_profiles:recipient_id ( full_name )`,
+           user_profiles:recipient_id ( full_name ),
+           workspaces:workspace_id ( name )`
         )
         .eq("certificate_id", certificateId)
         .maybeSingle();
 
       if (error) {
         console.error("certificates:verify error", error);
-        return new Response(JSON.stringify({ error: "Verification failed" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse("Verification failed", 500);
       }
 
       if (!data) {
@@ -504,7 +470,7 @@ serve(async (req) => {
           {
             status: 404,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
+          }
         );
       }
 
@@ -513,22 +479,50 @@ serve(async (req) => {
         certificateId: data.certificate_id,
         recipientName: (data.user_profiles as any)?.full_name ?? "Participant",
         eventName: (data.events as any).name,
+        workspaceName: (data.workspaces as any)?.name ?? undefined,
         eventOrganization: undefined,
         type: data.type,
         issuedAt: data.issued_at,
-        issuerName: "Thittam1Hub", // can be refined later
+        issuerName: "Thittam1Hub",
       };
 
-      return new Response(JSON.stringify({ valid: true, certificate }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return successResponse({ valid: true, certificate });
     }
 
-    return new Response(JSON.stringify({ error: "Unsupported action" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // ========== ACTION: getStats (workspace certificate statistics) ==========
+    if (action === "getStats") {
+      const { workspaceId } = body as { workspaceId?: string };
+      
+      if (!workspaceId) {
+        return errorResponse("Missing workspaceId");
+      }
+
+      await requireUser();
+
+      const { data, error } = await supabaseClient
+        .from("certificates")
+        .select("id, distributed_at, type")
+        .eq("workspace_id", workspaceId);
+
+      if (error) {
+        console.error("certificates:getStats error", error);
+        return errorResponse(error.message, 500);
+      }
+
+      const total = data?.length ?? 0;
+      const distributed = data?.filter((c: any) => c.distributed_at).length ?? 0;
+      const pending = total - distributed;
+
+      const byType = {
+        COMPLETION: data?.filter((c: any) => c.type === "COMPLETION").length ?? 0,
+        MERIT: data?.filter((c: any) => c.type === "MERIT").length ?? 0,
+        APPRECIATION: data?.filter((c: any) => c.type === "APPRECIATION").length ?? 0,
+      };
+
+      return successResponse({ total, distributed, pending, byType });
+    }
+
+    return errorResponse("Unsupported action");
   } catch (err) {
     if (err instanceof Response) {
       return err;

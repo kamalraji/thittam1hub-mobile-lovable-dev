@@ -1,5 +1,8 @@
 project_id = "ltsniuflqfahdcirrmjh"
 
+[functions.certificates]
+verify_jwt = false
+
 [functions.admin-audit-log]
 verify_jwt = false
 
