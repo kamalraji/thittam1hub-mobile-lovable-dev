@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
+import { z, uuidSchema, workspaceRoleSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +9,7 @@ const corsHeaders = {
 // Zod schema for access request (strict mode)
 const requestAccessSchema = z.object({
   workspace_id: uuidSchema,
-  requested_role: z.string().trim().max(50, "Role too long").optional(),
+  requested_role: workspaceRoleSchema.optional(),
   message: z.string().trim().max(500, "Message too long").optional(),
 }).strict();
 
