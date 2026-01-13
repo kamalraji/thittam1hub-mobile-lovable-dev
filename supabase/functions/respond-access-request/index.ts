@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
+import { z, uuidSchema, workspaceRoleSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +12,7 @@ const respondSchema = z.object({
   action: z.enum(["approve", "reject"], { 
     errorMap: () => ({ message: 'Action must be "approve" or "reject"' })
   }),
-  role: z.string().trim().max(50, "Role too long").optional(),
+  role: workspaceRoleSchema.optional(),
   review_notes: z.string().trim().max(500, "Review notes too long").optional(),
 }).strict();
 
@@ -101,7 +101,15 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'approve') {
-      const memberRole = role || accessRequest.requested_role || 'VOLUNTEER_COORDINATOR';
+      // Determine and validate role
+      let memberRole = role || accessRequest.requested_role || 'VOLUNTEER_COORDINATOR';
+      
+      // Runtime validation for role from database (requested_role might be invalid legacy data)
+      const roleValidation = workspaceRoleSchema.safeParse(memberRole);
+      if (!roleValidation.success) {
+        console.warn(`Invalid role "${memberRole}" found, defaulting to VOLUNTEER_COORDINATOR`);
+        memberRole = 'VOLUNTEER_COORDINATOR';
+      }
       
       const { error: memberInsertError } = await supabase
         .from('workspace_team_members')

@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
+import { z, uuidSchema, workspaceRoleSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -120,12 +120,22 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate role from invitation before use
+    const roleValidation = workspaceRoleSchema.safeParse(invitation.role);
+    if (!roleValidation.success) {
+      console.error(`Invalid role "${invitation.role}" in invitation ${invitation.id}`);
+      return new Response(
+        JSON.stringify({ error: 'Invalid role in invitation. Please contact workspace owner.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { error: memberInsertError } = await supabase
       .from('workspace_team_members')
       .insert({
         workspace_id: invitation.workspace_id,
         user_id: user.id,
-        role: invitation.role,
+        role: roleValidation.data,
         status: 'ACTIVE',
       });
 
