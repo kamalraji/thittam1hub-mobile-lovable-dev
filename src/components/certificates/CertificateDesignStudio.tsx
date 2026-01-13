@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Canvas as FabricCanvas, FabricObject } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { DesignCanvas, DesignCanvasRef } from './designer/DesignCanvas';
@@ -98,7 +99,7 @@ export function CertificateDesignStudio({
     fabricCanvas?.renderAll();
   };
 
-  return (
+  const studioContent = (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
       <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
@@ -187,4 +188,7 @@ export function CertificateDesignStudio({
       />
     </div>
   );
+
+  // Render via portal to ensure full-screen overlay works regardless of parent container
+  return createPortal(studioContent, document.body);
 }
