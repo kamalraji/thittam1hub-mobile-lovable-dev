@@ -26,6 +26,7 @@ import { OrganizerSpecificDashboard } from '../dashboard/OrganizerSpecificDashbo
 import { PortfolioPreviewCard } from '../portfolio/PortfolioPreviewCard';
 import { OrganizationLandingPage } from '../organization/OrganizationLandingPage';
 import { OrganizationProductsLandingPage } from '../organization/OrganizationProductsLandingPage';
+import { CertificateVerification } from '../certificates';
 
 import AttendflowLanding from '@/pages/AttendflowLanding';
 import { usePrimaryOrganization } from '@/hooks/usePrimaryOrganization';
@@ -558,6 +559,10 @@ export const AppRouter: React.FC = () => {
                 </ConsoleRoute>
               }
             />
+
+            {/* Public certificate verification */}
+            <Route path="/verify" element={<CertificateVerification />} />
+            <Route path="/verify/:certificateId" element={<CertificateVerification />} />
 
             {/* Public event routes */}
             <Route path="/events" element={<ParticipantEventsPage />} />

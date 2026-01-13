@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { QrScanner } from './QrScanner';
+import { QrCode, Keyboard } from 'lucide-react';
 
 // Types for certificate verification
 export interface CertificateVerificationResult {
@@ -28,6 +30,7 @@ export function CertificateVerification({ certificateId: propCertificateId }: Ce
   const [searchParams] = useSearchParams();
   const [inputCertificateId, setInputCertificateId] = useState('');
   const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Determine which certificate ID to use
   const certificateId = propCertificateId || paramCertificateId || searchParams.get('id');
@@ -79,8 +82,14 @@ export function CertificateVerification({ certificateId: propCertificateId }: Ce
   const handleReset = () => {
     setVerificationId(null);
     setInputCertificateId('');
+    setShowScanner(false);
   };
 
+  const handleScanResult = (scannedId: string) => {
+    setInputCertificateId(scannedId);
+    setVerificationId(scannedId);
+    setShowScanner(false);
+  };
   return (
     <div className="min-h-screen bg-muted/50 py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,37 +101,77 @@ export function CertificateVerification({ certificateId: propCertificateId }: Ce
           </p>
         </div>
 
-        {/* Verification Form */}
-        <div className="bg-card rounded-lg shadow-md p-6 mb-8">
-          <form onSubmit={handleVerify} className="space-y-4">
-            <div>
-              <label htmlFor="certificateId" className="block text-sm font-medium text-foreground mb-2">
-                Certificate ID
-              </label>
-              <div className="flex space-x-4">
-                <input
-                  type="text"
-                  id="certificateId"
-                  value={inputCertificateId}
-                  onChange={(e) => setInputCertificateId(e.target.value)}
-                  placeholder="Enter certificate ID (e.g., CERT-2024-ABC123)"
-                  className="flex-1 border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus-visible:ring-ring focus:border-transparent"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !inputCertificateId.trim()}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Verifying...' : 'Verify'}
-                </button>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Enter the certificate ID found on your certificate or scan the QR code to be redirected here automatically.
-            </p>
-          </form>
+        {/* Mode Toggle */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex rounded-lg border border-border p-1 bg-card">
+            <button
+              onClick={() => setShowScanner(false)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                !showScanner 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Keyboard className="w-4 h-4" />
+              Manual Entry
+            </button>
+            <button
+              onClick={() => setShowScanner(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                showScanner 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <QrCode className="w-4 h-4" />
+              Scan QR Code
+            </button>
+          </div>
         </div>
+
+        {/* QR Scanner */}
+        {showScanner && (
+          <div className="mb-8">
+            <QrScanner 
+              onScan={handleScanResult} 
+              onClose={() => setShowScanner(false)} 
+            />
+          </div>
+        )}
+
+        {/* Verification Form */}
+        {!showScanner && (
+          <div className="bg-card rounded-lg shadow-md p-6 mb-8">
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div>
+                <label htmlFor="certificateId" className="block text-sm font-medium text-foreground mb-2">
+                  Certificate ID
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    id="certificateId"
+                    value={inputCertificateId}
+                    onChange={(e) => setInputCertificateId(e.target.value)}
+                    placeholder="Enter certificate ID (e.g., CERT-2024-ABC123)"
+                    className="flex-1 border border-input bg-background text-foreground rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus-visible:ring-ring focus:border-transparent"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !inputCertificateId.trim()}
+                    className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Enter the certificate ID found on your certificate or switch to QR scanning mode.
+              </p>
+            </form>
+          </div>
+        )}
 
         {/* Verification Results */}
         {verificationResult && (
