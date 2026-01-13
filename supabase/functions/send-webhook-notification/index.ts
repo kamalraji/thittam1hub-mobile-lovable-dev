@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Zod schema for webhook payload
+// Zod schema for webhook payload (strict mode)
 const webhookPayloadSchema = z.object({
   workspace_id: uuidSchema,
   notification_type: notificationTypeSchema,
@@ -20,8 +20,8 @@ const webhookPayloadSchema = z.object({
     due_date: z.string().max(50).optional(),
     priority: z.string().max(20).optional(),
     url: z.string().url().max(2048).optional(),
-  }).optional(),
-});
+  }).strict().optional(),
+}).strict();
 
 type WebhookPayload = z.infer<typeof webhookPayloadSchema>;
 

@@ -18,14 +18,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// Zod schema for organization creation
-const slugSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(3, "Slug must be at least 3 characters")
-  .max(100, "Slug must be less than 100 characters")
-  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
+// Zod schema for organization creation (strict mode)
+import { slugSchema } from "../_shared/validation.ts";
 
 const createOrganizationSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(200, "Name must be less than 200 characters"),
@@ -35,7 +29,7 @@ const createOrganizationSchema = z.object({
   website: optionalUrlSchema,
   email: emailSchema.optional().nullable(),
   phone: phoneSchema,
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

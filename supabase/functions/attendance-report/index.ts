@@ -8,11 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for attendance report request
+// Zod schema for attendance report request (strict mode)
 const attendanceReportSchema = z.object({
   eventId: uuidSchema,
   sessionId: uuidSchema.optional().nullable(),
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

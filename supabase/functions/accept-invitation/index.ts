@@ -6,11 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Zod schema for accept request
+// Zod schema for accept request (strict mode)
 const acceptSchema = z.object({
   invitation_id: uuidSchema.optional(),
   token: z.string().trim().min(1, "Token required").max(500, "Token too long").optional(),
-}).refine(
+}).strict().refine(
   (data) => data.invitation_id || data.token,
   { message: "Either invitation_id or token is required" }
 );

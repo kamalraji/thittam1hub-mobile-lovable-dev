@@ -8,11 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for manual check-in request
+// Zod schema for manual check-in request (strict mode)
 const manualCheckinSchema = z.object({
   registrationId: uuidSchema,
   sessionId: uuidSchema.optional().nullable(),
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

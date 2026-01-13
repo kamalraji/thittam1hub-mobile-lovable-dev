@@ -6,12 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Zod schema for access request
+// Zod schema for access request (strict mode)
 const requestAccessSchema = z.object({
   workspace_id: uuidSchema,
   requested_role: z.string().trim().max(50, "Role too long").optional(),
   message: z.string().trim().max(500, "Message too long").optional(),
-});
+}).strict();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

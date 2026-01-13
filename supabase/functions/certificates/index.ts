@@ -1,6 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  z,
+  uuidSchema,
+  shortStringSchema,
+  optionalMediumStringSchema,
+  hexColorSchema,
+  certificateTypeSchema,
+  boundedArray,
+  boundedJsonSchema,
+  BODY_SIZE_LIMITS,
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +21,91 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// ============= Zod Schemas =============
+
+// Template schemas
+const templateDataSchema = z.object({
+  name: shortStringSchema,
+  type: z.string().min(1).max(50),
+  backgroundUrl: z.string().url().max(2048).optional().nullable(),
+  logoUrl: z.string().url().max(2048).optional().nullable(),
+  signatureUrl: z.string().url().max(2048).optional().nullable(),
+  branding: boundedJsonSchema,
+  content: boundedJsonSchema,
+  isDefault: z.boolean().optional(),
+}).strict();
+
+const templateUpdateSchema = z.object({
+  name: shortStringSchema.optional(),
+  type: z.string().min(1).max(50).optional(),
+  backgroundUrl: z.string().url().max(2048).optional().nullable(),
+  logoUrl: z.string().url().max(2048).optional().nullable(),
+  signatureUrl: z.string().url().max(2048).optional().nullable(),
+  branding: boundedJsonSchema,
+  content: boundedJsonSchema,
+  isDefault: z.boolean().optional(),
+}).strict();
+
+// Permission types
+const permissionSchema = z.enum(["design", "criteria", "generate", "distribute"]);
+
+// Delegation permissions
+const delegationPermissionsSchema = z.object({
+  canDesignTemplates: z.boolean().optional(),
+  canDefineCriteria: z.boolean().optional(),
+  canGenerate: z.boolean().optional(),
+  canDistribute: z.boolean().optional(),
+}).strict();
+
+// Criteria schema
+const criterionSchema = z.object({
+  type: z.string().min(1).max(50),
+  conditions: boundedJsonSchema,
+}).strict();
+
+// ============= Action Schemas (Discriminated Union) =============
+
+const getDelegationsSchema = z.object({ action: z.literal("getDelegations"), workspaceId: uuidSchema }).strict();
+const createDelegationSchema = z.object({ action: z.literal("createDelegation"), workspaceId: uuidSchema, delegatedWorkspaceId: uuidSchema, permissions: delegationPermissionsSchema.optional(), notes: optionalMediumStringSchema }).strict();
+const updateDelegationSchema = z.object({ action: z.literal("updateDelegation"), workspaceId: uuidSchema, delegationId: uuidSchema, permissions: delegationPermissionsSchema.optional(), notes: optionalMediumStringSchema }).strict();
+const removeDelegationSchema = z.object({ action: z.literal("removeDelegation"), workspaceId: uuidSchema, delegationId: uuidSchema }).strict();
+const getMyDelegationSchema = z.object({ action: z.literal("getMyDelegation"), workspaceId: uuidSchema }).strict();
+
+const listTemplatesSchema = z.object({ action: z.literal("listTemplates"), workspaceId: uuidSchema }).strict();
+const createTemplateSchema = z.object({ action: z.literal("createTemplate"), workspaceId: uuidSchema, template: templateDataSchema }).strict();
+const updateTemplateSchema = z.object({ action: z.literal("updateTemplate"), workspaceId: uuidSchema, templateId: uuidSchema, template: templateUpdateSchema }).strict();
+const deleteTemplateSchema = z.object({ action: z.literal("deleteTemplate"), workspaceId: uuidSchema, templateId: uuidSchema }).strict();
+
+const getCriteriaSchema = z.object({ action: z.literal("getCriteria"), workspaceId: uuidSchema }).strict();
+const saveCriteriaSchema = z.object({ action: z.literal("saveCriteria"), workspaceId: uuidSchema, criteria: boundedArray(criterionSchema, 20) }).strict();
+
+const getMyCertificatesSchema = z.object({ action: z.literal("getMyCertificates") }).strict();
+const listWorkspaceCertificatesSchema = z.object({ action: z.literal("listWorkspaceCertificates"), workspaceId: uuidSchema }).strict();
+const batchGenerateSchema = z.object({ action: z.literal("batchGenerate"), workspaceId: uuidSchema, templateId: uuidSchema.optional() }).strict();
+const distributeSchema = z.object({ action: z.literal("distribute"), workspaceId: uuidSchema, certificateIds: boundedArray(uuidSchema, 500) }).strict();
+const verifySchema = z.object({ action: z.literal("verify"), certificateId: z.string().min(1).max(100) }).strict();
+const getStatsSchema = z.object({ action: z.literal("getStats"), workspaceId: uuidSchema }).strict();
+
+const requestSchema = z.discriminatedUnion("action", [
+  getDelegationsSchema,
+  createDelegationSchema,
+  updateDelegationSchema,
+  removeDelegationSchema,
+  getMyDelegationSchema,
+  listTemplatesSchema,
+  createTemplateSchema,
+  updateTemplateSchema,
+  deleteTemplateSchema,
+  getCriteriaSchema,
+  saveCriteriaSchema,
+  getMyCertificatesSchema,
+  listWorkspaceCertificatesSchema,
+  batchGenerateSchema,
+  distributeSchema,
+  verifySchema,
+  getStatsSchema,
+]);
 
 function generateCertificateId(eventId: string): string {
   const random = crypto.getRandomValues(new Uint8Array(4));
@@ -45,6 +141,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Body size check
+  const contentLength = req.headers.get("content-length");
+  if (contentLength) {
+    const size = parseInt(contentLength, 10);
+    if (!isNaN(size) && size > BODY_SIZE_LIMITS.large) {
+      return errorResponse("Request body too large", 413);
+    }
+  }
+
   const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: {
       headers: { Authorization: req.headers.get("Authorization") ?? "" },
@@ -56,12 +161,19 @@ serve(async (req) => {
   });
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const { action } = body as { action?: string };
-
-    if (!action) {
-      return errorResponse("Missing action");
+    const rawBody = await req.json().catch(() => ({}));
+    
+    // Validate with Zod
+    const parseResult = requestSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const messages = parseResult.error.errors
+        .map((e) => (e.path.length > 0 ? `${e.path.join(".")}: ${e.message}` : e.message))
+        .join(", ");
+      console.log(`[VALIDATION_FAIL] ${messages}`);
+      return errorResponse(messages);
     }
+    
+    const body = parseResult.data;
 
     // Resolve current user for authenticated actions
     const { data: userResult } = await supabaseClient.auth.getUser();

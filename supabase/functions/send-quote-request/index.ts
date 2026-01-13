@@ -66,7 +66,7 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Zod schema for quote request
+// Zod schema for quote request (strict mode)
 const quoteRequestSchema = z.object({
   vendorEmail: emailSchema,
   vendorName: shortStringSchema,
@@ -79,7 +79,7 @@ const quoteRequestSchema = z.object({
   budget: z.string().max(50, "Budget must be less than 50 characters").optional(),
   message: longStringSchema,
   serviceNames: z.array(z.string().max(50)).max(10, "Maximum 10 services allowed").optional(),
-});
+}).strict();
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {

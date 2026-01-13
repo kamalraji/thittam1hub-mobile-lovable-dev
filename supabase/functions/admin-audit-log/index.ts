@@ -7,13 +7,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for audit log requests
+// Zod schema for audit log requests (strict mode)
 const auditLogSchema = z.object({
   action: shortStringSchema.describe("Action performed"),
   target_type: z.string().trim().min(1, "Target type is required").max(50, "Target type too long"),
   target_id: optionalUuidSchema,
-  details: z.record(z.unknown()).optional().nullable(),
-});
+  details: z.record(z.string().max(100), z.unknown()).refine(
+    (obj) => Object.keys(obj).length <= 50,
+    "Details has too many properties"
+  ).optional().nullable(),
+}).strict();
 
 serve(async (req) => {
   // Handle CORS preflight requests
