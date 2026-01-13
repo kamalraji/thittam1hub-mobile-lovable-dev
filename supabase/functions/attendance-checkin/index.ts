@@ -8,12 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for check-in request
+// Zod schema for check-in request (strict mode)
 const checkinSchema = z.object({
   qrCode: z.string().trim().min(1, "QR code is required").max(100, "QR code too long"),
   eventId: uuidSchema,
   sessionId: uuidSchema.optional().nullable(),
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Zod schema for respond request
+// Zod schema for respond request (strict mode)
 const respondSchema = z.object({
   request_id: uuidSchema,
   action: z.enum(["approve", "reject"], { 
@@ -14,7 +14,7 @@ const respondSchema = z.object({
   }),
   role: z.string().trim().max(50, "Role too long").optional(),
   review_notes: z.string().trim().max(500, "Review notes too long").optional(),
-});
+}).strict();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

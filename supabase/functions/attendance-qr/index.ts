@@ -8,10 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for attendance QR request
+// Zod schema for attendance QR request (strict mode)
 const attendanceQrSchema = z.object({
   eventId: uuidSchema,
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

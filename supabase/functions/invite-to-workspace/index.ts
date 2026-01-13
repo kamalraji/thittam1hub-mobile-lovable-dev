@@ -6,13 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Zod schema for invite request
+// Zod schema for invite request (strict mode)
 const inviteSchema = z.object({
   workspace_id: uuidSchema,
   email: emailSchema,
   role: workspaceRoleSchema,
   custom_message: z.string().trim().max(500, "Message too long").optional(),
-});
+}).strict();
 
 // Helper function to log audit events
 async function logAuditEvent(

@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-forwarded-for',
 };
 
-// Zod schema for page view
+// Zod schema for page view (strict mode)
 const pageViewSchema = z.object({
   event_id: uuidSchema,
   utm_source: z.string().max(255).optional().nullable(),
@@ -17,7 +17,7 @@ const pageViewSchema = z.object({
   user_agent: z.string().max(512).optional().nullable(),
   session_id: z.string().max(100).optional().nullable(),
   section_viewed: z.string().max(100).optional().nullable(),
-});
+}).strict();
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;

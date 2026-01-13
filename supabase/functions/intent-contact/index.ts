@@ -64,7 +64,7 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-// Zod schema for intent contact
+// Zod schema for intent contact (strict mode)
 const intentSchema = z.enum(["demo", "pricing", "walkthrough", "general"]);
 
 const intentContactSchema = z.object({
@@ -72,7 +72,7 @@ const intentContactSchema = z.object({
   name: shortStringSchema,
   email: emailSchema,
   message: longStringSchema,
-});
+}).strict();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

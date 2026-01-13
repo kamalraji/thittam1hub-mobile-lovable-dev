@@ -12,18 +12,18 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Zod schemas for social media post actions
+// Zod schemas for social media post actions (strict mode)
 const postNowSchema = z.object({
   action: z.literal("post_now"),
   workspace_id: uuidSchema,
   queue_id: uuidSchema,
-});
+}).strict();
 
 const addToQueueSchema = z.object({
   action: z.literal("add_to_queue"),
   workspace_id: uuidSchema,
   post_id: uuidSchema,
-});
+}).strict();
 
 const requestSchema = z.discriminatedUnion("action", [
   postNowSchema,

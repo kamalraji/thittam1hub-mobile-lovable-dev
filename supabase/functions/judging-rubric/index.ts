@@ -8,29 +8,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schemas for judging rubric actions
+// Zod schemas for judging rubric actions (strict mode)
 const criterionSchema = z.object({
   id: z.string().optional(),
   name: z.string().trim().min(1, "Name required").max(100, "Name too long"),
   description: z.string().trim().max(500, "Description too long"),
   weight: z.number().min(0, "Weight must be >= 0").max(100, "Weight must be <= 100"),
   maxScore: z.number().min(1, "Max score must be >= 1").max(100, "Max score must be <= 100"),
-});
+}).strict();
 
-const getActionSchema = z.object({ action: z.literal("get"), eventId: uuidSchema });
+const getActionSchema = z.object({ action: z.literal("get"), eventId: uuidSchema }).strict();
 const createActionSchema = z.object({
   action: z.literal("create"),
   eventId: uuidSchema,
   criteria: z.array(criterionSchema).min(1, "At least one criterion").max(20, "Maximum 20 criteria")
     .refine((c) => c.reduce((sum, item) => sum + item.weight, 0) === 100, "Criteria weights must sum to 100"),
-});
+}).strict();
 const updateActionSchema = z.object({
   action: z.literal("update"),
   eventId: uuidSchema,
   rubricId: uuidSchema,
   criteria: z.array(criterionSchema).min(1).max(20)
     .refine((c) => c.reduce((sum, item) => sum + item.weight, 0) === 100, "Criteria weights must sum to 100"),
-});
+}).strict();
 
 const requestSchema = z.discriminatedUnion("action", [getActionSchema, createActionSchema, updateActionSchema]);
 

@@ -11,23 +11,26 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// Zod schemas for different actions
+// Zod schemas for different actions (strict mode)
 const assignedSubmissionsSchema = z.object({
   action: z.literal("assignedSubmissions"),
   eventId: uuidSchema,
-});
+}).strict();
 
 const getScoreForSubmissionSchema = z.object({
   action: z.literal("getScoreForSubmission"),
   submissionId: uuidSchema,
-});
+}).strict();
 
 const submitScoreSchema = z.object({
   action: z.literal("submitScore"),
   submissionId: uuidSchema,
-  scores: z.record(z.string(), z.number().min(0).max(100)),
+  scores: z.record(z.string().max(100), z.number().min(0).max(100)).refine(
+    (obj) => Object.keys(obj).length <= 50,
+    "Too many score entries"
+  ),
   comments: z.string().max(2000).optional(),
-});
+}).strict();
 
 const requestSchema = z.discriminatedUnion("action", [
   assignedSubmissionsSchema,

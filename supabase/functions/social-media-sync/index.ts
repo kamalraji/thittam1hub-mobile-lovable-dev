@@ -11,7 +11,7 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Zod schemas for social media sync actions
+// Zod schemas for social media sync actions (strict mode)
 const syncActionSchema = z.enum(["sync_post_metrics", "sync_platform_stats", "generate_report"]);
 const syncTypeSchema = z.enum(["full", "incremental", "metrics_only"]);
 
@@ -20,7 +20,7 @@ const syncRequestSchema = z.object({
   workspace_id: uuidSchema,
   platform: socialPlatformSchema.optional(),
   sync_type: syncTypeSchema.optional(),
-});
+}).strict();
 
 // Twitter Analytics Sync
 async function syncTwitterAnalytics(credentials: Record<string, string>, postIds: string[]): Promise<{ metrics: Record<string, any>; error?: string }> {

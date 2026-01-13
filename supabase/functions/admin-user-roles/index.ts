@@ -20,15 +20,15 @@ type AdminUser = {
   appRole: AppRole | null;
 };
 
-// Zod schemas for different actions
+// Zod schemas for different actions (strict mode)
 const listActionSchema = z.object({
   action: z.literal("list"),
-});
+}).strict();
 
 const lookupActionSchema = z.object({
   action: z.literal("lookup"),
   email: emailSchema,
-});
+}).strict();
 
 const updateActionSchema = z.object({
   action: z.literal("update"),
@@ -36,7 +36,7 @@ const updateActionSchema = z.object({
   appRole: appRoleSchema.optional(),
   roles: z.array(appRoleSchema).max(6, "Maximum 6 roles allowed").optional(),
   note: z.string().trim().max(500, "Note too long").optional(),
-});
+}).strict();
 
 const requestSchema = z.discriminatedUnion("action", [
   listActionSchema,

@@ -16,13 +16,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Zod schema for vendor status email
+// Zod schema for vendor status email (strict mode)
 const vendorStatusEmailSchema = z.object({
   vendorEmail: emailSchema,
   vendorName: shortStringSchema,
   status: vendorStatusSchema,
   rejectionReason: z.string().trim().max(500, "Rejection reason must be less than 500 characters").optional(),
-});
+}).strict();
 
 const getStatusEmailContent = (vendorName: string, status: string, rejectionReason?: string) => {
   if (status === 'VERIFIED') {
