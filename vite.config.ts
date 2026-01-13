@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
       '@/hooks': path.resolve(__dirname, './src/hooks'),
       '@/utils': path.resolve(__dirname, './src/utils'),
     },
+    // Dedupe React to prevent multiple instances
+    dedupe: ['react', 'react-dom'],
   },
   server: {
     host: '::',
@@ -72,6 +74,8 @@ export default defineConfig(({ mode }) => ({
       '@radix-ui/react-slot',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
+      '@zxing/library',
+      '@zxing/browser',
     ],
     // Exclude large dependencies that should be loaded on demand
     exclude: ['@supabase/supabase-js'],
