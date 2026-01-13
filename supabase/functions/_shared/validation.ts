@@ -302,18 +302,105 @@ export const appRoleSchema = z
   .enum(["admin", "organizer", "participant", "judge", "volunteer", "speaker"])
   .describe("User application role");
 
-// Workspace roles
+// Workspace roles - Complete 4-level hierarchy (35 roles)
 export const workspaceRoleSchema = z.enum([
+  // Level 1 - Workspace Owner
   "WORKSPACE_OWNER",
+  
+  // Level 2 - Department Managers
   "OPERATIONS_MANAGER",
   "GROWTH_MANAGER",
   "CONTENT_MANAGER",
   "TECH_FINANCE_MANAGER",
   "VOLUNTEERS_MANAGER",
+  
+  // Level 3 - Team Leads (Committee Leads)
+  "EVENT_LEAD",
+  "CATERING_LEAD",
+  "LOGISTICS_LEAD",
+  "FACILITY_LEAD",
+  "MARKETING_LEAD",
+  "COMMUNICATION_LEAD",
+  "SPONSORSHIP_LEAD",
+  "SOCIAL_MEDIA_LEAD",
+  "CONTENT_LEAD",
+  "SPEAKER_LIAISON_LEAD",
+  "JUDGE_LEAD",
+  "MEDIA_LEAD",
+  "FINANCE_LEAD",
+  "REGISTRATION_LEAD",
+  "TECHNICAL_LEAD",
+  "IT_LEAD",
+  "VOLUNTEERS_LEAD",
+  
+  // Level 4 - Coordinators
   "EVENT_COORDINATOR",
+  "CATERING_COORDINATOR",
+  "LOGISTICS_COORDINATOR",
+  "FACILITY_COORDINATOR",
+  "MARKETING_COORDINATOR",
+  "COMMUNICATION_COORDINATOR",
+  "SPONSORSHIP_COORDINATOR",
+  "SOCIAL_MEDIA_COORDINATOR",
+  "CONTENT_COORDINATOR",
+  "SPEAKER_LIAISON_COORDINATOR",
+  "JUDGE_COORDINATOR",
+  "MEDIA_COORDINATOR",
+  "FINANCE_COORDINATOR",
+  "REGISTRATION_COORDINATOR",
+  "TECHNICAL_COORDINATOR",
+  "IT_COORDINATOR",
   "VOLUNTEER_COORDINATOR",
-  "MEMBER",
-]).describe("Workspace team member role");
+]).describe("Workspace team member role (4-level hierarchy)");
+
+// Helper schemas for role-level validation
+export const managerRoleSchema = z.enum([
+  "OPERATIONS_MANAGER",
+  "GROWTH_MANAGER",
+  "CONTENT_MANAGER",
+  "TECH_FINANCE_MANAGER",
+  "VOLUNTEERS_MANAGER",
+]).describe("Department manager role");
+
+export const leadRoleSchema = z.enum([
+  "EVENT_LEAD",
+  "CATERING_LEAD",
+  "LOGISTICS_LEAD",
+  "FACILITY_LEAD",
+  "MARKETING_LEAD",
+  "COMMUNICATION_LEAD",
+  "SPONSORSHIP_LEAD",
+  "SOCIAL_MEDIA_LEAD",
+  "CONTENT_LEAD",
+  "SPEAKER_LIAISON_LEAD",
+  "JUDGE_LEAD",
+  "MEDIA_LEAD",
+  "FINANCE_LEAD",
+  "REGISTRATION_LEAD",
+  "TECHNICAL_LEAD",
+  "IT_LEAD",
+  "VOLUNTEERS_LEAD",
+]).describe("Committee lead role");
+
+export const coordinatorRoleSchema = z.enum([
+  "EVENT_COORDINATOR",
+  "CATERING_COORDINATOR",
+  "LOGISTICS_COORDINATOR",
+  "FACILITY_COORDINATOR",
+  "MARKETING_COORDINATOR",
+  "COMMUNICATION_COORDINATOR",
+  "SPONSORSHIP_COORDINATOR",
+  "SOCIAL_MEDIA_COORDINATOR",
+  "CONTENT_COORDINATOR",
+  "SPEAKER_LIAISON_COORDINATOR",
+  "JUDGE_COORDINATOR",
+  "MEDIA_COORDINATOR",
+  "FINANCE_COORDINATOR",
+  "REGISTRATION_COORDINATOR",
+  "TECHNICAL_COORDINATOR",
+  "IT_COORDINATOR",
+  "VOLUNTEER_COORDINATOR",
+]).describe("Task coordinator role");
 
 // Notification types
 export const notificationTypeSchema = z.enum([
