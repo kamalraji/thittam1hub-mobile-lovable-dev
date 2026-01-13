@@ -64,32 +64,34 @@ export const AllEventSettingsPanel: React.FC<AllEventSettingsPanelProps> = ({
       </div>
 
       <Tabs defaultValue="landing-page" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="landing-page" className="flex items-center gap-2">
-            <Paintbrush className="h-4 w-4" />
-            <span className="hidden sm:inline">Landing Page</span>
-          </TabsTrigger>
-          <TabsTrigger value="ticketing" className="flex items-center gap-2">
-            <TicketIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Ticketing</span>
-          </TabsTrigger>
-          <TabsTrigger value="promo" className="flex items-center gap-2">
-            <Tag className="h-4 w-4" />
-            <span className="hidden sm:inline">Promo Codes</span>
-          </TabsTrigger>
-          <TabsTrigger value="seo" className="flex items-center gap-2">
-            <SearchIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">SEO</span>
-          </TabsTrigger>
-          <TabsTrigger value="accessibility" className="flex items-center gap-2">
-            <AccessibilityIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Accessibility</span>
-          </TabsTrigger>
-          <TabsTrigger value="certificates" className="flex items-center gap-2">
-            <Award className="h-4 w-4" />
-            <span className="hidden sm:inline">Certificates</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-6">
+            <TabsTrigger value="landing-page" className="flex items-center gap-2 whitespace-nowrap">
+              <Paintbrush className="h-4 w-4" />
+              <span className="hidden sm:inline">Landing Page</span>
+            </TabsTrigger>
+            <TabsTrigger value="ticketing" className="flex items-center gap-2 whitespace-nowrap">
+              <TicketIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Ticketing</span>
+            </TabsTrigger>
+            <TabsTrigger value="promo" className="flex items-center gap-2 whitespace-nowrap">
+              <Tag className="h-4 w-4" />
+              <span className="hidden sm:inline">Promo Codes</span>
+            </TabsTrigger>
+            <TabsTrigger value="seo" className="flex items-center gap-2 whitespace-nowrap">
+              <SearchIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">SEO</span>
+            </TabsTrigger>
+            <TabsTrigger value="accessibility" className="flex items-center gap-2 whitespace-nowrap">
+              <AccessibilityIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Accessibility</span>
+            </TabsTrigger>
+            <TabsTrigger value="certificates" className="flex items-center gap-2 whitespace-nowrap">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">Certificates</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="landing-page" className="mt-6 space-y-6">
           <LandingPageSettingsPanel 
