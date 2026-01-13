@@ -1,19 +1,22 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RespondRequest {
-  request_id: string;
-  action: 'approve' | 'reject';
-  role?: string;
-  review_notes?: string;
-}
+// Zod schema for respond request
+const respondSchema = z.object({
+  request_id: uuidSchema,
+  action: z.enum(["approve", "reject"], { 
+    errorMap: () => ({ message: 'Action must be "approve" or "reject"' })
+  }),
+  role: z.string().trim().max(50, "Role too long").optional(),
+  review_notes: z.string().trim().max(500, "Review notes too long").optional(),
+});
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,7 +27,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -33,7 +35,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the current user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -45,26 +46,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: RespondRequest = await req.json();
-    const { request_id, action, role, review_notes } = body;
-
-    if (!request_id || !action) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: request_id, action' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Parse and validate request body
+    const parseResult = await parseAndValidate(req, respondSchema, corsHeaders);
+    if (!parseResult.success) {
+      return parseResult.response;
     }
 
-    if (action !== 'approve' && action !== 'reject') {
-      return new Response(
-        JSON.stringify({ error: 'Invalid action. Must be "approve" or "reject"' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { request_id, action, role, review_notes } = parseResult.data;
 
     console.log(`User ${user.id} responding to access request ${request_id} with action: ${action}`);
 
-    // Get the access request with workspace info
     const { data: accessRequest, error: requestError } = await supabase
       .from('workspace_access_requests')
       .select('*, workspaces(id, name, organizer_id)')
@@ -80,7 +71,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if current user is the workspace owner
     if (accessRequest.workspaces.organizer_id !== user.id) {
       console.error(`User ${user.id} is not the owner of workspace. Owner is ${accessRequest.workspaces.organizer_id}`);
       return new Response(
@@ -91,7 +81,6 @@ Deno.serve(async (req) => {
 
     const newStatus = action === 'approve' ? 'APPROVED' : 'REJECTED';
 
-    // Update the access request
     const { error: updateError } = await supabase
       .from('workspace_access_requests')
       .update({
@@ -111,7 +100,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If approved, add user to workspace_team_members
     if (action === 'approve') {
       const memberRole = role || accessRequest.requested_role || 'VOLUNTEER_COORDINATOR';
       
@@ -132,7 +120,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Notify the requester of approval
       await supabase
         .from('notifications')
         .insert({
@@ -147,7 +134,6 @@ Deno.serve(async (req) => {
 
       console.log(`User ${accessRequest.user_id} approved and added to workspace ${accessRequest.workspace_id}`);
     } else {
-      // Notify the requester of rejection
       await supabase
         .from('notifications')
         .insert({

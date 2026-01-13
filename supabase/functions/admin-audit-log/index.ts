@@ -1,17 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z, uuidSchema, optionalUuidSchema, shortStringSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface AuditLogRequest {
-  action: string;
-  target_type: string;
-  target_id?: string;
-  details?: Record<string, unknown>;
-}
+// Zod schema for audit log requests
+const auditLogSchema = z.object({
+  action: shortStringSchema.describe("Action performed"),
+  target_type: z.string().trim().min(1, "Target type is required").max(50, "Target type too long"),
+  target_id: optionalUuidSchema,
+  details: z.record(z.unknown()).optional().nullable(),
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -80,15 +82,13 @@ serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const body: AuditLogRequest = await req.json();
-
-    if (!body.action || !body.target_type) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: action, target_type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Parse and validate request body
+    const parseResult = await parseAndValidate(req, auditLogSchema, corsHeaders);
+    if (!parseResult.success) {
+      return parseResult.response;
     }
+
+    const { action, target_type, target_id, details } = parseResult.data;
 
     // Get client info for audit trail
     const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
@@ -100,10 +100,10 @@ serve(async (req) => {
       .insert({
         admin_id: user.id,
         admin_email: user.email,
-        action: body.action,
-        target_type: body.target_type,
-        target_id: body.target_id || null,
-        details: body.details || null,
+        action,
+        target_type,
+        target_id: target_id || null,
+        details: details || null,
         ip_address: ipAddress,
         user_agent: userAgent,
       })
@@ -118,7 +118,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Audit log created: ${body.action} by ${user.email} on ${body.target_type}`);
+    console.log(`Audit log created: ${action} by ${user.email} on ${target_type}`);
 
     return new Response(
       JSON.stringify({ success: true, id: data.id }),

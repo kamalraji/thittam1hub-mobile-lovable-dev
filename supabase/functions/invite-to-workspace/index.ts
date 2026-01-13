@@ -1,16 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z, uuidSchema, emailSchema, workspaceRoleSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface InviteRequest {
-  workspace_id: string;
-  email: string;
-  role: string;
-  custom_message?: string;
-}
+// Zod schema for invite request
+const inviteSchema = z.object({
+  workspace_id: uuidSchema,
+  email: emailSchema,
+  role: workspaceRoleSchema,
+  custom_message: z.string().trim().max(500, "Message too long").optional(),
+});
 
 // Helper function to log audit events
 async function logAuditEvent(
@@ -45,12 +47,10 @@ async function logAuditEvent(
     });
   } catch (error) {
     console.error('Failed to log audit event:', error);
-    // Don't throw - audit logging should not block the main operation
   }
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -61,11 +61,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get request metadata for audit logging
     const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -74,7 +72,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the current user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -86,29 +83,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: InviteRequest = await req.json();
-    const { workspace_id, email, role, custom_message } = body;
-
-    // Validate required fields
-    if (!workspace_id || !email || !role) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: workspace_id, email, role' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Parse and validate request body
+    const parseResult = await parseAndValidate(req, inviteSchema, corsHeaders);
+    if (!parseResult.success) {
+      return parseResult.response;
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid email format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { workspace_id, email, role, custom_message } = parseResult.data;
 
     console.log(`User ${user.id} attempting to invite ${email} to workspace ${workspace_id} with role ${role}`);
 
-    // Check if the current user is the workspace owner
     const { data: workspace, error: workspaceError } = await supabase
       .from('workspaces')
       .select('id, organizer_id, name')
@@ -123,7 +107,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Only workspace owner can invite members
     if (workspace.organizer_id !== user.id) {
       console.error(`User ${user.id} is not the owner of workspace ${workspace_id}. Owner is ${workspace.organizer_id}`);
       return new Response(
@@ -132,13 +115,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user with this email already exists in the system
-    const { data: existingUsers } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .limit(1);
-    
-    // Check auth.users for the email
     const { data: authUsers, error: authLookupError } = await supabase.auth.admin.listUsers();
     
     let targetUserId: string | null = null;
@@ -149,7 +125,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check if user is already a member
     if (targetUserId) {
       const { data: existingMember } = await supabase
         .from('workspace_team_members')
@@ -167,7 +142,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check for existing pending invitation
     const { data: existingInvitation } = await supabase
       .from('workspace_invitations')
       .select('id')
@@ -183,7 +157,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If user exists in the system, add them directly to workspace_team_members
     if (targetUserId) {
       const { error: memberInsertError } = await supabase
         .from('workspace_team_members')
@@ -202,7 +175,6 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Log audit event for direct member addition
       await logAuditEvent(supabase, {
         workspace_id,
         actor_id: user.id,
@@ -220,7 +192,6 @@ Deno.serve(async (req) => {
         user_agent: userAgent,
       });
 
-      // Create a notification for the user
       await supabase
         .from('notifications')
         .insert({
@@ -245,7 +216,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // User doesn't exist - create an invitation record
     const { data: invitation, error: inviteError } = await supabase
       .from('workspace_invitations')
       .insert({
@@ -267,7 +237,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Log audit event for invitation sent
     await logAuditEvent(supabase, {
       workspace_id,
       actor_id: user.id,

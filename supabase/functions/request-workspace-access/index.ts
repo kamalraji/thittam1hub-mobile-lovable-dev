@@ -1,18 +1,19 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RequestAccessBody {
-  workspace_id: string;
-  requested_role?: string;
-  message?: string;
-}
+// Zod schema for access request
+const requestAccessSchema = z.object({
+  workspace_id: uuidSchema,
+  requested_role: z.string().trim().max(50, "Role too long").optional(),
+  message: z.string().trim().max(500, "Message too long").optional(),
+});
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,7 +24,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -32,7 +32,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the current user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -44,19 +43,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: RequestAccessBody = await req.json();
-    const { workspace_id, requested_role, message } = body;
-
-    if (!workspace_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required field: workspace_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Parse and validate request body
+    const parseResult = await parseAndValidate(req, requestAccessSchema, corsHeaders);
+    if (!parseResult.success) {
+      return parseResult.response;
     }
+
+    const { workspace_id, requested_role, message } = parseResult.data;
 
     console.log(`User ${user.id} requesting access to workspace ${workspace_id}`);
 
-    // Check if workspace exists
     const { data: workspace, error: workspaceError } = await supabase
       .from('workspaces')
       .select('id, name, organizer_id')
@@ -71,7 +67,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is the owner
     if (workspace.organizer_id === user.id) {
       return new Response(
         JSON.stringify({ error: 'You are the owner of this workspace' }),
@@ -79,7 +74,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is already a member
     const { data: existingMember } = await supabase
       .from('workspace_team_members')
       .select('id')
@@ -95,7 +89,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check for existing pending request
     const { data: existingRequest } = await supabase
       .from('workspace_access_requests')
       .select('id')
@@ -111,7 +104,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create the access request
     const { data: accessRequest, error: insertError } = await supabase
       .from('workspace_access_requests')
       .insert({
@@ -132,7 +124,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get requester's profile for the notification
     const { data: requesterProfile } = await supabase
       .from('user_profiles')
       .select('full_name')
@@ -141,7 +132,6 @@ Deno.serve(async (req) => {
 
     const requesterName = requesterProfile?.full_name || user.email || 'A user';
 
-    // Notify the workspace owner
     await supabase
       .from('notifications')
       .insert({

@@ -1,17 +1,21 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z, uuidSchema, parseAndValidate } from "../_shared/validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface AcceptRequest {
-  invitation_id?: string;
-  token?: string;
-}
+// Zod schema for accept request
+const acceptSchema = z.object({
+  invitation_id: uuidSchema.optional(),
+  token: z.string().trim().min(1, "Token required").max(500, "Token too long").optional(),
+}).refine(
+  (data) => data.invitation_id || data.token,
+  { message: "Either invitation_id or token is required" }
+);
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,7 +26,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -31,7 +34,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the current user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -43,19 +45,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: AcceptRequest = await req.json();
-    const { invitation_id, token: inviteToken } = body;
-
-    if (!invitation_id && !inviteToken) {
-      return new Response(
-        JSON.stringify({ error: 'Missing invitation_id or token' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Parse and validate request body
+    const parseResult = await parseAndValidate(req, acceptSchema, corsHeaders);
+    if (!parseResult.success) {
+      return parseResult.response;
     }
+
+    const { invitation_id, token: inviteToken } = parseResult.data;
 
     console.log(`User ${user.id} attempting to accept invitation`);
 
-    // Find the invitation
     let query = supabase
       .from('workspace_invitations')
       .select('*, workspaces(id, name)')
@@ -77,7 +76,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if invitation is for this user's email
     if (invitation.email.toLowerCase() !== user.email?.toLowerCase()) {
       console.error(`Email mismatch: invitation is for ${invitation.email}, user is ${user.email}`);
       return new Response(
@@ -86,9 +84,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if invitation has expired
     if (new Date(invitation.expires_at) < new Date()) {
-      // Update invitation status to expired
       await supabase
         .from('workspace_invitations')
         .update({ status: 'EXPIRED' })
@@ -100,7 +96,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is already a member
     const { data: existingMember } = await supabase
       .from('workspace_team_members')
       .select('id')
@@ -110,7 +105,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (existingMember) {
-      // Mark invitation as accepted anyway
       await supabase
         .from('workspace_invitations')
         .update({ status: 'ACCEPTED', accepted_at: new Date().toISOString() })
@@ -126,7 +120,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Add user to workspace_team_members
     const { error: memberInsertError } = await supabase
       .from('workspace_team_members')
       .insert({
@@ -144,7 +137,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update invitation status
     const { error: updateError } = await supabase
       .from('workspace_invitations')
       .update({ status: 'ACCEPTED', accepted_at: new Date().toISOString() })
@@ -154,7 +146,6 @@ Deno.serve(async (req) => {
       console.error('Error updating invitation:', updateError);
     }
 
-    // Create a notification
     await supabase
       .from('notifications')
       .insert({
