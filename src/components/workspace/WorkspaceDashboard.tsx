@@ -50,6 +50,7 @@ import {
   ExportListTab,
   SendRemindersTab,
   ViewWaitlistTab,
+  IDCardsTab,
   // Finance Committee tabs
   RecordExpenseTab,
   GenerateReportTab,
@@ -601,6 +602,10 @@ export function WorkspaceDashboard({ workspaceId, orgSlug }: WorkspaceDashboardP
 
         {activeTab === 'view-waitlist' && (
           <ViewWaitlistTab workspace={workspace} />
+        )}
+
+        {activeTab === 'id-cards' && (
+          <IDCardsTab workspace={workspace} />
         )}
 
         {/* Finance Committee tabs */}
