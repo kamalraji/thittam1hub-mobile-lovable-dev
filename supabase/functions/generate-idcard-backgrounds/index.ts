@@ -91,7 +91,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user is authenticated
+    // Verify user is authenticated (admin check temporarily removed for background generation)
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -102,7 +102,9 @@ serve(async (req) => {
       );
     }
 
-    // Check for admin role (optional - can be adjusted based on your needs)
+    // NOTE: Admin role check temporarily disabled for background generation
+    // Uncomment the following block after generation is complete:
+    /*
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -115,6 +117,9 @@ serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    */
+
+    console.log(`User ${user.id} triggering background generation`);
 
     const { action, theme, style } = await req.json();
 

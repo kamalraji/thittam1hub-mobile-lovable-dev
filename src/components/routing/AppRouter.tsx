@@ -46,6 +46,7 @@ const JoinOrganizationPage = lazy(() => import('../organization/JoinOrganization
 const VendorPublicProfilePage = lazy(() => import('./services/VendorPublicProfilePage'));
 const ParticipantPortfolioPage = lazy(() => import('../portfolio/ParticipantPortfolioPage'));
 const HelpPage = lazy(() => import('../help/HelpPage'));
+const GenerateBackgroundsPage = lazy(() => import('../../pages/admin/GenerateBackgrounds'));
 
 // Loading fallback for lazy-loaded routes
 const RouteLoadingFallback = () => (
@@ -739,6 +740,16 @@ export const AppRouter: React.FC = () => {
 
             {/* Legacy console redirect */}
             <Route path="/console/*" element={<Navigate to="/dashboard" replace />} />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin/generate-backgrounds"
+              element={
+                <Suspense fallback={<RouteLoadingFallback />}>
+                  <GenerateBackgroundsPage />
+                </Suspense>
+              }
+            />
 
             {/* 404 Not Found - must be last */}
             <Route path="*" element={<NotFoundPage />} />
