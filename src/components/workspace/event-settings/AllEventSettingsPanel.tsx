@@ -7,9 +7,11 @@ import { SEOSettingsCard } from '@/components/events/settings/SEOSettingsCard';
 import { AccessibilitySettingsCard } from '@/components/events/settings/AccessibilitySettingsCard';
 import { LandingPageSettingsPanel } from './LandingPageSettingsPanel';
 import { CertificatesSettingsPanel } from './CertificatesSettingsPanel';
+import { EventOverviewPanel } from './EventOverviewPanel';
+import { EventStatusHistory } from '@/components/events/publish/EventStatusHistory';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TicketIcon, Tag, SearchIcon, AccessibilityIcon, Paintbrush, Award } from 'lucide-react';
+import { TicketIcon, Tag, SearchIcon, AccessibilityIcon, Paintbrush, Award, LayoutDashboard, Clock } from 'lucide-react';
 
 interface AllEventSettingsPanelProps {
   eventId: string;
@@ -57,15 +59,19 @@ export const AllEventSettingsPanel: React.FC<AllEventSettingsPanelProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Event Settings</h2>
+        <h2 className="text-lg font-semibold">Event Space</h2>
         <p className="text-sm text-muted-foreground">
-          Manage all event settings from this central location. As the workspace owner, you have access to all configuration options.
+          Manage your event lifecycle, publishing, and configuration from this central hub.
         </p>
       </div>
 
-      <Tabs defaultValue="landing-page" className="w-full">
+      <Tabs defaultValue="overview" className="w-full">
         <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-6">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-8">
+            <TabsTrigger value="overview" className="flex items-center gap-2 whitespace-nowrap">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
             <TabsTrigger value="landing-page" className="flex items-center gap-2 whitespace-nowrap">
               <Paintbrush className="h-4 w-4" />
               <span className="hidden sm:inline">Landing Page</span>
@@ -90,8 +96,20 @@ export const AllEventSettingsPanel: React.FC<AllEventSettingsPanelProps> = ({
               <Award className="h-4 w-4" />
               <span className="hidden sm:inline">Certificates</span>
             </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2 whitespace-nowrap">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">History</span>
+            </TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="overview" className="mt-6 space-y-6">
+          <EventOverviewPanel
+            eventId={eventId}
+            workspaceId={workspaceId}
+            isRootOwner={isRootOwner}
+          />
+        </TabsContent>
 
         <TabsContent value="landing-page" className="mt-6 space-y-6">
           <LandingPageSettingsPanel 
@@ -136,6 +154,10 @@ export const AllEventSettingsPanel: React.FC<AllEventSettingsPanelProps> = ({
             workspaceId={workspaceId}
             isRootOwner={isRootOwner}
           />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6 space-y-6">
+          <EventStatusHistory eventId={eventId} />
         </TabsContent>
       </Tabs>
     </div>

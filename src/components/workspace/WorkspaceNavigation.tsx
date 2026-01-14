@@ -14,7 +14,7 @@ import {
   UserCog,
   ChevronDown,
   ChevronRight,
-  Settings2,
+  Rocket,
   ClipboardCheck,
   Layers
 } from 'lucide-react';
@@ -107,7 +107,7 @@ export function WorkspaceNavigation({
     { id: 'team', name: 'Team', icon: <Users className="w-4 h-4" />, group: 'core' },
     { id: 'communication', name: 'Communication', icon: <MessageSquare className="w-4 h-4" />, group: 'core' },
     { id: 'approvals', name: 'Approvals', icon: <ClipboardCheck className="w-4 h-4" />, group: 'core' },
-    { id: 'event-settings', name: 'Event Settings', icon: <Settings2 className="w-4 h-4" />, group: 'core' },
+    { id: 'event-settings', name: 'Event Space', icon: <Rocket className="w-4 h-4" />, group: 'core' },
     { id: 'workspace-management', name: 'Workspace Control', icon: <Layers className="w-4 h-4" />, group: 'management' },
     { id: 'marketplace', name: 'Marketplace', icon: <ShoppingBag className="w-4 h-4" />, group: 'management' },
     { id: 'templates', name: 'Templates', icon: <FileText className="w-4 h-4" />, group: 'management' },
