@@ -1190,6 +1190,63 @@ export type Database = {
           },
         ]
       }
+      id_card_templates: {
+        Row: {
+          card_type: string | null
+          created_at: string | null
+          created_by: string | null
+          design: Json
+          dimensions: Json | null
+          event_id: string
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          card_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          design?: Json
+          dimensions?: Json | null
+          event_id: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          card_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          design?: Json
+          dimensions?: Json | null
+          event_id?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "id_card_templates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "id_card_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       judge_assignments: {
         Row: {
           created_at: string

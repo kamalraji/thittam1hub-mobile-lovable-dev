@@ -27,6 +27,7 @@ import {
   UserPlus,
   Mail,
   ListChecks,
+  CreditCard,
   // Catering Committee
   Utensils,
   Package,
@@ -125,6 +126,7 @@ const committeeActions: Record<string, CommitteeAction[]> = {
     { id: 'export-list', label: 'Export List', icon: Download, color: 'text-purple-500', tab: 'export-list' },
     { id: 'send-reminders', label: 'Send Reminders', icon: Mail, color: 'text-amber-500', tab: 'send-reminders' },
     { id: 'view-waitlist', label: 'View Waitlist', icon: ListChecks, color: 'text-cyan-500', tab: 'view-waitlist' },
+    { id: 'id-cards', label: 'ID Cards', icon: CreditCard, color: 'text-indigo-500', tab: 'id-cards' },
   ],
   catering: [
     { id: 'update-menu', label: 'Update Menu', icon: Utensils, color: 'text-orange-500', tab: 'update-menu-catering' },
