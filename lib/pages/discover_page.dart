@@ -35,6 +35,10 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
     setState(() => _isLoading = true);
     try {
       final events = await _eventService.getAllEvents();
+      debugPrint('📅 Loaded ${events.length} events');
+      for (final e in events) {
+        debugPrint('  - ${e.name}: ${e.startDate} to ${e.endDate} (${e.status})');
+      }
       Map<String, List<TicketTier>> tiers = {};
       if (events.isNotEmpty) {
         final ids = events.map((e) => e.id).toList();
@@ -46,15 +50,6 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
           _tiersByEvent = tiers;
           _isLoading = false;
         });
-        final allNow = _filtered();
-        if (allNow.isEmpty) {
-          final now = DateTime.now();
-          final past = _events.where((e) => e.endDate.isBefore(now)).toList();
-          if (past.isNotEmpty && _tabController.index != 1) {
-            _tabController.index = 1;
-            setState(() {});
-          }
-        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -269,6 +264,8 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                       _savedEventIds.add(id);
                     }
                   }),
+                  hasPastEvents: _events.any((e) => e.endDate.isBefore(DateTime.now())),
+                  onViewPastEvents: () => setState(() => _tabController.index = 1),
                 ),
                 _EventsTab(
                   key: const ValueKey('tab_past'),
@@ -284,6 +281,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                       _savedEventIds.add(id);
                     }
                   }),
+                  isPastTab: true,
                 ),
               ],
             ),
@@ -322,6 +320,9 @@ class _EventsTab extends StatelessWidget {
     required this.savedEventIds,
     required this.onRefresh,
     required this.onToggleSave,
+    this.hasPastEvents = false,
+    this.onViewPastEvents,
+    this.isPastTab = false,
   });
 
   final bool isLoading;
@@ -330,6 +331,9 @@ class _EventsTab extends StatelessWidget {
   final Set<String> savedEventIds;
   final Future<void> Function() onRefresh;
   final void Function(String id) onToggleSave;
+  final bool hasPastEvents;
+  final VoidCallback? onViewPastEvents;
+  final bool isPastTab;
 
   @override
   Widget build(BuildContext context) {
@@ -358,17 +362,30 @@ class _EventsTab extends StatelessWidget {
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    'No events found',
+                    isPastTab ? 'No past events' : 'No upcoming events',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(color: cs.onSurface),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Center(
                   child: Text(
-                    'Try adjusting your filters',
+                    isPastTab ? 'Events you attended will appear here' : 'Try adjusting your filters',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ),
+                if (!isPastTab && hasPastEvents && onViewPastEvents != null) ...[
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: onViewPastEvents,
+                      icon: Icon(Icons.history, size: 18, color: cs.primary),
+                      label: Text(
+                        'View past events',
+                        style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             )
           : ListView.separated(
