@@ -10,8 +10,8 @@ class EventService {
           .from('events')
           .select('*, organization:organizations(*)')
           // Include COMPLETED so Past Events tab can render finished events
-          .inFilter('status', ['PUBLISHED', 'ONGOING', 'COMPLETED', 'published', 'ongoing', 'completed'])
-          .inFilter('visibility', ['PUBLIC', 'public'])
+          .inFilter('status', ['PUBLISHED', 'ONGOING', 'COMPLETED'])
+          .inFilter('visibility', ['PUBLIC'])
           .order('start_date', ascending: true);
 
       return (data as List).map((json) => Event.fromJson(json)).toList();
@@ -27,8 +27,8 @@ class EventService {
       final data = await SupabaseConfig.client
           .from('events')
           .select('*, organization:organizations(*)')
-          .inFilter('status', ['PUBLISHED', 'published'])
-          .inFilter('visibility', ['PUBLIC', 'public'])
+          .inFilter('status', ['PUBLISHED'])
+          .inFilter('visibility', ['PUBLIC'])
           .eq('category', category.name)
           .order('start_date', ascending: true);
 
@@ -45,8 +45,8 @@ class EventService {
       final data = await SupabaseConfig.client
           .from('events')
           .select('*, organization:organizations(*)')
-          .inFilter('status', ['PUBLISHED', 'published'])
-          .inFilter('visibility', ['PUBLIC', 'public'])
+          .inFilter('status', ['PUBLISHED'])
+          .inFilter('visibility', ['PUBLIC'])
           .eq('mode', mode.name)
           .order('start_date', ascending: true);
 
@@ -121,8 +121,8 @@ class EventService {
       final data = await SupabaseConfig.client
           .from('events')
           .select('*, organization:organizations(*)')
-          .inFilter('status', ['PUBLISHED', 'published'])
-          .inFilter('visibility', ['PUBLIC', 'public'])
+          .inFilter('status', ['PUBLISHED'])
+          .inFilter('visibility', ['PUBLIC'])
           .ilike('name', '%$query%')
           .order('start_date', ascending: true);
 
@@ -140,8 +140,8 @@ class EventService {
       final data = await SupabaseConfig.client
           .from('events')
           .select('*, organization:organizations(*)')
-          .inFilter('status', ['PUBLISHED', 'published'])
-          .inFilter('visibility', ['PUBLIC', 'public'])
+          .inFilter('status', ['PUBLISHED'])
+          .inFilter('visibility', ['PUBLIC'])
           .gte('start_date', now)
           .order('start_date', ascending: true)
           .limit(20);
