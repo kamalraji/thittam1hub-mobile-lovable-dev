@@ -1,19 +1,21 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, Package, UserPlus, AlertCircle } from 'lucide-react';
+import { DollarSign, Package, UserPlus, AlertCircle, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ApprovalsSummaryCardsProps {
   budgetCount: number;
   resourceCount: number;
   accessCount: number;
+  eventPublishCount?: number;
 }
 
 export function ApprovalsSummaryCards({
   budgetCount,
   resourceCount,
   accessCount,
+  eventPublishCount,
 }: ApprovalsSummaryCardsProps) {
-  const totalPending = budgetCount + resourceCount + accessCount;
+  const totalPending = budgetCount + resourceCount + accessCount + (eventPublishCount || 0);
 
   const cards = [
     {
@@ -23,6 +25,7 @@ export function ApprovalsSummaryCards({
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/20',
+      show: true,
     },
     {
       label: 'Budget Requests',
@@ -31,6 +34,7 @@ export function ApprovalsSummaryCards({
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-500/10',
       borderColor: 'border-emerald-500/20',
+      show: true,
     },
     {
       label: 'Resource Requests',
@@ -39,6 +43,7 @@ export function ApprovalsSummaryCards({
       color: 'text-blue-600',
       bgColor: 'bg-blue-500/10',
       borderColor: 'border-blue-500/20',
+      show: true,
     },
     {
       label: 'Access Requests',
@@ -47,12 +52,27 @@ export function ApprovalsSummaryCards({
       color: 'text-amber-600',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/20',
+      show: true,
+    },
+    {
+      label: 'Event Publish',
+      count: eventPublishCount || 0,
+      icon: Rocket,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/20',
+      show: eventPublishCount !== undefined,
     },
   ];
 
+  const visibleCards = cards.filter(c => c.show);
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card) => (
+    <div className={cn(
+      'grid gap-4',
+      visibleCards.length === 5 ? 'grid-cols-2 lg:grid-cols-5' : 'grid-cols-2 lg:grid-cols-4'
+    )}>
+      {visibleCards.map((card) => (
         <Card
           key={card.label}
           className={cn(
