@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'nav.dart';
+import 'services/theme_service.dart';
 import 'supabase/supabase_config.dart';
 
 /// Main entry point for the application
 ///
 /// This sets up:
 /// - Supabase initialization
+/// - Theme service for dynamic theme switching
 /// - go_router navigation
 /// - Material 3 theming with light/dark modes
 void main() async {
@@ -19,8 +22,17 @@ void main() async {
   } catch (e) {
     debugPrint('❌ Failed to initialize Supabase: $e');
   }
+
+  // Initialize theme service
+  final themeService = ThemeService();
+  await themeService.loadThemeMode();
   
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider.value(
+      value: themeService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -28,30 +40,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // As you extend the app, use MultiProvider to wrap the app
-    // and provide state to all widgets
-    // Example:
-    // return MultiProvider(
-    //   providers: [
-    //     ChangeNotifierProvider(create: (_) => ExampleProvider()),
-    //   ],
-    //   child: MaterialApp.router(
-    //     title: 'Dreamflow Starter',
-    //     debugShowCheckedModeBanner: false,
-    //     routerConfig: AppRouter.router,
-    //   ),
-    // );
-    return MaterialApp.router(
-      title: 'Dreamflow Starter',
-      debugShowCheckedModeBanner: false,
+    return Consumer<ThemeService>(
+      builder: (context, themeService, _) => MaterialApp.router(
+        title: 'Dreamflow Starter',
+        debugShowCheckedModeBanner: false,
 
-      // Theme configuration
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
+        // Theme configuration
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeService.themeMode,
 
-      // Router configuration
-      routerConfig: AppRouter.createRouter(),
+        // Router configuration
+        routerConfig: AppRouter.createRouter(),
+      ),
     );
   }
 }
@@ -75,19 +76,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppBarTheme.of(context).backgroundColor,
+        backgroundColor: cs.surface,
         title: Text(widget.title),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('You have pushed the button this many times:'),
+            Text(
+              'You have pushed the button this many times:',
+              style: TextStyle(color: cs.onSurface),
+            ),
             Text(
               '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: cs.onSurface,
+              ),
             ),
           ],
         ),
@@ -95,6 +103,8 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         child: const Icon(Icons.add),
       ),
     );
