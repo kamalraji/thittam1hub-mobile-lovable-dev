@@ -1,1 +1,0 @@
-export { TemplateManagementPage } from './TemplateManagementPage';
