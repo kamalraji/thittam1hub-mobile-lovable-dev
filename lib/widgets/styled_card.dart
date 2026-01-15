@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/theme.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
-/// A reusable themed card component that adapts to light/dark mode
-class StyledCard extends StatelessWidget {
+/// A styled card with theme-aware colors, animations, and compact design
+class StyledCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
@@ -10,6 +11,9 @@ class StyledCard extends StatelessWidget {
   final BorderRadius? borderRadius;
   final Color? backgroundColor;
   final double? elevation;
+  final bool enableTapAnimation;
+  final bool enableEntrance;
+  final Duration entranceDelay;
 
   const StyledCard({
     super.key,
@@ -20,35 +24,97 @@ class StyledCard extends StatelessWidget {
     this.borderRadius,
     this.backgroundColor,
     this.elevation,
+    this.enableTapAnimation = true,
+    this.enableEntrance = false,
+    this.entranceDelay = Duration.zero,
   });
+
+  @override
+  State<StyledCard> createState() => _StyledCardState();
+}
+
+class _StyledCardState extends State<StyledCard> with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    if (widget.enableTapAnimation && widget.onTap != null) {
+      _scaleController.forward();
+    }
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    if (widget.enableTapAnimation && widget.onTap != null) {
+      _scaleController.reverse();
+    }
+  }
+
+  void _onTapCancel() {
+    if (widget.enableTapAnimation) {
+      _scaleController.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final radius = borderRadius ?? BorderRadius.circular(AppRadius.md);
+    final radius = widget.borderRadius ?? BorderRadius.circular(AppRadius.md);
 
-    return Container(
-      margin: margin,
+    Widget card = Container(
+      margin: widget.margin,
       child: Material(
-        color: backgroundColor ?? cs.surfaceContainerHighest,
+        color: widget.backgroundColor ?? cs.surfaceContainerHighest,
         borderRadius: radius,
-        elevation: elevation ?? 0,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
+        elevation: widget.elevation ?? 0,
+        child: GestureDetector(
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          onTap: widget.onTap,
           child: Container(
-            padding: padding ?? AppSpacing.paddingMd,
+            padding: widget.padding ?? const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: radius,
               border: Border.all(
-                color: cs.outline.withValues(alpha: 0.6),
+                color: cs.outline.withValues(alpha: 0.4),
               ),
             ),
-            child: child,
+            child: widget.child,
           ),
         ),
       ),
     );
+
+    if (widget.enableTapAnimation && widget.onTap != null) {
+      card = ScaleTransition(scale: _scale, child: card);
+    }
+
+    if (widget.enableEntrance) {
+      card = FadeSlideTransition(
+        delay: widget.entranceDelay,
+        child: card,
+      );
+    }
+
+    return card;
   }
 }
 
@@ -76,27 +142,20 @@ class StyledGradientCard extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(AppRadius.md);
     final colors = gradientColors ?? [AppColors.primary, AppColors.accent];
 
-    return Container(
-      margin: margin,
-      child: Material(
-        borderRadius: radius,
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
+    return TapScaleWidget(
+      onTap: onTap,
+      child: Container(
+        margin: margin,
+        padding: padding ?? const EdgeInsets.all(10),
+        decoration: BoxDecoration(
           borderRadius: radius,
-          child: Container(
-            padding: padding ?? AppSpacing.paddingMd,
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              gradient: LinearGradient(
-                colors: colors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: child,
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
+        child: child,
       ),
     );
   }

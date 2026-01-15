@@ -8,3 +8,4 @@ export 'styled_text_field.dart';
 export 'styled_avatar.dart';
 export 'styled_badge.dart';
 export 'styled_bottom_sheet.dart';
+export 'styled_list_tile.dart';
