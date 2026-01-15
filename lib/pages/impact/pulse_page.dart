@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
@@ -276,6 +278,10 @@ class _PulsePageState extends State<PulsePage> {
                         onSkip: _onSkip,
                         onConnect: _onConnect,
                         onSave: _onSave,
+                        onTap: () => context.push(
+                          '/impact/profile/${_filteredProfiles[_currentIndex].userId}',
+                          extra: _filteredProfiles[_currentIndex],
+                        ),
                       ),
           ),
         ],
@@ -444,6 +450,8 @@ class ProfileCard extends StatefulWidget {
   final VoidCallback onSkip;
   final VoidCallback onConnect;
   final VoidCallback onSave;
+  final VoidCallback? onTap;
+  final bool enableHero;
 
   const ProfileCard({
     Key? key,
@@ -453,6 +461,8 @@ class ProfileCard extends StatefulWidget {
     required this.onSkip,
     required this.onConnect,
     required this.onSave,
+    this.onTap,
+    this.enableHero = true,
   }) : super(key: key);
 
   @override
@@ -532,10 +542,13 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final swipeProgress = (_dragPosition.abs() / 80).clamp(0.0, 1.0);
     final isSwipingRight = _dragPosition > 0;
+    final avatarHeroTag = HeroConfig.profileAvatarTag(widget.profile.userId);
+    final nameHeroTag = HeroConfig.profileNameTag(widget.profile.userId);
     
     return GestureDetector(
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
+      onTap: widget.onTap,
       child: Transform.translate(
         offset: Offset(_dragPosition, 0),
         child: Transform.rotate(
@@ -557,10 +570,14 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
               children: [
                 Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundImage: widget.profile.avatarUrl != null ? NetworkImage(widget.profile.avatarUrl!) : null,
-                      child: widget.profile.avatarUrl == null ? Text(widget.profile.fullName.substring(0, 1), style: TextStyle(fontSize: 24)) : null,
+                    AnimatedHero(
+                      tag: avatarHeroTag,
+                      enabled: widget.enableHero,
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundImage: widget.profile.avatarUrl != null ? NetworkImage(widget.profile.avatarUrl!) : null,
+                        child: widget.profile.avatarUrl == null ? Text(widget.profile.fullName.substring(0, 1), style: TextStyle(fontSize: 24)) : null,
+                      ),
                     ),
                     if (widget.isOnline)
                       Positioned(
@@ -583,7 +600,11 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.profile.fullName, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      TextHero(
+                        tag: nameHeroTag,
+                        enabled: widget.enableHero,
+                        child: Text(widget.profile.fullName, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      ),
                       SizedBox(height: 4),
                       Text(widget.profile.headline, style: TextStyle(color: Colors.grey[600]), overflow: TextOverflow.ellipsis),
                     ],
