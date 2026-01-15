@@ -1,21 +1,29 @@
-
-import { CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle, Info, ExternalLink } from 'lucide-react';
 import type { ChecklistItem } from '@/hooks/useEventPublish';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface EventPublishChecklistProps {
   items: ChecklistItem[];
   canPublish: boolean;
   warningCount: number;
   failCount: number;
+  onNavigateToSetting?: (tab: string) => void;
 }
 
 export function EventPublishChecklist({ 
   items, 
   canPublish, 
   warningCount, 
-  failCount 
+  failCount,
+  onNavigateToSetting,
 }: EventPublishChecklistProps) {
+  const [basicOpen, setBasicOpen] = useState(true);
+  const [eventSpaceOpen, setEventSpaceOpen] = useState(true);
+
   const getStatusIcon = (status: ChecklistItem['status']) => {
     switch (status) {
       case 'pass':
@@ -37,6 +45,48 @@ export function EventPublishChecklist({
         return 'bg-red-500/10 border-red-500/20';
     }
   };
+
+  // Group items by category
+  const basicItems = items.filter(i => i.category === 'basic' || !i.category);
+  const eventSpaceItems = items.filter(i => i.category === 'event-space');
+
+  const renderItem = (item: ChecklistItem) => (
+    <div 
+      key={item.id}
+      className={cn(
+        'flex items-start gap-3 rounded-lg border p-3',
+        getStatusBg(item.status)
+      )}
+    >
+      {getStatusIcon(item.status)}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground">
+            {item.label}
+          </span>
+          {item.required && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              Required
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {item.description}
+        </p>
+      </div>
+      {item.status !== 'pass' && item.settingsTab && onNavigateToSetting && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 h-8 gap-1"
+          onClick={() => onNavigateToSetting(item.settingsTab!)}
+        >
+          Configure
+          <ExternalLink className="h-3 w-3" />
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -71,35 +121,31 @@ export function EventPublishChecklist({
         </div>
       </div>
 
-      {/* Checklist Items */}
-      <div className="space-y-2">
-        {items.map((item) => (
-          <div 
-            key={item.id}
-            className={cn(
-              'flex items-start gap-3 rounded-lg border p-3',
-              getStatusBg(item.status)
-            )}
-          >
-            {getStatusIcon(item.status)}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">
-                  {item.label}
-                </span>
-                {item.required && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                    Required
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {item.description}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Basic Information Category */}
+      {basicItems.length > 0 && (
+        <Collapsible open={basicOpen} onOpenChange={setBasicOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/50">
+            <span className="text-sm font-medium">Basic Information</span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform", basicOpen && "rotate-180")} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 mt-2">
+            {basicItems.map(renderItem)}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      {/* Event Space Settings Category */}
+      {eventSpaceItems.length > 0 && (
+        <Collapsible open={eventSpaceOpen} onOpenChange={setEventSpaceOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted/50">
+            <span className="text-sm font-medium">Event Space Settings</span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform", eventSpaceOpen && "rotate-180")} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 mt-2">
+            {eventSpaceItems.map(renderItem)}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Info Note */}
       <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">

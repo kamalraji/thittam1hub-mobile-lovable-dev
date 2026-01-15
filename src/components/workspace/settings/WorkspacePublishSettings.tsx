@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/looseClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +6,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Rocket, Shield, Loader2, Users } from 'lucide-react';
+import { Rocket, Shield, Loader2, Users, Settings2, Layout, Ticket, Search, Accessibility } from 'lucide-react';
 import { toast } from 'sonner';
+import { DEFAULT_PUBLISH_REQUIREMENTS, type PublishRequirements } from '@/types/eventPublishReadiness';
 
 interface WorkspacePublishSettingsProps {
   workspaceId: string;
@@ -18,6 +19,13 @@ const MANAGER_ROLES = [
   { id: 'OPERATIONS_MANAGER', label: 'Operations Manager' },
   { id: 'GROWTH_MANAGER', label: 'Growth Manager' },
   { id: 'TECH_FINANCE_MANAGER', label: 'Tech & Finance Manager' },
+];
+
+const PUBLISH_REQUIREMENTS_CONFIG = [
+  { id: 'requireLandingPage', label: 'Landing Page', icon: Layout, description: 'Require landing page before publishing' },
+  { id: 'requireTicketingConfig', label: 'Ticketing', icon: Ticket, description: 'Require ticketing configuration' },
+  { id: 'requireSEO', label: 'SEO Settings', icon: Search, description: 'Require SEO meta description' },
+  { id: 'requireAccessibility', label: 'Accessibility', icon: Accessibility, description: 'Require accessibility settings' },
 ];
 
 export function WorkspacePublishSettings({ workspaceId }: WorkspacePublishSettingsProps) {
@@ -42,12 +50,26 @@ export function WorkspacePublishSettings({ workspaceId }: WorkspacePublishSettin
   const settings = (workspace?.settings as {
     requireEventPublishApproval?: boolean;
     publishApprovalRoles?: string[];
+    publishRequirements?: PublishRequirements;
   }) || {};
 
   const [requireApproval, setRequireApproval] = useState(settings.requireEventPublishApproval ?? false);
   const [approvalRoles, setApprovalRoles] = useState<string[]>(
     settings.publishApprovalRoles || ['WORKSPACE_OWNER']
   );
+  const [publishRequirements, setPublishRequirements] = useState<PublishRequirements>(
+    settings.publishRequirements || DEFAULT_PUBLISH_REQUIREMENTS
+  );
+
+  // Sync state when data loads
+  useEffect(() => {
+    if (workspace?.settings) {
+      const s = workspace.settings as typeof settings;
+      setRequireApproval(s.requireEventPublishApproval ?? false);
+      setApprovalRoles(s.publishApprovalRoles || ['WORKSPACE_OWNER']);
+      setPublishRequirements(s.publishRequirements || DEFAULT_PUBLISH_REQUIREMENTS);
+    }
+  }, [workspace?.settings]);
 
   // Update settings mutation
   const updateMutation = useMutation({
@@ -56,6 +78,7 @@ export function WorkspacePublishSettings({ workspaceId }: WorkspacePublishSettin
         ...settings,
         requireEventPublishApproval: requireApproval,
         publishApprovalRoles: approvalRoles,
+        publishRequirements,
       };
 
       const { error } = await supabase
@@ -85,9 +108,17 @@ export function WorkspacePublishSettings({ workspaceId }: WorkspacePublishSettin
     }
   };
 
+  const handleRequirementToggle = (requirementId: keyof PublishRequirements, checked: boolean) => {
+    setPublishRequirements(prev => ({
+      ...prev,
+      [requirementId]: checked,
+    }));
+  };
+
   const hasChanges = 
     requireApproval !== (settings.requireEventPublishApproval ?? false) ||
-    JSON.stringify(approvalRoles.sort()) !== JSON.stringify((settings.publishApprovalRoles || ['WORKSPACE_OWNER']).sort());
+    JSON.stringify(approvalRoles.sort()) !== JSON.stringify((settings.publishApprovalRoles || ['WORKSPACE_OWNER']).sort()) ||
+    JSON.stringify(publishRequirements) !== JSON.stringify(settings.publishRequirements || DEFAULT_PUBLISH_REQUIREMENTS);
 
   // Only show for ROOT workspaces
   if (workspace && workspace.workspace_type !== 'ROOT') {
@@ -166,6 +197,41 @@ export function WorkspacePublishSettings({ workspaceId }: WorkspacePublishSettin
             </div>
           </div>
         )}
+
+        {/* Publish Requirements Configuration */}
+        <div className="space-y-3 pt-4 border-t border-border">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
+            <Label className="font-medium">Publish Requirements</Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Select which Event Space settings must be configured before publishing
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            {PUBLISH_REQUIREMENTS_CONFIG.map((req) => {
+              const Icon = req.icon;
+              return (
+                <div key={req.id} className="flex items-start space-x-2 p-2 rounded-lg border border-border bg-muted/30">
+                  <Checkbox
+                    id={req.id}
+                    checked={publishRequirements[req.id as keyof PublishRequirements]}
+                    onCheckedChange={(checked) => handleRequirementToggle(req.id as keyof PublishRequirements, checked as boolean)}
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor={req.id}
+                      className="flex items-center gap-1.5 text-sm font-medium leading-none cursor-pointer"
+                    >
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      {req.label}
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">{req.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Save Button */}
         {hasChanges && (
