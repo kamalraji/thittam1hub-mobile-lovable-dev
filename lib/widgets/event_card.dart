@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
@@ -9,6 +10,7 @@ class EventCard extends StatelessWidget {
   final bool saved;
   final VoidCallback onTap;
   final VoidCallback onToggleSave;
+  final bool enableHero;
 
   const EventCard({
     super.key,
@@ -17,6 +19,7 @@ class EventCard extends StatelessWidget {
     required this.saved,
     required this.onTap,
     required this.onToggleSave,
+    this.enableHero = true,
   });
 
   String _formatDateRange(DateTime start, DateTime end) {
@@ -72,6 +75,8 @@ class EventCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final (icon, clr, label) = _modeBadge(event.mode);
     final priceText = _priceLabel(tiers);
+    final bannerHeroTag = HeroConfig.eventBannerTag(event.id);
+    final titleHeroTag = HeroConfig.eventTitleTag(event.id);
 
     return TapScaleWidget(
       onTap: onTap,
@@ -85,14 +90,18 @@ class EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image section - compact aspect ratio
+            // Image section with Hero animation
             Stack(
               children: [
-                AspectRatio(
-                  aspectRatio: 2.1,
-                  child: Image(
-                    image: _imageProvider(event.branding.bannerUrl),
-                    fit: BoxFit.cover,
+                AnimatedHero(
+                  tag: bannerHeroTag,
+                  enabled: enableHero,
+                  child: AspectRatio(
+                    aspectRatio: 2.1,
+                    child: Image(
+                      image: _imageProvider(event.branding.bannerUrl),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 // Save button
@@ -148,13 +157,17 @@ class EventCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    event.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface,
+                  TextHero(
+                    tag: titleHeroTag,
+                    enabled: enableHero,
+                    child: Text(
+                      event.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),

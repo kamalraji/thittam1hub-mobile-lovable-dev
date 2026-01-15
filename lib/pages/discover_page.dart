@@ -384,7 +384,7 @@ class _EventsTab extends StatelessWidget {
                     event: e,
                     tiers: tiersByEvent[e.id] ?? const [],
                     saved: savedEventIds.contains(e.id),
-                    onTap: () => context.push('/events/${e.id}'),
+                    onTap: () => context.push('/events/${e.id}', extra: e),
                     onToggleSave: () => onToggleSave(e.id),
                   ),
                 );

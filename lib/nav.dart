@@ -20,6 +20,7 @@ import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 /// Custom fade-slide page transition
 CustomTransitionPage<T> _buildPageTransition<T>(Widget child, GoRouterState state) {
@@ -41,6 +42,37 @@ CustomTransitionPage<T> _buildPageTransition<T>(Widget child, GoRouterState stat
         opacity: fadeAnimation,
         child: SlideTransition(
           position: slideAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Hero-enabled page transition for event detail navigation
+CustomTransitionPage<T> _buildHeroPageTransition<T>(Widget child, GoRouterState state) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: HeroConfig.duration,
+    reverseTransitionDuration: HeroConfig.reverseDuration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // Fade for non-hero content
+      final fadeAnimation = CurvedAnimation(
+        parent: animation,
+        curve: HeroConfig.curve,
+      );
+      
+      // Subtle scale effect for background
+      final scaleAnimation = Tween<double>(
+        begin: 0.97,
+        end: 1.0,
+      ).animate(fadeAnimation);
+      
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: ScaleTransition(
+          scale: scaleAnimation,
           child: child,
         ),
       );
@@ -134,7 +166,11 @@ class AppRouter {
               path: '/events/:id',
               pageBuilder: (context, state) {
                 final id = state.pathParameters['id']!;
-                return _buildPageTransition(EventDetailPage(eventId: id), state);
+                final event = state.extra as Event?;
+                return _buildHeroPageTransition(
+                  EventDetailPage(eventId: id, event: event),
+                  state,
+                );
               },
             ),
             GoRoute(

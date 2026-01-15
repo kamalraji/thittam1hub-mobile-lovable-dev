@@ -2,6 +2,40 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Theme-aware glassmorphism configuration
+class GlassConfig {
+  // Light mode values
+  static const double lightBlur = 20.0;
+  static const double lightOpacity = 0.85;
+  static const Color lightSurface = Colors.white;
+  static const Color lightBorder = Color(0x0D000000); // 5% black
+  
+  // Dark mode values (enhanced for contrast)
+  static const double darkBlur = 25.0;        // More blur for depth
+  static const double darkOpacity = 0.75;     // Less opacity = more translucent
+  static const Color darkSurface = Color(0xFF1A1B2E);
+  static const Color darkBorder = Color(0x1AFFFFFF); // 10% white
+  static const Color darkGlow = Color(0x0D8B5CF6);   // Subtle primary glow
+  
+  /// Get config based on theme
+  static ({double blur, double opacity, Color surface, Color border}) forTheme(bool isDark) {
+    if (isDark) {
+      return (
+        blur: darkBlur,
+        opacity: darkOpacity,
+        surface: darkSurface,
+        border: darkBorder,
+      );
+    }
+    return (
+      blur: lightBlur,
+      opacity: lightOpacity,
+      surface: lightSurface,
+      border: lightBorder,
+    );
+  }
+}
+
 /// Shows a glassmorphism bottom sheet with blur effect
 Future<T?> showGlassBottomSheet<T>({
   required BuildContext context,
@@ -38,8 +72,8 @@ class GlassBottomSheet extends StatelessWidget {
   final double? maxHeight;
   final List<Widget>? actions;
   final EdgeInsetsGeometry? padding;
-  final double blurAmount;
-  final double opacity;
+  final double? blurAmount;
+  final double? opacity;
   final Color? borderColor;
 
   const GlassBottomSheet({
@@ -50,43 +84,62 @@ class GlassBottomSheet extends StatelessWidget {
     this.maxHeight,
     this.actions,
     this.padding,
-    this.blurAmount = 20,
-    this.opacity = 0.85,
+    this.blurAmount,
+    this.opacity,
     this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark
-        ? const Color(0xFF1A1B2E).withValues(alpha: opacity)
-        : Colors.white.withValues(alpha: opacity);
-    final border = borderColor ?? (isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.05));
+    final config = GlassConfig.forTheme(isDark);
+    
+    // Use configured values with overrides
+    final effectiveBlur = blurAmount ?? config.blur;
+    final effectiveOpacity = opacity ?? config.opacity;
+    final effectiveSurface = config.surface.withValues(alpha: effectiveOpacity);
+    final effectiveBorder = borderColor ?? config.border;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+        filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
         child: Container(
           constraints: BoxConstraints(
             maxHeight: maxHeight ?? MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
-            color: surfaceColor,
+            // Dark mode: use gradient for depth effect
+            color: isDark ? null : effectiveSurface,
+            gradient: isDark ? LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                config.surface.withValues(alpha: effectiveOpacity + 0.05),
+                config.surface.withValues(alpha: effectiveOpacity),
+              ],
+            ) : null,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
-              top: BorderSide(color: border, width: 1),
-              left: BorderSide(color: border, width: 0.5),
-              right: BorderSide(color: border, width: 0.5),
+              top: BorderSide(color: effectiveBorder, width: 1),
+              left: BorderSide(color: effectiveBorder, width: 0.5),
+              right: BorderSide(color: effectiveBorder, width: 0.5),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
+                color: isDark 
+                    ? Colors.black.withValues(alpha: 0.4) 
+                    : Colors.black.withValues(alpha: 0.15),
+                blurRadius: isDark ? 30 : 20,
                 offset: const Offset(0, -5),
               ),
+              // Dark mode: subtle glow effect
+              if (isDark)
+                BoxShadow(
+                  color: GlassConfig.darkGlow,
+                  blurRadius: 40,
+                  offset: const Offset(0, -10),
+                ),
             ],
           ),
           child: SafeArea(
@@ -109,6 +162,40 @@ class GlassBottomSheet extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildDragHandle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(top: 12, bottom: 8),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 12, 12),
+      child: Row(
+        children: [
+          if (title != null)
+            Expanded(
+              child: Text(
+                title!,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          if (actions != null) ...actions!,
+        ],
+      ),
+    );
+  }
+}
 
   Widget _buildDragHandle(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -171,12 +258,23 @@ class _GlassActionButtonState extends State<GlassActionButton> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Enhanced colors for dark mode
     final color = widget.isDestructive
         ? Colors.red
         : widget.color ?? Theme.of(context).colorScheme.primary;
+    
     final textColor = widget.isDestructive
         ? Colors.red
-        : (isDark ? Colors.white : Colors.black87);
+        : (isDark ? Colors.white.withValues(alpha: 0.95) : Colors.black87);
+    
+    // Brighter press state for dark mode
+    final pressedColor = isDark 
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.05);
+    
+    // Enhanced icon background for dark mode
+    final iconBgOpacity = isDark ? 0.2 : 0.15;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -190,9 +288,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
         duration: const Duration(milliseconds: 100),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: _isPressed
-              ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05))
-              : Colors.transparent,
+          color: _isPressed ? pressedColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -201,7 +297,7 @@ class _GlassActionButtonState extends State<GlassActionButton> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
+                color: color.withValues(alpha: iconBgOpacity),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(widget.icon, color: color, size: 20),
@@ -321,6 +417,67 @@ class GlassProfileHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Glassmorphism card with theme-aware styling
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double? blurAmount;
+  final double? opacity;
+  final BorderRadius? borderRadius;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.blurAmount,
+    this.opacity,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final config = GlassConfig.forTheme(isDark);
+    final effectiveBlur = blurAmount ?? config.blur * 0.5;
+    final effectiveOpacity = opacity ?? config.opacity * 0.8;
+    final effectiveRadius = borderRadius ?? BorderRadius.circular(16);
+
+    return ClipRRect(
+      borderRadius: effectiveRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: effectiveBlur,
+          sigmaY: effectiveBlur,
+        ),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? null : config.surface.withValues(alpha: effectiveOpacity),
+            gradient: isDark ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                config.surface.withValues(alpha: effectiveOpacity + 0.05),
+                config.surface.withValues(alpha: effectiveOpacity - 0.05),
+              ],
+            ) : null,
+            borderRadius: effectiveRadius,
+            border: Border.all(color: config.border),
+            boxShadow: isDark ? [
+              BoxShadow(
+                color: GlassConfig.darkGlow.withValues(alpha: 0.1),
+                blurRadius: 20,
+                spreadRadius: -5,
+              ),
+            ] : null,
+          ),
+          child: child,
+        ),
       ),
     );
   }
