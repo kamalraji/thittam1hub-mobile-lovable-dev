@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class SparkPage extends StatefulWidget {
   const SparkPage({Key? key}) : super(key: key);
@@ -124,7 +125,12 @@ class _SparkPageState extends State<SparkPage> {
           ),
           Expanded(
             child: _isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? ListView(
+                    children: List.generate(4, (i) => FadeSlideTransition(
+                      delay: staggerDelay(i),
+                      child: const SparkPostSkeleton(),
+                    )),
+                  )
                 : _filteredPosts.isEmpty
                     ? Center(
                         child: Column(
@@ -141,40 +147,45 @@ class _SparkPageState extends State<SparkPage> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        itemCount: _filteredPosts.length,
-                        itemBuilder: (context, index) {
-                          final post = _filteredPosts[index];
-                          return SparkPostCard(
-                            post: post,
-                            hasSparked: _sparked.contains(post.id),
-                            onSpark: () async {
-                              final created = await _sparkService.toggleSparkOnce(post.id);
-                              if (!mounted) return;
-                              if (created) {
-                                setState(() {
-                                  _sparked.add(post.id);
-                                  // Optimistic UI update
-                                  _filteredPosts[index] = SparkPost(
-                                    id: post.id,
-                                    authorId: post.authorId,
-                                    authorName: post.authorName,
-                                    authorAvatar: post.authorAvatar,
-                                    type: post.type,
-                                    title: post.title,
-                                    content: post.content,
-                                    tags: post.tags,
-                                    sparkCount: post.sparkCount + 1,
-                                    commentCount: post.commentCount,
-                                    createdAt: post.createdAt,
-                                  );
-                                });
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You already sparked this post')));
-                              }
-                            },
-                          );
-                        },
+                    : BrandedRefreshIndicator(
+                        onRefresh: () => _loadPosts(_selectedFilter),
+                        child: ListView.builder(
+                          itemCount: _filteredPosts.length,
+                          itemBuilder: (context, index) {
+                            final post = _filteredPosts[index];
+                            return FadeSlideTransition(
+                              delay: staggerDelay(index),
+                              child: SparkPostCard(
+                                post: post,
+                                hasSparked: _sparked.contains(post.id),
+                                onSpark: () async {
+                                  final created = await _sparkService.toggleSparkOnce(post.id);
+                                  if (!mounted) return;
+                                  if (created) {
+                                    setState(() {
+                                      _sparked.add(post.id);
+                                      _filteredPosts[index] = SparkPost(
+                                        id: post.id,
+                                        authorId: post.authorId,
+                                        authorName: post.authorName,
+                                        authorAvatar: post.authorAvatar,
+                                        type: post.type,
+                                        title: post.title,
+                                        content: post.content,
+                                        tags: post.tags,
+                                        sparkCount: post.sparkCount + 1,
+                                        commentCount: post.commentCount,
+                                        createdAt: post.createdAt,
+                                      );
+                                    });
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You already sparked this post')));
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
                       ),
           ),
         ],

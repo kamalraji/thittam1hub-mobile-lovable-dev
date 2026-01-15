@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/supabase/circle_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class CirclesPage extends StatefulWidget {
   const CirclesPage({Key? key}) : super(key: key);
@@ -113,7 +114,7 @@ class _CirclesPageState extends State<CirclesPage> {
             future: _autoMatchedCirclesFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Column(children: List.generate(3, (_) => const CircleCardSkeleton()));
               } else if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {

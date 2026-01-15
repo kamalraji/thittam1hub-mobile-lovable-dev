@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Animation configuration constants for consistent timing
 class AnimConfig {
@@ -15,6 +17,122 @@ class AnimConfig {
 Duration staggerDelay(int index, {int maxItems = 10}) {
   return Duration(milliseconds: AnimConfig.stagger.inMilliseconds * index.clamp(0, maxItems));
 }
+
+// =============================================================================
+// BRANDED REFRESH INDICATOR
+// =============================================================================
+
+/// Custom refresh indicator with branded loading animation
+class BrandedRefreshIndicator extends StatelessWidget {
+  final Widget child;
+  final Future<void> Function() onRefresh;
+  final Color? color;
+  final Color? backgroundColor;
+
+  const BrandedRefreshIndicator({
+    super.key,
+    required this.child,
+    required this.onRefresh,
+    this.color,
+    this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = color ?? Theme.of(context).colorScheme.primary;
+    final bgColor = backgroundColor ?? (isDark ? const Color(0xFF1E1E2E) : Colors.white);
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        HapticFeedback.mediumImpact();
+        await onRefresh();
+      },
+      color: primaryColor,
+      backgroundColor: bgColor,
+      strokeWidth: 3,
+      displacement: 60,
+      child: child,
+    );
+  }
+}
+
+// =============================================================================
+// LOADING DOTS ANIMATION
+// =============================================================================
+
+/// Animated loading dots (three dots that bounce sequentially)
+class LoadingDots extends StatefulWidget {
+  final Color? color;
+  final double size;
+  final Duration duration;
+
+  const LoadingDots({
+    super.key,
+    this.color,
+    this.size = 8,
+    this.duration = const Duration(milliseconds: 1200),
+  });
+
+  @override
+  State<LoadingDots> createState() => _LoadingDotsState();
+}
+
+class _LoadingDotsState extends State<LoadingDots>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dotColor = widget.color ?? Theme.of(context).colorScheme.primary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final delay = index * 0.2;
+            final value = ((_controller.value + delay) % 1.0);
+            final bounce = value < 0.5 
+                ? Curves.easeOut.transform(value * 2)
+                : Curves.easeIn.transform((1 - value) * 2);
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: widget.size * 0.3),
+              child: Transform.translate(
+                offset: Offset(0, -bounce * widget.size),
+                child: Container(
+                  width: widget.size,
+                  height: widget.size,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }),
+    );
+  }
+}
+
+// =============================================================================
+// FADE SLIDE TRANSITION
+// =============================================================================
 
 /// A widget that fades and slides in its child
 class FadeSlideTransition extends StatefulWidget {
@@ -80,6 +198,10 @@ class _FadeSlideTransitionState extends State<FadeSlideTransition>
     );
   }
 }
+
+// =============================================================================
+// TAP SCALE WIDGET
+// =============================================================================
 
 /// A widget that scales down on tap for interactive feedback
 class TapScaleWidget extends StatefulWidget {
@@ -155,6 +277,10 @@ class _TapScaleWidgetState extends State<TapScaleWidget>
   }
 }
 
+// =============================================================================
+// SHIMMER LOADING
+// =============================================================================
+
 /// Shimmer loading effect placeholder
 class ShimmerLoading extends StatefulWidget {
   final double width;
@@ -226,6 +352,499 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   }
 }
 
+// =============================================================================
+// SKELETON WIDGETS
+// =============================================================================
+
+/// Event card skeleton placeholder
+class EventCardSkeleton extends StatelessWidget {
+  const EventCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner
+          ShimmerLoading(
+            width: double.infinity,
+            height: 120,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          const SizedBox(height: 12),
+          // Title
+          ShimmerLoading(
+            width: 200,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 8),
+          // Subtitle
+          ShimmerLoading(
+            width: 140,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Tags row
+          Row(
+            children: [
+              ShimmerLoading(
+                width: 60,
+                height: 24,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(width: 8),
+              ShimmerLoading(
+                width: 80,
+                height: 24,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Profile card skeleton
+class ProfileCardSkeleton extends StatelessWidget {
+  const ProfileCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Avatar
+          const ShimmerLoading(
+            width: 80,
+            height: 80,
+            borderRadius: BorderRadius.all(Radius.circular(40)),
+          ),
+          const SizedBox(height: 12),
+          // Name
+          ShimmerLoading(
+            width: 120,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 8),
+          // Subtitle
+          ShimmerLoading(
+            width: 180,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 16),
+          // Stats row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(3, (i) => Column(
+              children: [
+                ShimmerLoading(
+                  width: 40,
+                  height: 24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                const SizedBox(height: 4),
+                ShimmerLoading(
+                  width: 50,
+                  height: 12,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Circle/Space card skeleton  
+class CircleCardSkeleton extends StatelessWidget {
+  const CircleCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          const ShimmerLoading(
+            width: 40,
+            height: 40,
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          const SizedBox(width: 16),
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShimmerLoading(
+                  width: 140,
+                  height: 16,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                const SizedBox(height: 6),
+                ShimmerLoading(
+                  width: 200,
+                  height: 12,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            ),
+          ),
+          // Button
+          ShimmerLoading(
+            width: 70,
+            height: 32,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Spark post skeleton
+class SparkPostSkeleton extends StatelessWidget {
+  const SparkPostSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Type badge
+          ShimmerLoading(
+            width: 80,
+            height: 20,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Title
+          ShimmerLoading(
+            width: double.infinity,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 8),
+          // Content lines
+          ShimmerLoading(
+            width: double.infinity,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 4),
+          ShimmerLoading(
+            width: 250,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Tags
+          Row(
+            children: [
+              ShimmerLoading(
+                width: 50,
+                height: 24,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(width: 8),
+              ShimmerLoading(
+                width: 70,
+                height: 24,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Footer
+          Row(
+            children: [
+              ShimmerLoading(
+                width: 60,
+                height: 16,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const SizedBox(width: 16),
+              ShimmerLoading(
+                width: 80,
+                height: 16,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Space card skeleton
+class SpaceCardSkeleton extends StatelessWidget {
+  const SpaceCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Topic
+          ShimmerLoading(
+            width: 200,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Tags
+          Row(
+            children: List.generate(3, (i) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ShimmerLoading(
+                width: 60,
+                height: 24,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            )),
+          ),
+          const SizedBox(height: 16),
+          // Footer with avatars
+          Row(
+            children: [
+              // Avatars
+              Row(
+                children: List.generate(3, (i) => Padding(
+                  padding: EdgeInsets.only(left: i > 0 ? 0 : 0),
+                  child: const ShimmerLoading(
+                    width: 30,
+                    height: 30,
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                  ),
+                )),
+              ),
+              const SizedBox(width: 12),
+              ShimmerLoading(
+                width: 80,
+                height: 14,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const Spacer(),
+              ShimmerLoading(
+                width: 60,
+                height: 32,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Vibe game card skeleton
+class VibeGameSkeleton extends StatelessWidget {
+  const VibeGameSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Type badge
+          ShimmerLoading(
+            width: 100,
+            height: 20,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Question
+          ShimmerLoading(
+            width: double.infinity,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 16),
+          // Options
+          ...List.generate(4, (i) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ShimmerLoading(
+              width: double.infinity,
+              height: 40,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          )),
+          const SizedBox(height: 8),
+          // Footer
+          ShimmerLoading(
+            width: 150,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Channel/DM tile skeleton
+class ChannelTileSkeleton extends StatelessWidget {
+  const ChannelTileSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          const ShimmerLoading(
+            width: 36,
+            height: 36,
+            borderRadius: BorderRadius.all(Radius.circular(18)),
+          ),
+          const SizedBox(width: 12),
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ShimmerLoading(
+                      width: 100,
+                      height: 14,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const Spacer(),
+                    ShimmerLoading(
+                      width: 50,
+                      height: 12,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ShimmerLoading(
+                  width: 180,
+                  height: 12,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Generic list skeleton builder
+class SkeletonList extends StatelessWidget {
+  final int itemCount;
+  final Widget Function(BuildContext, int) itemBuilder;
+  final EdgeInsetsGeometry? padding;
+  final Widget? separator;
+
+  const SkeletonList({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.padding,
+    this.separator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: padding,
+      itemCount: itemCount,
+      separatorBuilder: (_, __) => separator ?? const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        return FadeSlideTransition(
+          delay: staggerDelay(index),
+          child: itemBuilder(context, index),
+        );
+      },
+    );
+  }
+}
+
+// =============================================================================
+// STAGGERED LIST
+// =============================================================================
+
 /// Staggered list builder with fade animations
 class StaggeredList extends StatelessWidget {
   final int itemCount;
@@ -262,6 +881,10 @@ class StaggeredList extends StatelessWidget {
     );
   }
 }
+
+// =============================================================================
+// ANIMATED COUNT
+// =============================================================================
 
 /// Animated count display
 class AnimatedCount extends StatefulWidget {
@@ -324,6 +947,10 @@ class _AnimatedCountState extends State<AnimatedCount>
     );
   }
 }
+
+// =============================================================================
+// BOUNCE ANIMATION
+// =============================================================================
 
 /// Bounce animation wrapper for selection states
 class BounceAnimation extends StatefulWidget {

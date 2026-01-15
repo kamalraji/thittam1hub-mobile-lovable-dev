@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/space.dart';
 import 'package:thittam1hub/pages/impact/live_now_indicator.dart';
 import 'package:thittam1hub/supabase/space_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class SpacesPage extends StatefulWidget {
   const SpacesPage({Key? key}) : super(key: key);
@@ -69,7 +70,7 @@ class _SpacesPageState extends State<SpacesPage> {
         stream: _spacesStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(children: List.generate(4, (_) => const SpaceCardSkeleton()));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
