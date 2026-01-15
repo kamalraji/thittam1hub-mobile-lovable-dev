@@ -333,4 +333,29 @@ class ImpactService {
       return [];
     }
   }
+
+  /// Get a profile by ID (alias for getImpactProfileByUserId)
+  Future<ImpactProfile?> getProfileById(String userId) async {
+    return getImpactProfileByUserId(userId);
+  }
+
+  /// Get connection status between current user and target user
+  Future<String?> getConnectionStatus(String targetUserId) async {
+    try {
+      final myId = _supabase.auth.currentUser?.id;
+      if (myId == null) return null;
+
+      // Check if there's a connection record in either direction
+      final response = await _supabase
+          .from('connections')
+          .select('status')
+          .or('and(requester_id.eq.$myId,receiver_id.eq.$targetUserId),and(requester_id.eq.$targetUserId,receiver_id.eq.$myId)')
+          .maybeSingle();
+
+      return response?['status'] as String?;
+    } catch (e) {
+      debugPrint('Error fetching connection status: $e');
+      return null;
+    }
+  }
 }

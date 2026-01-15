@@ -197,40 +197,6 @@ class GlassBottomSheet extends StatelessWidget {
   }
 }
 
-  Widget _buildDragHandle(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.only(top: 12, bottom: 8),
-      width: 40,
-      height: 4,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 12, 12),
-      child: Row(
-        children: [
-          if (title != null)
-            Expanded(
-              child: Text(
-                title!,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          if (actions != null) ...actions!,
-        ],
-      ),
-    );
-  }
-}
-
 /// Glass action button with hover/tap feedback
 class GlassActionButton extends StatefulWidget {
   final IconData icon;
