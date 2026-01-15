@@ -55,7 +55,7 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
         
         // Create user profile with QR code
         final qrCode = const Uuid().v4();
-        await SupabaseConfig.client.from('users').insert({
+        await SupabaseConfig.client.from('user_profiles').insert({
           'id': response.user!.id,
           'email': email,
           'full_name': fullName,
@@ -95,7 +95,7 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
       if (user == null) throw Exception('No user logged in');
       
       // Delete user profile first (cascades to registrations)
-      await SupabaseConfig.client.from('users').delete().eq('id', user.id);
+      await SupabaseConfig.client.from('user_profiles').delete().eq('id', user.id);
       
       // Delete auth user
       await SupabaseConfig.client.rpc('delete_user');
@@ -124,7 +124,7 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
       final user = currentUser;
       if (user != null) {
         await SupabaseConfig.client
-            .from('users')
+            .from('user_profiles')
             .update({'email': email})
             .eq('id', user.id);
       }
@@ -174,7 +174,7 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
   Future<UserProfile?> getUserProfile(String userId) async {
     try {
       final data = await SupabaseConfig.client
-          .from('users')
+          .from('user_profiles')
           .select()
           .eq('id', userId)
           .maybeSingle();
@@ -191,7 +191,7 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
   Future<void> updateUserProfile(UserProfile profile) async {
     try {
       await SupabaseConfig.client
-          .from('users')
+          .from('user_profiles')
           .update(profile.toJson())
           .eq('id', profile.id);
       debugPrint('✅ User profile updated');
