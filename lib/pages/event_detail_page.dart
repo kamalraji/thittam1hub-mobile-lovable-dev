@@ -3,10 +3,17 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/services/event_service.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
-  const EventDetailPage({super.key, required this.eventId});
+  final Event? event; // Pass event for immediate hero display
+  
+  const EventDetailPage({
+    super.key,
+    required this.eventId,
+    this.event,
+  });
 
   @override
   State<EventDetailPage> createState() => _EventDetailPageState();
@@ -22,11 +29,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void initState() {
     super.initState();
+    // Use passed event for immediate display (enables smooth hero)
+    if (widget.event != null) {
+      _event = widget.event;
+      _isLoading = false;
+    }
     _loadEvent();
   }
 
   Future<void> _loadEvent() async {
-    setState(() => _isLoading = true);
+    // Only show loading if we don't have an event yet
+    if (_event == null) {
+      setState(() => _isLoading = true);
+    }
     try {
       final event = await _eventService.getEventById(widget.eventId);
       final tiers = event != null ? await _eventService.getTicketTiers(widget.eventId) : <TicketTier>[];
@@ -151,9 +166,24 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsetsDirectional.only(start: 56, bottom: 16, end: 16),
-              title: Text(e.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: TextHero(
+                tag: HeroConfig.eventTitleTag(widget.eventId),
+                child: Text(
+                  e.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
               background: Stack(fit: StackFit.expand, children: [
-                _BannerImage(urlOrAsset: e.branding.bannerUrl),
+                AnimatedHero(
+                  tag: HeroConfig.eventBannerTag(widget.eventId),
+                  child: _BannerImage(urlOrAsset: e.branding.bannerUrl),
+                ),
                 Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.black.withValues(alpha: 0.1), Colors.black.withValues(alpha: 0.5), Colors.black.withValues(alpha: 0.7)]))),
                 Positioned(
                   left: 16,
