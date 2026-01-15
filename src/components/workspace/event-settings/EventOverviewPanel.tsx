@@ -4,11 +4,14 @@ import { supabase } from '@/integrations/supabase/looseClient';
 import { EventStatusActions } from '@/components/events/publish/EventStatusActions';
 import { WorkspacePublishSettings } from '@/components/workspace/settings/WorkspacePublishSettings';
 import { EventQuickStats } from './EventQuickStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Globe, Lock, Loader2, ExternalLink } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Calendar, MapPin, Globe, Lock, Loader2, ExternalLink, CheckCircle, AlertTriangle, XCircle, ClipboardCheck } from 'lucide-react';
 import { format, differenceInDays, isPast, isFuture } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { useEventPublish } from '@/hooks/useEventPublish';
+import { cn } from '@/lib/utils';
 
 interface EventOverviewPanelProps {
   eventId: string;
@@ -34,6 +37,8 @@ export const EventOverviewPanel: React.FC<EventOverviewPanelProps> = ({
       return data;
     },
   });
+
+  const { checklist } = useEventPublish(eventId);
 
   if (isLoading) {
     return (
@@ -79,6 +84,7 @@ export const EventOverviewPanel: React.FC<EventOverviewPanelProps> = ({
   };
 
   const timeStatus = getEventTimeStatus();
+  const settingsReadiness = checklist.settingsReadiness;
 
   return (
     <div className="space-y-6">
@@ -138,6 +144,89 @@ export const EventOverviewPanel: React.FC<EventOverviewPanelProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Publish Readiness Card - Only for DRAFT events */}
+      {event.status === 'DRAFT' && settingsReadiness && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5 text-primary" />
+                <CardTitle className="text-base">Publish Readiness</CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                {checklist.canPublish ? (
+                  <Badge className="bg-green-500/20 text-green-700 dark:text-green-400">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Ready
+                  </Badge>
+                ) : (
+                  <Badge className="bg-red-500/20 text-red-700 dark:text-red-400">
+                    <XCircle className="h-3 w-3 mr-1" />
+                    {checklist.failCount} Blocking
+                  </Badge>
+                )}
+                {checklist.warningCount > 0 && (
+                  <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    {checklist.warningCount} Warning{checklist.warningCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <CardDescription>
+              Complete required settings before publishing your event
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Overall Progress */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Completion</span>
+                <span className="font-medium">{checklist.completionPercentage || 0}%</span>
+              </div>
+              <Progress value={checklist.completionPercentage || 0} className="h-2" />
+            </div>
+
+            {/* Quick Status */}
+            <div className="grid grid-cols-2 gap-2">
+              {checklist.items.filter(i => i.category === 'event-space').slice(0, 4).map((item) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    'flex items-center gap-2 p-2 rounded-lg text-sm',
+                    item.status === 'pass' && 'bg-green-500/10',
+                    item.status === 'warning' && 'bg-yellow-500/10',
+                    item.status === 'fail' && 'bg-red-500/10',
+                  )}
+                >
+                  {item.status === 'pass' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                  {item.status === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
+                  {item.status === 'fail' && <XCircle className="h-4 w-4 text-red-500" />}
+                  <span className="truncate">{item.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Blocking Items */}
+            {checklist.failCount > 0 && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-sm font-medium text-red-700 dark:text-red-400 mb-2">
+                  Items blocking publish:
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  {checklist.items.filter(i => i.status === 'fail').map((item) => (
+                    <li key={item.id} className="flex items-center gap-2">
+                      <XCircle className="h-3 w-3 text-red-500" />
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Event Quick Stats */}
       <EventQuickStats eventId={eventId} />

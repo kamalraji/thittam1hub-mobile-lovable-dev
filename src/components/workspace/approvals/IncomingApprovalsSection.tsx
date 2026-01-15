@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { Workspace, WorkspaceType } from '@/types';
 import { useWorkspaceApprovals } from '@/hooks/useWorkspaceApprovals';
+import { useEventPublishApprovals } from '@/hooks/useEventPublishApprovals';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApprovalsSummaryCards } from './ApprovalsSummaryCards';
 import { BudgetApprovalList } from './BudgetApprovalList';
 import { ResourceApprovalList } from './ResourceApprovalList';
 import { AccessApprovalList } from './AccessApprovalList';
 import { UnifiedApprovalsList } from './UnifiedApprovalsList';
-import { DollarSign, Package, UserPlus, LayoutList } from 'lucide-react';
+import { EventPublishApprovalList } from './EventPublishApprovalList';
+import { DollarSign, Package, UserPlus, LayoutList, Rocket } from 'lucide-react';
 
 interface IncomingApprovalsSectionProps {
   workspace: Workspace;
 }
 
 export function IncomingApprovalsSection({ workspace }: IncomingApprovalsSectionProps) {
-  const [activeTab, setActiveTab] = useState<'all' | 'budget' | 'resources' | 'access'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'budget' | 'resources' | 'access' | 'event-publish'>('all');
 
   const {
     budgetRequests,
@@ -25,8 +27,16 @@ export function IncomingApprovalsSection({ workspace }: IncomingApprovalsSection
     isLoading,
   } = useWorkspaceApprovals(workspace.id, workspace.workspaceType);
 
+  const {
+    totalPending: eventPublishPending,
+  } = useEventPublishApprovals(workspace.id);
+
   // Teams can't approve budget/resource requests
   const isTeam = workspace.workspaceType === WorkspaceType.TEAM;
+  // Only ROOT workspaces can approve event publish requests
+  const isRoot = workspace.workspaceType === WorkspaceType.ROOT;
+
+  const totalAllPending = totalPending + (isRoot ? eventPublishPending : 0);
 
   return (
     <div className="space-y-6">
@@ -35,17 +45,18 @@ export function IncomingApprovalsSection({ workspace }: IncomingApprovalsSection
         budgetCount={budgetRequests.length}
         resourceCount={resourceRequests.length}
         accessCount={accessRequests.length}
+        eventPublishCount={isRoot ? eventPublishPending : undefined}
       />
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${isRoot ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="all" className="flex items-center gap-2">
             <LayoutList className="h-4 w-4" />
             <span className="hidden sm:inline">All</span>
-            {totalPending > 0 && (
+            {totalAllPending > 0 && (
               <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
-                {totalPending}
+                {totalAllPending}
               </span>
             )}
           </TabsTrigger>
@@ -76,6 +87,17 @@ export function IncomingApprovalsSection({ workspace }: IncomingApprovalsSection
               </span>
             )}
           </TabsTrigger>
+          {isRoot && (
+            <TabsTrigger value="event-publish" className="flex items-center gap-2">
+              <Rocket className="h-4 w-4" />
+              <span className="hidden sm:inline">Publish</span>
+              {eventPublishPending > 0 && (
+                <span className="text-xs bg-purple-500/20 text-purple-600 px-1.5 py-0.5 rounded-full">
+                  {eventPublishPending}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <div className="mt-6">
@@ -113,6 +135,14 @@ export function IncomingApprovalsSection({ workspace }: IncomingApprovalsSection
               workspaceId={workspace.id}
             />
           </TabsContent>
+
+          {isRoot && (
+            <TabsContent value="event-publish" className="m-0">
+              <EventPublishApprovalList
+                workspaceId={workspace.id}
+              />
+            </TabsContent>
+          )}
         </div>
       </Tabs>
     </div>
