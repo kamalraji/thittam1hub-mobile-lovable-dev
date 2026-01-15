@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class VibePage extends StatefulWidget {
   const VibePage({Key? key}) : super(key: key);
@@ -64,7 +65,7 @@ class _VibePageState extends State<VibePage> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListView(children: List.generate(2, (_) => const VibeGameSkeleton()))
           : ListView(
               children: [
                 _buildSectionTitle('🔥 Live Now'),
