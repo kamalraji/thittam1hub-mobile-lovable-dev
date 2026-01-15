@@ -228,13 +228,13 @@ export const EventOverviewPanel: React.FC<EventOverviewPanelProps> = ({
         </Card>
       )}
 
-      {/* Event Quick Stats */}
-      <EventQuickStats eventId={eventId} />
-
       {/* Workspace Publish Settings - ROOT only */}
       {isRootOwner && (
         <WorkspacePublishSettings workspaceId={workspaceId} />
       )}
+
+      {/* Event Quick Stats */}
+      <EventQuickStats eventId={eventId} />
     </div>
   );
 };
