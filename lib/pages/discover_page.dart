@@ -4,6 +4,7 @@ import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/event_card.dart';
 import 'package:thittam1hub/services/event_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
@@ -15,9 +16,9 @@ class DiscoverPage extends StatefulWidget {
 class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final EventService _eventService = EventService();
-  EventCategory? _selectedCategory; // null = All
-  EventMode? _selectedMode; // null = all
-  late TabController _tabController; // 0 = All Events, 1 = Past Events
+  EventCategory? _selectedCategory;
+  EventMode? _selectedMode;
+  late TabController _tabController;
   final Set<String> _savedEventIds = {};
   List<Event> _events = [];
   bool _isLoading = true;
@@ -45,10 +46,8 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
           _tiersByEvent = tiers;
           _isLoading = false;
         });
-        // If All tab is empty but Past has items, auto-switch to Past for better UX
         final allNow = _filtered();
         if (allNow.isEmpty) {
-          // Temporarily compute past list
           final now = DateTime.now();
           final past = _events.where((e) => e.endDate.isBefore(now)).toList();
           if (past.isNotEmpty && _tabController.index != 1) {
@@ -73,8 +72,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
     final now = DateTime.now();
     final query = _searchController.text.trim().toLowerCase();
     return _events.where((e) {
-      if (_tabController.index == 1 && e.endDate.isAfter(now)) return false; // Past Events tab
-      // For All Events tab, exclude past events
+      if (_tabController.index == 1 && e.endDate.isAfter(now)) return false;
       if (_tabController.index == 0 && e.endDate.isBefore(now)) return false;
       if (_selectedCategory != null && e.category != _selectedCategory) return false;
       if (_selectedMode != null && e.mode != _selectedMode) return false;
@@ -88,111 +86,169 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   }
 
   Widget _searchBar(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return TextField(
       controller: _searchController,
       onChanged: (_) => setState(() {}),
+      style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
-        hintText: 'Search events in Thittam1Hub...',
-        prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+        hintText: 'Search events...',
+        hintStyle: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+        prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant, size: 20),
         suffixIcon: _searchController.text.isNotEmpty
-            ? IconButton(icon: const Icon(Icons.close, color: AppColors.textMuted), onPressed: () => setState(() => _searchController.clear()))
+            ? IconButton(
+                icon: Icon(Icons.close, color: cs.onSurfaceVariant, size: 18),
+                onPressed: () => setState(() => _searchController.clear()),
+              )
             : null,
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide(color: AppColors.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        fillColor: cs.surfaceContainerHighest,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.4)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.4)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(color: cs.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+        isDense: true,
       ),
     );
   }
 
   Widget _categoryChips() {
+    final cs = Theme.of(context).colorScheme;
     final cats = [null, EventCategory.HACKATHON, EventCategory.WORKSHOP, EventCategory.CONFERENCE, EventCategory.MEETUP, EventCategory.WEBINAR, EventCategory.SEMINAR, EventCategory.COMPETITION];
     return SizedBox(
-      height: 40,
+      height: 28,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemBuilder: (_, i) {
           final cat = cats[i];
           final selected = _selectedCategory == cat;
           final label = cat == null ? 'All' : cat.displayName;
-          return ChoiceChip(
-            label: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: selected ? Colors.white : AppColors.textPrimary)),
-            selected: selected,
-            onSelected: (_) => setState(() => _selectedCategory = cat),
-            selectedColor: Theme.of(context).colorScheme.primary,
-            backgroundColor: AppColors.card,
-            shape: StadiumBorder(side: BorderSide(color: selected ? Theme.of(context).colorScheme.primary : AppColors.border)),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCategory = cat),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: selected ? cs.primary : cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: selected ? cs.primary : cs.outline.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? cs.onPrimary : cs.onSurface,
+                ),
+              ),
+            ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
         itemCount: cats.length,
       ),
     );
   }
 
   Widget _modeToggles() {
+    final cs = Theme.of(context).colorScheme;
     Widget buildBtn(String label, IconData icon, EventMode mode) {
       final selected = _selectedMode == mode;
       return GestureDetector(
         onTap: () => setState(() => _selectedMode = selected ? null : mode),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? Theme.of(context).colorScheme.primary : AppColors.card,
+            color: selected ? cs.primary : cs.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? Theme.of(context).colorScheme.primary : AppColors.border),
+            border: Border.all(
+              color: selected ? cs.primary : cs.outline.withValues(alpha: 0.4),
+            ),
           ),
-          child: Row(children: [
-            Icon(icon, size: 18, color: selected ? Colors.white : AppColors.textPrimary),
-            const SizedBox(width: 8),
-            Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
-          ]),
+          child: Row(
+            children: [
+              Icon(icon, size: 14, color: selected ? cs.onPrimary : cs.onSurface),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? cs.onPrimary : cs.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return Row(children: [
       buildBtn('Online', Icons.public, EventMode.ONLINE),
-      const SizedBox(width: 8),
+      const SizedBox(width: 6),
       buildBtn('Offline', Icons.place, EventMode.OFFLINE),
-      const SizedBox(width: 8),
+      const SizedBox(width: 6),
       buildBtn('Hybrid', Icons.group, EventMode.HYBRID),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _searchBar(context),
-              const SizedBox(height: 12),
-              Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: _categoryChips()),
-              const SizedBox(height: 8),
-              _modeToggles(),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(999)),
-                child: TabBar(
-                  controller: _tabController,
-                  labelPadding: const EdgeInsets.symmetric(horizontal: 18),
-                  indicator: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(999)),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: AppColors.textPrimary,
-                  dividerColor: Colors.transparent,
-                  tabs: const [Tab(text: 'All Events'), Tab(text: 'Past Events')],
-                  onTap: (_) => setState(() {}),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _searchBar(context),
+                const SizedBox(height: 8),
+                _categoryChips(),
+                const SizedBox(height: 6),
+                _modeToggles(),
+                const SizedBox(height: 8),
+                Container(
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    indicator: BoxDecoration(
+                      color: cs.primary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: cs.onPrimary,
+                    unselectedLabelColor: cs.onSurface,
+                    labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    dividerColor: Colors.transparent,
+                    tabs: const [
+                      Tab(text: 'All Events'),
+                      Tab(text: 'Past Events'),
+                    ],
+                    onTap: (_) => setState(() {}),
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           ),
           Expanded(
             child: TabBarView(
@@ -243,8 +299,8 @@ extension on _DiscoverPageState {
     final now = DateTime.now();
     final query = _searchController.text.trim().toLowerCase();
     return _events.where((e) {
-      if (tabIndex == 1 && e.endDate.isAfter(now)) return false; // Past tab
-      if (tabIndex == 0 && e.endDate.isBefore(now)) return false; // All tab excludes past
+      if (tabIndex == 1 && e.endDate.isAfter(now)) return false;
+      if (tabIndex == 0 && e.endDate.isBefore(now)) return false;
       if (_selectedCategory != null && e.category != _selectedCategory) return false;
       if (_selectedMode != null && e.mode != _selectedMode) return false;
       if (query.isNotEmpty) {
@@ -258,7 +314,15 @@ extension on _DiscoverPageState {
 }
 
 class _EventsTab extends StatelessWidget {
-  const _EventsTab({super.key, required this.isLoading, required this.events, required this.tiersByEvent, required this.savedEventIds, required this.onRefresh, required this.onToggleSave});
+  const _EventsTab({
+    super.key,
+    required this.isLoading,
+    required this.events,
+    required this.tiersByEvent,
+    required this.savedEventIds,
+    required this.onRefresh,
+    required this.onToggleSave,
+  });
 
   final bool isLoading;
   final List<Event> events;
@@ -269,37 +333,60 @@ class _EventsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ShimmerLoading(width: 100, height: 100, borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 12),
+            ShimmerLoading(width: 150, height: 16, borderRadius: BorderRadius.circular(4)),
+          ],
+        ),
+      );
     }
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: Theme.of(context).colorScheme.primary,
+      color: cs.primary,
       child: events.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                Center(child: Icon(Icons.event_busy, size: 64, color: AppColors.textMuted)),
-                const SizedBox(height: 16),
-                Center(child: Text('No events found', style: Theme.of(context).textTheme.titleMedium)),
-                const SizedBox(height: 8),
-                Center(child: Text('Try adjusting your filters', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted))),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                Center(child: Icon(Icons.event_busy, size: 48, color: cs.onSurfaceVariant)),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'No events found',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: cs.onSurface),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(
+                    'Try adjusting your filters',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ),
               ],
             )
           : ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               itemCount: events.length,
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 6),
               itemBuilder: (_, i) {
                 final e = events[i];
-                return EventCard(
-                  event: e,
-                  tiers: tiersByEvent[e.id] ?? const [],
-                  saved: savedEventIds.contains(e.id),
-                  onTap: () => context.push('/events/${e.id}'),
-                  onToggleSave: () => onToggleSave(e.id),
+                return FadeSlideTransition(
+                  delay: staggerDelay(i),
+                  child: EventCard(
+                    event: e,
+                    tiers: tiersByEvent[e.id] ?? const [],
+                    saved: savedEventIds.contains(e.id),
+                    onTap: () => context.push('/events/${e.id}'),
+                    onToggleSave: () => onToggleSave(e.id),
+                  ),
                 );
               },
             ),
