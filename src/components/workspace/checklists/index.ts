@@ -8,3 +8,7 @@ export { DelegatedChecklistBadge } from './DelegatedChecklistBadge';
 export { RequestDeadlineExtensionDialog } from './RequestDeadlineExtensionDialog';
 export { DeadlineExtensionReviewCard } from './DeadlineExtensionReviewCard';
 export { DelegationProgressDashboard } from './DelegationProgressDashboard';
+export { SharedChecklistsView } from './SharedChecklistsView';
+export { SharedChecklistCard } from './SharedChecklistCard';
+export { CategorySuggestionsCard } from './CategorySuggestionsCard';
+export { CreateSharedChecklistDialog } from './CreateSharedChecklistDialog';

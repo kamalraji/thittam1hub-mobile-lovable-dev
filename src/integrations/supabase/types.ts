@@ -3594,7 +3594,9 @@ export type Database = {
           delegated_from_workspace_id: string | null
           delegation_status: string | null
           due_date: string | null
+          event_id: string | null
           id: string
+          is_shared: boolean | null
           is_template: boolean | null
           items: Json
           phase: string | null
@@ -3610,7 +3612,9 @@ export type Database = {
           delegated_from_workspace_id?: string | null
           delegation_status?: string | null
           due_date?: string | null
+          event_id?: string | null
           id?: string
+          is_shared?: boolean | null
           is_template?: boolean | null
           items?: Json
           phase?: string | null
@@ -3626,7 +3630,9 @@ export type Database = {
           delegated_from_workspace_id?: string | null
           delegation_status?: string | null
           due_date?: string | null
+          event_id?: string | null
           id?: string
+          is_shared?: boolean | null
           is_template?: boolean | null
           items?: Json
           phase?: string | null
@@ -3640,6 +3646,13 @@ export type Database = {
             columns: ["delegated_from_workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_checklists_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
