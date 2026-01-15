@@ -21,13 +21,39 @@ import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
 import 'package:thittam1hub/models/models.dart';
 
+/// Custom fade-slide page transition
+CustomTransitionPage<T> _buildPageTransition<T>(Widget child, GoRouterState state) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    reverseTransitionDuration: const Duration(milliseconds: 200),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final fadeAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      final slideAnimation = Tween<Offset>(
+        begin: const Offset(0, 0.03),
+        end: Offset.zero,
+      ).animate(fadeAnimation);
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(
+          position: slideAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 /// GoRouter configuration for app navigation
 class AppRouter {
   static GoRouter createRouter() {
     return GoRouter(
       initialLocation: AppRoutes.discover,
-      refreshListenable:
-          GoRouterRefreshStream(SupabaseConfig.auth.onAuthStateChange),
+      refreshListenable: GoRouterRefreshStream(SupabaseConfig.auth.onAuthStateChange),
       redirect: (context, state) {
         final loggedIn = SupabaseConfig.auth.currentUser != null;
         final loggingIn = state.matchedLocation == AppRoutes.signIn ||
@@ -46,26 +72,22 @@ class AppRouter {
       routes: [
         GoRoute(
           path: AppRoutes.signIn,
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: SignInPage()),
+          pageBuilder: (context, state) => _buildPageTransition(const SignInPage(), state),
         ),
         GoRoute(
           path: AppRoutes.signUp,
-          pageBuilder: (context, state) =>
-              const NoTransitionPage(child: SignUpPage()),
+          pageBuilder: (context, state) => _buildPageTransition(const SignUpPage(), state),
         ),
         ShellRoute(
           builder: (context, state, child) => _RootShell(child: child),
           routes: [
             GoRoute(
               path: AppRoutes.home,
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: MyHomePage(title: 'Dashboard')),
+              pageBuilder: (context, state) => const NoTransitionPage(child: MyHomePage(title: 'Dashboard')),
             ),
             GoRoute(
               path: AppRoutes.discover,
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: DiscoverPage()),
+              pageBuilder: (context, state) => const NoTransitionPage(child: DiscoverPage()),
             ),
             GoRoute(
               path: AppRoutes.impact,
@@ -77,95 +99,91 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: 'new',
-                  pageBuilder: (context, state) => const NoTransitionPage(child: NewMessagePage()),
+                  pageBuilder: (context, state) => _buildPageTransition(const NewMessagePage(), state),
                 ),
                 GoRoute(
                   path: ':channelId',
                   pageBuilder: (context, state) {
                     final id = state.pathParameters['channelId']!;
-                    final extra = state.extra; // may be null
+                    final extra = state.extra;
                     if (extra is WorkspaceChannel) {
-                      return NoTransitionPage(child: MessageThreadPage(channelId: id, channel: extra));
+                      return _buildPageTransition(MessageThreadPage(channelId: id, channel: extra), state);
                     }
                     if (extra is Map) {
                       final map = Map<String, dynamic>.from(extra as Map);
-                      return NoTransitionPage(
-                        child: MessageThreadPage(
+                      return _buildPageTransition(
+                        MessageThreadPage(
                           channelId: id,
                           dmUserId: map['dmUserId'] as String?,
                           dmUserName: map['dmUserName'] as String?,
                           dmUserAvatar: map['dmUserAvatar'] as String?,
                         ),
+                        state,
                       );
                     }
-                    return NoTransitionPage(child: MessageThreadPage(channelId: id));
+                    return _buildPageTransition(MessageThreadPage(channelId: id), state);
                   },
                 ),
               ],
             ),
             GoRoute(
               path: AppRoutes.profile,
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: ProfilePage()),
+              pageBuilder: (context, state) => const NoTransitionPage(child: ProfilePage()),
             ),
-            // Event detail
             GoRoute(
               path: '/events/:id',
               pageBuilder: (context, state) {
                 final id = state.pathParameters['id']!;
-                return NoTransitionPage(child: EventDetailPage(eventId: id));
+                return _buildPageTransition(EventDetailPage(eventId: id), state);
               },
             ),
-            // Circle Chat Page
             GoRoute(
               path: '/circles/:id',
               pageBuilder: (context, state) {
                 final circle = state.extra as Circle?;
                 if (circle != null) {
-                  return NoTransitionPage(child: CircleChatPage(circle: circle));
+                  return _buildPageTransition(CircleChatPage(circle: circle), state);
                 } else {
-                  // Handle the case where the circle is not passed
-                  return const NoTransitionPage(child: _PlaceholderPage(title: 'Error'));
+                  return _buildPageTransition(const _PlaceholderPage(title: 'Error'), state);
                 }
               },
             ),
-            // Space Room Page
             GoRoute(
               path: '/spaces/:id',
               pageBuilder: (context, state) {
                 final space = state.extra as Space?;
                 if (space != null) {
-                  return NoTransitionPage(child: SpaceRoomPage(space: space));
+                  return _buildPageTransition(SpaceRoomPage(space: space), state);
                 } else {
-                  return const NoTransitionPage(child: _PlaceholderPage(title: 'Error'));
+                  return _buildPageTransition(const _PlaceholderPage(title: 'Error'), state);
                 }
               },
             ),
-            // Profile routes
             GoRoute(
               path: '/profile/edit',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: EditProfilePage()),
+              pageBuilder: (context, state) => _buildPageTransition(const EditProfilePage(), state),
             ),
             GoRoute(
               path: '/profile/qr',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: QrCodePage()),
+              pageBuilder: (context, state) => _buildPageTransition(const QrCodePage(), state),
             ),
             GoRoute(
               path: '/profile/settings',
-              pageBuilder: (context, state) =>
-                  const NoTransitionPage(child: SettingsPage()),
+              pageBuilder: (context, state) => _buildPageTransition(const SettingsPage(), state),
             ),
             GoRoute(
               path: '/profile/registrations',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                  child: _PlaceholderPage(title: 'My Registrations')),
+              pageBuilder: (context, state) => _buildPageTransition(
+                const _PlaceholderPage(title: 'My Registrations'),
+                state,
+              ),
             ),
             GoRoute(
               path: '/profile/saved',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                  child: _PlaceholderPage(title: 'Saved Events')),
+              pageBuilder: (context, state) => _buildPageTransition(
+                const _PlaceholderPage(title: 'Saved Events'),
+                state,
+              ),
             ),
           ],
         ),
@@ -223,34 +241,44 @@ class _RootShellState extends State<_RootShell> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final idx = _indexFromLocation(GoRouterState.of(context).uri.toString());
     return Scaffold(
       body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: idx,
         onDestinationSelected: _onTap,
-        height: 64,
-        indicatorColor:
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-        destinations: const [
+        height: 56,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        backgroundColor: cs.surface,
+        indicatorColor: cs.primary.withValues(alpha: 0.15),
+        surfaceTintColor: Colors.transparent,
+        destinations: [
           NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home'),
+            icon: Icon(Icons.home_outlined, size: 22),
+            selectedIcon: Icon(Icons.home, size: 22, color: cs.primary),
+            label: 'Home',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.explore_outlined), label: 'Discover'),
+            icon: Icon(Icons.explore_outlined, size: 22),
+            selectedIcon: Icon(Icons.explore, size: 22, color: cs.primary),
+            label: 'Discover',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.volunteer_activism_outlined),
-              selectedIcon: Icon(Icons.volunteer_activism),
-              label: 'Impact'),
+            icon: Icon(Icons.volunteer_activism_outlined, size: 22),
+            selectedIcon: Icon(Icons.volunteer_activism, size: 22, color: cs.primary),
+            label: 'Impact',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble),
-              label: 'Chat'),
+            icon: Icon(Icons.chat_bubble_outline, size: 22),
+            selectedIcon: Icon(Icons.chat_bubble, size: 22, color: cs.primary),
+            label: 'Chat',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile'),
+            icon: Icon(Icons.person_outline, size: 22),
+            selectedIcon: Icon(Icons.person, size: 22, color: cs.primary),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -275,15 +303,20 @@ class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({required this.title});
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SafeArea(
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.hourglass_empty,
-              size: 48, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 12),
-          Text('$title coming soon',
-              style: Theme.of(context).textTheme.titleLarge),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.hourglass_empty, size: 40, color: cs.primary),
+            const SizedBox(height: 10),
+            Text(
+              '$title coming soon',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          ],
+        ),
       ),
     );
   }
