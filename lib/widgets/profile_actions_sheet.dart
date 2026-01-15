@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 /// Shows a glassmorphism profile actions bottom sheet
 void showProfileActionsSheet(
@@ -12,16 +14,21 @@ void showProfileActionsSheet(
   VoidCallback? onBlock,
   VoidCallback? onViewProfile,
 }) {
+  final avatarHeroTag = HeroConfig.profileAvatarTag(profile.userId);
+  final nameHeroTag = HeroConfig.profileNameTag(profile.userId);
+  
   showGlassBottomSheet(
     context: context,
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Profile header
-        GlassProfileHeader(
+        // Profile header with Hero widgets
+        _HeroProfileHeader(
           avatarUrl: profile.avatarUrl,
           name: profile.fullName,
           subtitle: profile.headline,
+          avatarHeroTag: avatarHeroTag,
+          nameHeroTag: nameHeroTag,
         ),
         const SizedBox(height: 20),
         
@@ -58,7 +65,12 @@ void showProfileActionsSheet(
               label: 'View Full Profile',
               onTap: () {
                 Navigator.pop(context);
-                onViewProfile?.call();
+                if (onViewProfile != null) {
+                  onViewProfile();
+                } else {
+                  // Navigate with hero transition
+                  context.push('/impact/profile/${profile.userId}', extra: profile);
+                }
               },
             ),
             GlassActionButton(
@@ -323,6 +335,83 @@ class _StatItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Hero-enabled profile header for bottom sheets with smooth avatar/name transitions
+class _HeroProfileHeader extends StatelessWidget {
+  final String? avatarUrl;
+  final String name;
+  final String? subtitle;
+  final String avatarHeroTag;
+  final String nameHeroTag;
+
+  const _HeroProfileHeader({
+    this.avatarUrl,
+    required this.name,
+    this.subtitle,
+    required this.avatarHeroTag,
+    required this.nameHeroTag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          AnimatedHero(
+            tag: avatarHeroTag,
+            child: CircleAvatar(
+              radius: 28,
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+              child: avatarUrl == null
+                  ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextHero(
+                  tag: nameHeroTag,
+                  child: Text(
+                    name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

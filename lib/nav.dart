@@ -4,11 +4,13 @@ import 'dart:async';
 import 'package:thittam1hub/main.dart';
 import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/models/space.dart';
+import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/pages/event_detail_page.dart';
 import 'package:thittam1hub/pages/discover_page.dart';
 import 'package:thittam1hub/pages/impact/impact_hub_page.dart';
 import 'package:thittam1hub/pages/impact/circle_chat_page.dart';
 import 'package:thittam1hub/pages/impact/space_room_page.dart';
+import 'package:thittam1hub/pages/impact/profile_detail_page.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/pages/auth/sign_in_page.dart';
 import 'package:thittam1hub/pages/auth/sign_up_page.dart';
@@ -193,6 +195,17 @@ class AppRouter {
                 } else {
                   return _buildPageTransition(const _PlaceholderPage(title: 'Error'), state);
                 }
+              },
+            ),
+            GoRoute(
+              path: '/impact/profile/:id',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                final profile = state.extra as ImpactProfile?;
+                return _buildHeroPageTransition(
+                  ProfileDetailPage(profileId: id, profile: profile),
+                  state,
+                );
               },
             ),
             GoRoute(
