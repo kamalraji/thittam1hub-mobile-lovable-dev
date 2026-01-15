@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/services/profile_service.dart';
+import 'package:thittam1hub/services/theme_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/auth/supabase_auth_manager.dart';
 
-/// Settings screen with account info and notification preferences
+/// Settings screen with account info, theme toggle, and notification preferences
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -62,6 +64,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _handleDeleteAccount() async {
+    final cs = Theme.of(context).colorScheme;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -102,9 +106,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     if (_isLoading || _prefs == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator(color: cs.primary)),
       );
     }
 
@@ -130,10 +136,19 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: AppSpacing.md),
 
+          // Appearance Section (Theme Toggle)
+          _SectionCard(
+            title: 'Appearance',
+            children: [
+              _ThemeModeRow(),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
           // Become Organizer Banner (if PARTICIPANT)
           if (_userRole == 'PARTICIPANT') ...[
             Card(
-              color: AppColors.accent.withValues(alpha: 0.1),
+              color: cs.secondary.withValues(alpha: 0.1),
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
@@ -141,7 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.star, color: AppColors.accent),
+                        Icon(Icons.star, color: cs.secondary),
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           'Become an organizer',
@@ -152,7 +167,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Upgrade to create events and manage organizations',
-                      style: context.textStyles.bodySmall?.withColor(AppColors.textMuted),
+                      style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     FilledButton(
@@ -161,7 +176,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SnackBar(content: Text('Upgrade flow coming soon')),
                         );
                       },
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                      style: FilledButton.styleFrom(backgroundColor: cs.secondary),
                       child: const Text('Upgrade'),
                     ),
                   ],
@@ -283,6 +298,102 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
+/// Theme mode selection row
+class _ThemeModeRow extends StatelessWidget {
+  const _ThemeModeRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final themeService = context.watch<ThemeService>();
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Theme', style: context.textStyles.bodyMedium),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: ThemeMode.values.map((mode) {
+              final isSelected = themeService.themeMode == mode;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: mode != ThemeMode.values.last ? AppSpacing.sm : 0,
+                  ),
+                  child: _ThemeOptionButton(
+                    icon: themeService.getThemeModeIcon(mode),
+                    label: themeService.getThemeModeDisplayName(mode),
+                    isSelected: isSelected,
+                    onTap: () => themeService.setThemeMode(mode),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Individual theme option button
+class _ThemeOptionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOptionButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: isSelected ? cs.primary : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: isSelected ? cs.primary : cs.outline,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+              size: 20,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: context.textStyles.labelSmall?.copyWith(
+                color: isSelected ? cs.onPrimary : cs.onSurface,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Section card wrapper
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -292,6 +403,8 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -299,7 +412,7 @@ class _SectionCard extends StatelessWidget {
           padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
           child: Text(
             title.toUpperCase(),
-            style: context.textStyles.labelSmall?.withColor(AppColors.textMuted),
+            style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
           ),
         ),
         Card(
@@ -327,6 +440,8 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -343,17 +458,17 @@ class _InfoRow extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: cs.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     value,
-                    style: context.textStyles.labelSmall?.semiBold.withColor(AppColors.primary),
+                    style: context.textStyles.labelSmall?.semiBold.withColor(cs.primary),
                   ),
                 )
               : Text(
                   value,
-                  style: context.textStyles.bodyMedium?.withColor(AppColors.textMuted),
+                  style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
                 ),
         ],
       ),
@@ -377,6 +492,8 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -392,7 +509,7 @@ class _ToggleRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: context.textStyles.bodySmall?.withColor(AppColors.textMuted),
+                  style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
                 ),
               ],
             ),

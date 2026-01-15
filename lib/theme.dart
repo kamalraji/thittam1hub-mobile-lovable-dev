@@ -75,6 +75,37 @@ extension TextStyleExtensions on TextStyle {
 }
 
 // =============================================================================
+// THEME CONTEXT EXTENSION
+// =============================================================================
+
+/// Extension to provide easy access to theme-aware colors and utilities
+extension ThemeContext on BuildContext {
+  /// Get the current ColorScheme
+  ColorScheme get colors => Theme.of(this).colorScheme;
+  
+  /// Check if dark mode is active
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+  
+  /// Semantic background color (adapts to theme)
+  Color get backgroundColor => colors.surface;
+  
+  /// Semantic card color (adapts to theme)
+  Color get cardColor => colors.surfaceContainerHighest;
+  
+  /// Semantic border color (adapts to theme)
+  Color get borderColor => colors.outline;
+  
+  /// Semantic primary text color (adapts to theme)
+  Color get textPrimary => colors.onSurface;
+  
+  /// Semantic muted text color (adapts to theme)
+  Color get textMuted => colors.onSurfaceVariant;
+  
+  /// Semantic divider color (adapts to theme)
+  Color get dividerColor => colors.outline.withValues(alpha: 0.5);
+}
+
+// =============================================================================
 // COLORS
 // =============================================================================
 
@@ -84,14 +115,23 @@ class AppColors {
   static const primary = Color(0xFF8B5CF6); // Purple
   static const accent = Color(0xFF06B6D4); // Cyan
 
-  // Surfaces
+  // Light mode surfaces
   static const background = Color(0xFFFFFFFF);
   static const card = Color(0xFFF9FAFB);
   static const border = Color(0xFFE5E7EB);
 
-  // Text
+  // Dark mode surfaces
+  static const backgroundDark = Color(0xFF0B0B0D);
+  static const cardDark = Color(0xFF15171A);
+  static const borderDark = Color(0xFF2E3136);
+
+  // Light mode text
   static const textPrimary = Color(0xFF111827);
   static const textMuted = Color(0xFF6B7280);
+
+  // Dark mode text
+  static const textPrimaryDark = Colors.white;
+  static const textMutedDark = Color(0xFFB5BAC1);
 
   // Feedback
   static const success = Color(0xFF10B981);
@@ -169,6 +209,20 @@ ThemeData get lightTheme => ThemeData(
       ),
     ),
   ),
+  dividerTheme: const DividerThemeData(
+    color: AppColors.border,
+    thickness: 1,
+  ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return AppColors.primary;
+      return Colors.grey[400];
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return AppColors.primary.withValues(alpha: 0.5);
+      return Colors.grey[300];
+    }),
+  ),
   textTheme: _buildTextTheme(Brightness.light),
 );
 
@@ -182,19 +236,19 @@ ThemeData get darkTheme => ThemeData(
     onSecondary: Colors.white,
     error: AppColors.error,
     onError: Colors.white,
-    surface: Color(0xFF0B0B0D),
-    onSurface: Colors.white,
-    surfaceContainerHighest: Color(0xFF15171A),
-    onSurfaceVariant: Color(0xFFB5BAC1),
-    outline: Color(0xFF2E3136),
+    surface: AppColors.backgroundDark,
+    onSurface: AppColors.textPrimaryDark,
+    surfaceContainerHighest: AppColors.cardDark,
+    onSurfaceVariant: AppColors.textMutedDark,
+    outline: AppColors.borderDark,
     shadow: Colors.black,
     inversePrimary: AppColors.accent,
   ),
   brightness: Brightness.dark,
-  scaffoldBackgroundColor: const Color(0xFF0B0B0D),
+  scaffoldBackgroundColor: AppColors.backgroundDark,
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.transparent,
-    foregroundColor: Colors.white,
+    foregroundColor: AppColors.textPrimaryDark,
     elevation: 0,
     scrolledUnderElevation: 0,
   ),
@@ -203,10 +257,24 @@ ThemeData get darkTheme => ThemeData(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
       side: BorderSide(
-        color: const Color(0xFF2E3136).withValues(alpha: 0.6),
+        color: AppColors.borderDark.withValues(alpha: 0.6),
         width: 1,
       ),
     ),
+  ),
+  dividerTheme: const DividerThemeData(
+    color: AppColors.borderDark,
+    thickness: 1,
+  ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return AppColors.primary;
+      return Colors.grey[600];
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return AppColors.primary.withValues(alpha: 0.5);
+      return Colors.grey[800];
+    }),
   ),
   textTheme: _buildTextTheme(Brightness.dark),
 );
