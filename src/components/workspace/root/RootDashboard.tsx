@@ -62,11 +62,11 @@ export function RootDashboard({
   const { departments, recentActivity, upcomingMilestones } = data;
 
   return (
-    <div className="space-y-6">
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Departments Performance */}
-        <section id="departments" className="lg:col-span-2 space-y-4">
+    <div className="w-full space-y-6">
+      {/* Main Content Grid - 12-column system for finer control */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 w-full">
+        {/* Left Column: Departments Performance - 8/12 on xl screens */}
+        <section id="departments" className="xl:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -74,7 +74,7 @@ export function RootDashboard({
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-[200px]">
             {departments.map((dept) => {
               const colors = getDepartmentColor(dept.departmentId);
               const progress = dept.tasksTotal > 0 
@@ -134,7 +134,7 @@ export function RootDashboard({
             })}
 
             {departments.length === 0 && (
-              <div className="col-span-2 text-center py-8 text-muted-foreground">
+              <div className="col-span-full text-center py-8 text-muted-foreground">
                 <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No departments created yet</p>
                 <p className="text-xs">Create departments to organize your event</p>
@@ -142,8 +142,8 @@ export function RootDashboard({
             )}
           </div>
         </section>
-        {/* Right Column: Workspace Management, Activity & Milestones */}
-        <div className="space-y-4">
+        {/* Right Column: Workspace Management, Activity & Milestones - 4/12 on xl screens */}
+        <div className="xl:col-span-4 space-y-4">
 
           {/* Child Workspaces Manager */}
           <section id="workspaces">
