@@ -41,9 +41,11 @@ class _SparkPageState extends State<SparkPage> {
   }
 
   void _showNewPostDialog() {
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -63,132 +65,139 @@ class _SparkPageState extends State<SparkPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cs.surface,
         elevation: 0,
         title: Text(
           '💡 Spark Board',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           TextButton.icon(
             onPressed: _showNewPostDialog,
             icon: Icon(Icons.add_circle_outline),
             label: Text('New Post'),
-            style: TextButton.styleFrom(foregroundColor: Color(0xFF8B5CF6)),
+            style: TextButton.styleFrom(foregroundColor: cs.primary),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: Text('All'),
-                    onSelected: (val) => _filterPosts(null),
-                    selected: _selectedFilter == null,
-                    selectedColor: Color(0xFF8B5CF6),
-                  ),
-                  SizedBox(width: 8),
-                  FilterChip(
-                    label: Text('Ideas'),
-                    onSelected: (val) => _filterPosts(SparkPostType.IDEA),
-                    selected: _selectedFilter == SparkPostType.IDEA,
-                  ),
-                  SizedBox(width: 8),
-                  FilterChip(
-                    label: Text('Seeking'),
-                    onSelected: (val) => _filterPosts(SparkPostType.SEEKING),
-                    selected: _selectedFilter == SparkPostType.SEEKING,
-                  ),
-                  SizedBox(width: 8),
-                  FilterChip(
-                    label: Text('Offering'),
-                    onSelected: (val) => _filterPosts(SparkPostType.OFFERING),
-                    selected: _selectedFilter == SparkPostType.OFFERING,
-                  ),
-                  SizedBox(width: 8),
-                  FilterChip(
-                    label: Text('Q&A'),
-                    onSelected: (val) => _filterPosts(SparkPostType.QUESTION),
-                    selected: _selectedFilter == SparkPostType.QUESTION,
-                  ),
-                ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    FilterChip(
+                      label: Text('All'),
+                      onSelected: (val) => _filterPosts(null),
+                      selected: _selectedFilter == null,
+                      selectedColor: cs.primary,
+                    ),
+                    SizedBox(width: 8),
+                    FilterChip(
+                      label: Text('Ideas'),
+                      onSelected: (val) => _filterPosts(SparkPostType.IDEA),
+                      selected: _selectedFilter == SparkPostType.IDEA,
+                    ),
+                    SizedBox(width: 8),
+                    FilterChip(
+                      label: Text('Seeking'),
+                      onSelected: (val) => _filterPosts(SparkPostType.SEEKING),
+                      selected: _selectedFilter == SparkPostType.SEEKING,
+                    ),
+                    SizedBox(width: 8),
+                    FilterChip(
+                      label: Text('Offering'),
+                      onSelected: (val) => _filterPosts(SparkPostType.OFFERING),
+                      selected: _selectedFilter == SparkPostType.OFFERING,
+                    ),
+                    SizedBox(width: 8),
+                    FilterChip(
+                      label: Text('Q&A'),
+                      onSelected: (val) => _filterPosts(SparkPostType.QUESTION),
+                      selected: _selectedFilter == SparkPostType.QUESTION,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? ListView(
-                    children: List.generate(4, (i) => FadeSlideTransition(
-                      delay: staggerDelay(i),
-                      child: const SparkPostSkeleton(),
-                    )),
-                  )
-                : _filteredPosts.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.lightbulb_outline, size: 64, color: Colors.grey[400]),
-                            SizedBox(height: 16),
-                            Text('No posts yet.', style: TextStyle(color: Colors.grey[600])),
-                            SizedBox(height: 8),
-                            TextButton(
-                              onPressed: _showNewPostDialog,
-                              child: Text('Create First Post'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : BrandedRefreshIndicator(
-                        onRefresh: () => _loadPosts(_selectedFilter),
-                        child: ListView.builder(
-                          itemCount: _filteredPosts.length,
-                          itemBuilder: (context, index) {
-                            final post = _filteredPosts[index];
-                            return FadeSlideTransition(
-                              delay: staggerDelay(index),
-                              child: SparkPostCard(
-                                post: post,
-                                hasSparked: _sparked.contains(post.id),
-                                onSpark: () async {
-                                  final created = await _sparkService.toggleSparkOnce(post.id);
-                                  if (!mounted) return;
-                                  if (created) {
-                                    setState(() {
-                                      _sparked.add(post.id);
-                                      _filteredPosts[index] = SparkPost(
-                                        id: post.id,
-                                        authorId: post.authorId,
-                                        authorName: post.authorName,
-                                        authorAvatar: post.authorAvatar,
-                                        type: post.type,
-                                        title: post.title,
-                                        content: post.content,
-                                        tags: post.tags,
-                                        sparkCount: post.sparkCount + 1,
-                                        commentCount: post.commentCount,
-                                        createdAt: post.createdAt,
-                                      );
-                                    });
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You already sparked this post')));
-                                  }
-                                },
+            Expanded(
+              child: _isLoading
+                  ? ListView(
+                      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                      children: List.generate(4, (i) => FadeSlideTransition(
+                        delay: staggerDelay(i),
+                        child: const SparkPostSkeleton(),
+                      )),
+                    )
+                  : _filteredPosts.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.lightbulb_outline, size: 64, color: cs.onSurfaceVariant),
+                              SizedBox(height: 16),
+                              Text('No posts yet.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                              SizedBox(height: 8),
+                              TextButton(
+                                onPressed: _showNewPostDialog,
+                                child: Text('Create First Post'),
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                        )
+                      : BrandedRefreshIndicator(
+                          onRefresh: () => _loadPosts(_selectedFilter),
+                          child: ListView.builder(
+                            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                            itemCount: _filteredPosts.length,
+                            itemBuilder: (context, index) {
+                              final post = _filteredPosts[index];
+                              return FadeSlideTransition(
+                                delay: staggerDelay(index),
+                                child: SparkPostCard(
+                                  post: post,
+                                  hasSparked: _sparked.contains(post.id),
+                                  onSpark: () async {
+                                    final created = await _sparkService.toggleSparkOnce(post.id);
+                                    if (!mounted) return;
+                                    if (created) {
+                                      setState(() {
+                                        _sparked.add(post.id);
+                                        _filteredPosts[index] = SparkPost(
+                                          id: post.id,
+                                          authorId: post.authorId,
+                                          authorName: post.authorName,
+                                          authorAvatar: post.authorAvatar,
+                                          type: post.type,
+                                          title: post.title,
+                                          content: post.content,
+                                          tags: post.tags,
+                                          sparkCount: post.sparkCount + 1,
+                                          commentCount: post.commentCount,
+                                          createdAt: post.createdAt,
+                                        );
+                                      });
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You already sparked this post')));
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -235,6 +244,7 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
       return;
     }
 
+    final cs = Theme.of(context).colorScheme;
     setState(() => _isSubmitting = true);
     try {
       await widget.onSubmit(
@@ -248,7 +258,7 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Post created successfully!'),
-            backgroundColor: Color(0xFF8B5CF6),
+            backgroundColor: cs.primary,
           ),
         );
       }
@@ -265,6 +275,9 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -277,9 +290,9 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('New Spark Post', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('New Spark Post', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 16),
-            Text('Post Type', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Post Type', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -297,7 +310,7 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
                   onSelected: (selected) {
                     if (selected) setState(() => _selectedType = type);
                   },
-                  selectedColor: Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                  selectedColor: cs.primary.withValues(alpha: 0.2),
                 );
               }).toList(),
             ),
@@ -319,7 +332,7 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
               ),
             ),
             SizedBox(height: 16),
-            Text('Tags', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Tags', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             Row(
               children: [
@@ -336,7 +349,7 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
                 SizedBox(width: 8),
                 IconButton(
                   icon: Icon(Icons.add_circle),
-                  color: Color(0xFF8B5CF6),
+                  color: cs.primary,
                   onPressed: _addTag,
                 ),
               ],
@@ -363,7 +376,8 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
                     ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : Text('Create Post'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF8B5CF6),
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
@@ -389,6 +403,9 @@ class SparkPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     final typeEmoji = {
       SparkPostType.IDEA: '💡 IDEA',
       SparkPostType.SEEKING: '🔍 SEEKING',
@@ -408,15 +425,15 @@ class SparkPostCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(typeEmoji!, style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold)),
+            Text(typeEmoji!, style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
-            Text(post.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(post.title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             Text(
               post.content,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey[600]),
+              style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
             SizedBox(height: 12),
             Wrap(spacing: 8, children: post.tags.map((tag) => Chip(label: Text(tag))).toList()),
@@ -428,19 +445,19 @@ class SparkPostCard extends StatelessWidget {
                   child: Row(children: [
                     Icon(Icons.bolt, color: hasSparked ? Colors.amber[800] : Colors.amber[700], size: 20),
                     SizedBox(width: 4),
-                    Text('${post.sparkCount} sparks', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('${post.sparkCount} sparks', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                   ]),
                 ),
                 SizedBox(width: 16),
-                Icon(Icons.comment, color: Colors.grey[600], size: 20),
+                Icon(Icons.comment, color: cs.onSurfaceVariant, size: 20),
                 SizedBox(width: 4),
-                Text('${post.commentCount} comments', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('${post.commentCount} comments', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
             SizedBox(height: 8),
             Text(
               'Posted by ${post.authorName} • $timeAgo',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ],
         ),

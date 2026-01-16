@@ -34,6 +34,7 @@ class _CirclesPageState extends State<CirclesPage> {
 
   Future<void> _toggleCircleMembership(Circle circle) async {
     final isJoined = _joinedCircles.contains(circle.id);
+    final cs = Theme.of(context).colorScheme;
     
     try {
       if (isJoined) {
@@ -43,7 +44,7 @@ class _CirclesPageState extends State<CirclesPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Left ${circle.name}'),
-              backgroundColor: Colors.grey[700],
+              backgroundColor: cs.surfaceContainerHighest,
             ),
           );
         }
@@ -54,7 +55,7 @@ class _CirclesPageState extends State<CirclesPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Joined ${circle.name}'),
-              backgroundColor: Color(0xFF8B5CF6),
+              backgroundColor: cs.primary,
             ),
           );
         }
@@ -74,170 +75,184 @@ class _CirclesPageState extends State<CirclesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = (screenWidth * 0.55).clamp(180.0, 260.0);
+    final listHeight = screenWidth < 400 ? 200.0 : 220.0;
+    
     return Scaffold(
-      backgroundColor: Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cs.surface,
         elevation: 0,
         title: Text(
           'Circles',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
           TextButton.icon(
             onPressed: _openCreateCircle,
             icon: Icon(Icons.add_circle_outline),
             label: Text('Create'),
-            style: TextButton.styleFrom(foregroundColor: Color(0xFF8B5CF6)),
+            style: TextButton.styleFrom(foregroundColor: cs.primary),
           ),
         ],
       ),
-      body: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search circles...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+      body: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search circles...',
+                  prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: cs.surfaceContainerHighest,
                 ),
-                filled: true,
-                fillColor: Colors.white,
               ),
             ),
-          ),
-          _buildSectionTitle('📍 Auto-Matched Circles'),
-          FutureBuilder<List<Circle>>(
-            future: _autoMatchedCirclesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Column(
-                  children: List.generate(3, (index) => FadeSlideTransition(
-                    delay: staggerDelay(index),
-                    child: const CircleCardSkeleton(),
-                  )),
-                );
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('No auto-matched circles found.'));
-              } else {
-                final circles = snapshot.data!;
-                return Column(
-                  children: circles
-                      .map((circle) => AutoMatchedCircleCard(
-                            circle: circle,
-                            isJoined: _joinedCircles.contains(circle.id),
-                            onTap: () => _navigateToChat(circle),
-                            onJoinToggle: () => _toggleCircleMembership(circle),
-                          ))
-                      .toList(),
-                );
-              }
-            },
-          ),
-          _buildSectionTitle('🔥 Popular Circles'),
-          Container(
-            height: 220,
-            child: FutureBuilder<List<Circle>>(
-              future: _popularCirclesFuture,
+            _buildSectionTitle('📍 Auto-Matched Circles'),
+            FutureBuilder<List<Circle>>(
+              future: _autoMatchedCirclesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: 3,
-                    itemBuilder: (_, index) => FadeSlideTransition(
+                  return Column(
+                    children: List.generate(3, (index) => FadeSlideTransition(
                       delay: staggerDelay(index),
-                      child: const PopularCircleCardSkeleton(),
-                    ),
+                      child: const CircleCardSkeleton(),
+                    )),
                   );
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No popular circles found.'));
+                  return Center(child: Text('No auto-matched circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
                 } else {
                   final circles = snapshot.data!;
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: circles.length,
-                    itemBuilder: (context, index) {
-                      final circle = circles[index];
-                      return PopularCircleCard(
-                        circle: circle,
-                        isJoined: _joinedCircles.contains(circle.id),
-                        onTap: () => _navigateToChat(circle),
-                        onJoinToggle: () => _toggleCircleMembership(circle),
-                      );
-                    },
+                  return Column(
+                    children: circles
+                        .map((circle) => AutoMatchedCircleCard(
+                              circle: circle,
+                              isJoined: _joinedCircles.contains(circle.id),
+                              onTap: () => _navigateToChat(circle),
+                              onJoinToggle: () => _toggleCircleMembership(circle),
+                            ))
+                        .toList(),
                   );
                 }
               },
             ),
-          ),
-          _buildSectionTitle('🎯 Based on Your Interests'),
-          Container(
-            height: 220,
-            child: FutureBuilder<List<Circle>>(
-              future: _recommendedCirclesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: 3,
-                    itemBuilder: (_, index) => FadeSlideTransition(
-                      delay: staggerDelay(index),
-                      child: const PopularCircleCardSkeleton(),
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No recommended circles found.'));
-                } else {
-                  final circles = snapshot.data!;
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: circles.length,
-                    itemBuilder: (context, index) {
-                      final circle = circles[index];
-                      return PopularCircleCard(
-                        circle: circle,
-                        isJoined: _joinedCircles.contains(circle.id),
-                        onTap: () => _navigateToChat(circle),
-                        onJoinToggle: () => _toggleCircleMembership(circle),
-                      );
-                    },
-                  );
-                }
-              },
+            _buildSectionTitle('🔥 Popular Circles'),
+            SizedBox(
+              height: listHeight,
+              child: FutureBuilder<List<Circle>>(
+                future: _popularCirclesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 3,
+                      itemBuilder: (_, index) => FadeSlideTransition(
+                        delay: staggerDelay(index),
+                        child: const PopularCircleCardSkeleton(),
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No popular circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
+                  } else {
+                    final circles = snapshot.data!;
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: circles.length,
+                      itemBuilder: (context, index) {
+                        final circle = circles[index];
+                        return PopularCircleCard(
+                          circle: circle,
+                          isJoined: _joinedCircles.contains(circle.id),
+                          onTap: () => _navigateToChat(circle),
+                          onJoinToggle: () => _toggleCircleMembership(circle),
+                          cardWidth: cardWidth,
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+            _buildSectionTitle('🎯 Based on Your Interests'),
+            SizedBox(
+              height: listHeight,
+              child: FutureBuilder<List<Circle>>(
+                future: _recommendedCirclesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 3,
+                      itemBuilder: (_, index) => FadeSlideTransition(
+                        delay: staggerDelay(index),
+                        child: const PopularCircleCardSkeleton(),
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No recommended circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
+                  } else {
+                    final circles = snapshot.data!;
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: circles.length,
+                      itemBuilder: (context, index) {
+                        final circle = circles[index];
+                        return PopularCircleCard(
+                          circle: circle,
+                          isJoined: _joinedCircles.contains(circle.id),
+                          onTap: () => _navigateToChat(circle),
+                          onJoinToggle: () => _toggleCircleMembership(circle),
+                          cardWidth: cardWidth,
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(
         title,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
 
   void _openCreateCircle() {
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => CreateCircleSheet(
         onCreate: (name, description, icon, isPublic, tags) async {
@@ -250,7 +265,7 @@ class _CirclesPageState extends State<CirclesPage> {
           );
           if (mounted) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Circle "$name" created'), backgroundColor: Color(0xFF8B5CF6)));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Circle "$name" created'), backgroundColor: cs.primary));
             _loadData();
           }
         },
@@ -275,6 +290,9 @@ class AutoMatchedCircleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -291,9 +309,9 @@ class AutoMatchedCircleCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(circle.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(circle.name, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                     SizedBox(height: 4),
-                    Text(circle.description ?? '', style: TextStyle(color: Colors.grey[600])),
+                    Text(circle.description ?? '', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -301,8 +319,8 @@ class AutoMatchedCircleCard extends StatelessWidget {
                 onPressed: onJoinToggle,
                 child: Text(isJoined ? 'Joined ✓' : 'Join'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isJoined ? Colors.grey[300] : Color(0xFF8B5CF6),
-                  foregroundColor: isJoined ? Colors.grey[700] : Colors.white,
+                  backgroundColor: isJoined ? cs.surfaceContainerHighest : cs.primary,
+                  foregroundColor: isJoined ? cs.onSurfaceVariant : cs.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
               )
@@ -319,6 +337,7 @@ class PopularCircleCard extends StatelessWidget {
   final bool isJoined;
   final VoidCallback onTap;
   final VoidCallback onJoinToggle;
+  final double cardWidth;
 
   const PopularCircleCard({
     Key? key,
@@ -326,35 +345,39 @@ class PopularCircleCard extends StatelessWidget {
     required this.isJoined,
     required this.onTap,
     required this.onJoinToggle,
+    this.cardWidth = 220,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         child: Container(
-          width: 220,
+          width: cardWidth,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(circle.icon, style: TextStyle(fontSize: 24)),
               SizedBox(height: 8),
-              Text(circle.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(circle.name, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
               SizedBox(height: 4),
-              Text(circle.description ?? '', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text(circle.description ?? '', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 2, overflow: TextOverflow.ellipsis),
               Spacer(),
-              Text('👥 ${circle.tags.join(', ')}', style: TextStyle(fontSize: 12)),
+              Text('👥 ${circle.tags.join(', ')}', style: textTheme.bodySmall),
               SizedBox(height: 8),
               ElevatedButton(
                 onPressed: onJoinToggle,
                 child: Text(isJoined ? 'Joined ✓' : 'Join Circle'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isJoined ? Colors.grey[300] : Color(0xFF8B5CF6),
-                  foregroundColor: isJoined ? Colors.grey[700] : Colors.white,
+                  backgroundColor: isJoined ? cs.surfaceContainerHighest : cs.primary,
+                  foregroundColor: isJoined ? cs.onSurfaceVariant : cs.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
               )
@@ -425,11 +448,14 @@ class _CreateCircleSheetState extends State<CreateCircleSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Padding(
       padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text('Create Circle', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('Create Circle', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 12),
           TextField(
             controller: _nameController,
@@ -461,7 +487,7 @@ class _CreateCircleSheetState extends State<CreateCircleSheet> {
             onChanged: (v) => setState(() => _isPublic = v),
           ),
           SizedBox(height: 8),
-          Text('Tags', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text('Tags', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 8),
           Row(children: [
             Expanded(
@@ -472,19 +498,33 @@ class _CreateCircleSheetState extends State<CreateCircleSheet> {
               ),
             ),
             SizedBox(width: 8),
-            IconButton(onPressed: _addTag, icon: Icon(Icons.add_circle, color: Color(0xFF8B5CF6))),
+            IconButton(onPressed: _addTag, icon: Icon(Icons.add_circle, color: cs.primary)),
           ]),
           if (_tags.isNotEmpty) ...[
             SizedBox(height: 8),
-            Wrap(spacing: 8, children: _tags.map((t) => Chip(label: Text(t), onDeleted: () => setState(() => _tags.remove(t)), deleteIcon: Icon(Icons.close, size: 16))).toList()),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: _tags.map((t) => Chip(
+                label: Text(t),
+                deleteIcon: Icon(Icons.close, size: 16),
+                onDeleted: () => setState(() => _tags.remove(t)),
+              )).toList(),
+            ),
           ],
           SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF8B5CF6), padding: EdgeInsets.symmetric(vertical: 14)),
-              child: _submitting ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text('Create Circle'),
+              child: _submitting
+                  ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text('Create Circle'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                padding: EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
           ),
         ]),

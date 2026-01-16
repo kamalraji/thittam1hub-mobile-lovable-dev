@@ -83,6 +83,7 @@ class _PulsePageState extends State<PulsePage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -123,6 +124,7 @@ class _PulsePageState extends State<PulsePage> {
   void _onConnect() async {
     if (_currentIndex >= _filteredProfiles.length) return;
     final profile = _filteredProfiles[_currentIndex];
+    final cs = Theme.of(context).colorScheme;
     
     try {
       await _impactService.sendConnectionRequest(
@@ -134,7 +136,7 @@ class _PulsePageState extends State<PulsePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Connection request sent to ${profile.fullName}'),
-            backgroundColor: Color(0xFF8B5CF6),
+            backgroundColor: cs.primary,
           ),
         );
       }
@@ -195,118 +197,127 @@ class _PulsePageState extends State<PulsePage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: Color(0xFFF9FAFB),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by name, skill, etc...',
-                      prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search by name, skill, etc...',
+                        prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: cs.surfaceContainerHighest,
                       ),
-                      filled: true,
-                      fillColor: Colors.white,
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.filter_list, color: Colors.grey[600]),
-                  onPressed: _showFilterDialog,
-                ),
-              ],
-            ),
-          ),
-          if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty || _selectedLookingFor.isNotEmpty)
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  ..._selectedSkills.map((s) => _buildFilterChip(s, () {
-                    setState(() => _selectedSkills.remove(s));
-                    _loadProfiles();
-                  })),
-                  ..._selectedInterests.map((i) => _buildFilterChip(i, () {
-                    setState(() => _selectedInterests.remove(i));
-                    _loadProfiles();
-                  })),
-                  ..._selectedLookingFor.map((l) => _buildFilterChip(l, () {
-                    setState(() => _selectedLookingFor.remove(l));
-                    _loadProfiles();
-                  })),
+                  IconButton(
+                    icon: Icon(Icons.filter_list, color: cs.onSurfaceVariant),
+                    onPressed: _showFilterDialog,
+                  ),
                 ],
               ),
             ),
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: FadeSlideTransition(
-                        child: const ProfileCardSkeleton(),
-                      ),
-                    ),
-                  )
-                : _filteredProfiles.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-                            SizedBox(height: 16),
-                            Text('No profiles found.', style: TextStyle(color: Colors.grey[600])),
-                            SizedBox(height: 8),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedSkills.clear();
-                                  _selectedInterests.clear();
-                                  _selectedLookingFor.clear();
-                                });
-                                _loadProfiles();
-                              },
-                              child: Text('Clear Filters'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ProfileCard(
-                        profile: _filteredProfiles[_currentIndex],
-                        matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
-                        isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
-                        onSkip: _onSkip,
-                        onConnect: _onConnect,
-                        onSave: _onSave,
-                        onTap: () => context.push(
-                          '/impact/profile/${_filteredProfiles[_currentIndex].userId}',
-                          extra: _filteredProfiles[_currentIndex],
+            if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty || _selectedLookingFor.isNotEmpty)
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    ..._selectedSkills.map((s) => _buildFilterChip(s, () {
+                      setState(() => _selectedSkills.remove(s));
+                      _loadProfiles();
+                    })),
+                    ..._selectedInterests.map((i) => _buildFilterChip(i, () {
+                      setState(() => _selectedInterests.remove(i));
+                      _loadProfiles();
+                    })),
+                    ..._selectedLookingFor.map((l) => _buildFilterChip(l, () {
+                      setState(() => _selectedLookingFor.remove(l));
+                      _loadProfiles();
+                    })),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: FadeSlideTransition(
+                          child: const ProfileCardSkeleton(),
                         ),
                       ),
-          ),
-        ],
+                    )
+                  : _filteredProfiles.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.people_outline, size: 64, color: cs.onSurfaceVariant),
+                              SizedBox(height: 16),
+                              Text('No profiles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                              SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedSkills.clear();
+                                    _selectedInterests.clear();
+                                    _selectedLookingFor.clear();
+                                  });
+                                  _loadProfiles();
+                                },
+                                child: Text('Clear Filters'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ProfileCard(
+                          profile: _filteredProfiles[_currentIndex],
+                          matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
+                          isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
+                          onSkip: _onSkip,
+                          onConnect: _onConnect,
+                          onSave: _onSave,
+                          onTap: () => context.push(
+                            '/impact/profile/${_filteredProfiles[_currentIndex].userId}',
+                            extra: _filteredProfiles[_currentIndex],
+                          ),
+                        ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, VoidCallback onRemove) => Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: Chip(
-          label: Text(label),
-          deleteIcon: Icon(Icons.close, size: 16),
-          onDeleted: onRemove,
-          backgroundColor: Color(0xFF8B5CF6).withValues(alpha: 0.1),
-          labelStyle: TextStyle(color: Color(0xFF8B5CF6)),
-        ),
-      );
+  Widget _buildFilterChip(String label, VoidCallback onRemove) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Chip(
+        label: Text(label),
+        deleteIcon: Icon(Icons.close, size: 16),
+        onDeleted: onRemove,
+        backgroundColor: cs.primary.withValues(alpha: 0.1),
+        labelStyle: TextStyle(color: cs.primary),
+      ),
+    );
+  }
 }
 
 class FilterSheet extends StatefulWidget {
@@ -344,6 +355,9 @@ class _FilterSheetState extends State<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     final allSkills = widget.allProfiles
         .expand((p) => p.skills)
         .toSet()
@@ -373,7 +387,7 @@ class _FilterSheetState extends State<FilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Filters', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -409,7 +423,8 @@ class _FilterSheetState extends State<FilterSheet> {
                 },
                 child: Text('Apply Filters'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF8B5CF6),
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: 16),
                 ),
               ),
@@ -420,35 +435,40 @@ class _FilterSheetState extends State<FilterSheet> {
     );
   }
 
-  Widget _buildSection(String title, List<String> options, List<String> selected) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: options.map((option) {
-              final isSelected = selected.contains(option);
-              return FilterChip(
-                label: Text(option),
-                selected: isSelected,
-                onSelected: (value) {
-                  setState(() {
-                    if (value) {
-                      selected.add(option);
-                    } else {
-                      selected.remove(option);
-                    }
-                  });
-                },
-                selectedColor: Color(0xFF8B5CF6).withValues(alpha: 0.2),
-                checkmarkColor: Color(0xFF8B5CF6),
-              );
-            }).toList(),
-          ),
-        ],
-      );
+  Widget _buildSection(String title, List<String> options, List<String> selected) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final isSelected = selected.contains(option);
+            return FilterChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    selected.add(option);
+                  } else {
+                    selected.remove(option);
+                  }
+                });
+              },
+              selectedColor: cs.primary.withValues(alpha: 0.2),
+              checkmarkColor: cs.primary,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
 }
 
 class ProfileCard extends StatefulWidget {
@@ -548,6 +568,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final swipeProgress = (_dragPosition.abs() / 80).clamp(0.0, 1.0);
     final isSwipingRight = _dragPosition > 0;
     final avatarHeroTag = HeroConfig.profileAvatarTag(widget.profile.userId);
@@ -574,156 +596,155 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-            Row(
-              children: [
-                Stack(
-                  children: [
-                    AnimatedHero(
-                      tag: avatarHeroTag,
-                      enabled: widget.enableHero,
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundImage: widget.profile.avatarUrl != null ? NetworkImage(widget.profile.avatarUrl!) : null,
-                        child: widget.profile.avatarUrl == null ? Text(widget.profile.fullName.substring(0, 1), style: TextStyle(fontSize: 24)) : null,
-                      ),
-                    ),
-                    if (widget.isOnline)
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
+                        Row(
+                          children: [
+                            Stack(
+                              children: [
+                                AnimatedHero(
+                                  tag: avatarHeroTag,
+                                  enabled: widget.enableHero,
+                                  child: CircleAvatar(
+                                    radius: 30,
+                                    backgroundImage: widget.profile.avatarUrl != null ? NetworkImage(widget.profile.avatarUrl!) : null,
+                                    child: widget.profile.avatarUrl == null ? Text(widget.profile.fullName.substring(0, 1), style: TextStyle(fontSize: 24)) : null,
+                                  ),
+                                ),
+                                if (widget.isOnline)
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 16,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: cs.surface, width: 2),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TextHero(
+                                    tag: nameHeroTag,
+                                    enabled: widget.enableHero,
+                                    child: Text(widget.profile.fullName, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(widget.profile.headline, style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant), overflow: TextOverflow.ellipsis),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.favorite, color: cs.primary, size: 16),
+                                  SizedBox(width: 6),
+                                  Text('${widget.matchScore}%', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                  ],
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextHero(
-                        tag: nameHeroTag,
-                        enabled: widget.enableHero,
-                        child: Text(widget.profile.fullName, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                      ),
-                      SizedBox(height: 4),
-                      Text(widget.profile.headline, style: TextStyle(color: Colors.grey[600]), overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.favorite, color: Color(0xFF8B5CF6), size: 16),
-                      SizedBox(width: 6),
-                      Text('${widget.matchScore}%', style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-            Text('🎯 Looking for: ${widget.profile.lookingFor.join(', ')}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            SizedBox(height: 12),
-            if (_mutualConnections.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(Icons.people, size: 16, color: Color(0xFF8B5CF6)),
-                  SizedBox(width: 4),
-                  Text('${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}', style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold)),
-                ],
-              ),
-              SizedBox(height: 8),
-              SizedBox(
-                height: 36,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _mutualConnections.length.clamp(0, 5),
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Tooltip(
-                      message: _mutualConnections[i].fullName,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundImage: _mutualConnections[i].avatarUrl != null ? NetworkImage(_mutualConnections[i].avatarUrl!) : null,
-                        child: _mutualConnections[i].avatarUrl == null ? Text(_mutualConnections[i].fullName[0]) : null,
-                      ),
+                        SizedBox(height: 24),
+                        Text('🎯 Looking for: ${widget.profile.lookingFor.join(', ')}', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 12),
+                        if (_mutualConnections.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              Icon(Icons.people, size: 16, color: cs.primary),
+                              SizedBox(width: 4),
+                              Text('${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          SizedBox(
+                            height: 36,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _mutualConnections.length.clamp(0, 5),
+                              itemBuilder: (context, i) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Tooltip(
+                                  message: _mutualConnections[i].fullName,
+                                  child: CircleAvatar(
+                                    radius: 18,
+                                    backgroundImage: _mutualConnections[i].avatarUrl != null ? NetworkImage(_mutualConnections[i].avatarUrl!) : null,
+                                    child: _mutualConnections[i].avatarUrl == null ? Text(_mutualConnections[i].fullName[0]) : null,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                        ],
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: widget.profile.interests.take(3).map((interest) => Chip(label: Text(interest))).toList(),
+                        ),
+                        SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Vibe: ${widget.profile.vibeEmoji}', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                            Text('🔥 Level ${widget.profile.level}', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                          ],
+                        ),
+                        Spacer(),
+                        Text(
+                          'Swipe left to skip, right to save, or use buttons below',
+                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 12),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isNarrow = constraints.maxWidth < 340;
+                            if (isNarrow) {
+                              return Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildSkipButton(cs),
+                                      _buildSaveButton(),
+                                    ],
+                                  ),
+                                  SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: _buildConnectButton(cs),
+                                  ),
+                                ],
+                              );
+                            }
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildSkipButton(cs),
+                                _buildConnectButton(cs),
+                                _buildSaveButton(),
+                              ],
+                            );
+                          },
+                        ),
+                        SizedBox(height: 10),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 12),
-            ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: widget.profile.interests.take(3).map((interest) => Chip(label: Text(interest))).toList(),
-            ),
-            SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Vibe: ${widget.profile.vibeEmoji}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('🔥 Level ${widget.profile.level}', style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            Spacer(),
-            Text(
-              'Swipe left to skip, right to save, or use buttons below',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: widget.onSkip,
-                  child: Icon(Icons.close, color: Colors.white),
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.red[400],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: widget.onConnect,
-                  child: Text('Connect', style: TextStyle(fontSize: 18)),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-                    backgroundColor: Color(0xFF8B5CF6),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: widget.onSave,
-                  child: Icon(Icons.star_border, color: Colors.white),
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(20),
-                    backgroundColor: Colors.amber[600],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
-    ),
                 if (_dragPosition.abs() > 20)
                   Positioned.fill(
                     child: Align(
@@ -733,7 +754,7 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                         child: Container(
                           padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isSwipingRight ? Colors.amber[600]!.withValues(alpha: swipeProgress) : Colors.red[400]!.withValues(alpha: swipeProgress),
+                            color: isSwipingRight ? Colors.amber[600]!.withValues(alpha: swipeProgress) : cs.error.withValues(alpha: swipeProgress),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -749,6 +770,43 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSkipButton(ColorScheme cs) {
+    return ElevatedButton(
+      onPressed: widget.onSkip,
+      child: Icon(Icons.close, color: cs.onError),
+      style: ElevatedButton.styleFrom(
+        shape: CircleBorder(),
+        padding: EdgeInsets.all(20),
+        backgroundColor: cs.error,
+      ),
+    );
+  }
+
+  Widget _buildConnectButton(ColorScheme cs) {
+    return ElevatedButton(
+      onPressed: widget.onConnect,
+      child: Text('Connect', style: TextStyle(fontSize: 18)),
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return ElevatedButton(
+      onPressed: widget.onSave,
+      child: Icon(Icons.star_border, color: Colors.white),
+      style: ElevatedButton.styleFrom(
+        shape: CircleBorder(),
+        padding: EdgeInsets.all(20),
+        backgroundColor: Colors.amber[600],
       ),
     );
   }

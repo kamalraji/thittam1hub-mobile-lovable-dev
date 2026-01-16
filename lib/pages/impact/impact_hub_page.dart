@@ -104,9 +104,13 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   void _showNotificationsSheet() async {
     await _loadNotifications();
     if (!mounted) return;
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
@@ -121,7 +125,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Notifications', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Notifications', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   Row(
                     children: [
                       if (_unreadCount > 0)
@@ -140,7 +144,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
               SizedBox(height: 8),
               Expanded(
                 child: _notifications.isEmpty
-                    ? Center(child: Text('No notifications'))
+                    ? Center(child: Text('No notifications', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)))
                     : ListView.builder(
                         controller: scrollController,
                         itemCount: _notifications.length,
@@ -148,7 +152,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                           final n = _notifications[index];
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 4),
-                            color: n.isRead ? null : Color(0xFF8B5CF6).withValues(alpha: 0.05),
+                            color: n.isRead ? cs.surfaceContainerHighest : cs.primary.withValues(alpha: 0.05),
                             child: ListTile(
                               leading: CircleAvatar(
                                 backgroundImage: n.avatarUrl != null ? NetworkImage(n.avatarUrl!) : null,
@@ -161,7 +165,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                                 children: [
                                   Text(n.message),
                                   SizedBox(height: 4),
-                                  Text(_formatTimestamp(n.createdAt), style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                                  Text(_formatTimestamp(n.createdAt), style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                                 ],
                               ),
                               onTap: () async {
@@ -185,9 +189,13 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   void _showRequestsSheet() async {
     await _loadPendingRequests();
     if (!mounted) return;
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -202,14 +210,14 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Connection Requests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Connection Requests', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   Chip(label: Text('${_pendingRequests.length}')),
                 ],
               ),
               SizedBox(height: 8),
               Expanded(
                 child: _pendingRequests.isEmpty
-                    ? Center(child: Text('No pending requests'))
+                    ? Center(child: Text('No pending requests', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)))
                     : ListView.builder(
                         controller: scrollController,
                         itemCount: _pendingRequests.length,
@@ -229,7 +237,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                                 children: [
                                   IconButton(
                                     tooltip: 'Decline',
-                                    icon: Icon(Icons.close, color: Colors.red[400]),
+                                    icon: Icon(Icons.close, color: cs.error),
                                     onPressed: () async {
                                       await _impactService.respondToConnectionRequest(requestId: r.id, accept: false);
                                       await _loadPendingRequests();
@@ -238,7 +246,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                                   ),
                                   IconButton(
                                     tooltip: 'Accept',
-                                    icon: Icon(Icons.check_circle, color: Color(0xFF8B5CF6)),
+                                    icon: Icon(Icons.check_circle, color: cs.primary),
                                     onPressed: () async {
                                       await _impactService.respondToConnectionRequest(requestId: r.id, accept: true);
                                       await _loadPendingRequests();
@@ -279,12 +287,13 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   }
 
   Color _getNotificationColor(NotificationType type) {
+    final cs = Theme.of(context).colorScheme;
     switch (type) {
       case NotificationType.CONNECTION_REQUEST:
       case NotificationType.CONNECTION_ACCEPTED:
-        return Color(0xFF8B5CF6);
+        return cs.primary;
       case NotificationType.CIRCLE_INVITE:
-        return Color(0xFF06B6D4);
+        return cs.tertiary;
       case NotificationType.SPARK_REACTION:
         return Colors.amber;
       case NotificationType.NEW_BADGE:
@@ -322,12 +331,15 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
       body: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return <Widget>[
             SliverAppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: cs.surface,
               pinned: true,
               expandedHeight: 200.0,
               flexibleSpace: FlexibleSpaceBar(
@@ -335,8 +347,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                 centerTitle: true,
                 title: Text(
                   'Impact Hub',
-                  style: TextStyle(
-                    color: Colors.black,
+                  style: textTheme.titleLarge?.copyWith(
+                    color: cs.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -344,8 +356,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Color(0xFF8B5CF6),
-                        Color(0xFF06B6D4),
+                        cs.primary,
+                        cs.tertiary,
                       ],
                     ),
                   ),
@@ -366,7 +378,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                 Stack(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.notifications_none),
+                      icon: Icon(Icons.notifications_none, color: cs.onSurface),
                       onPressed: _showNotificationsSheet,
                     ),
                     if (_unreadCount > 0)
@@ -376,7 +388,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                         child: Container(
                           padding: EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: cs.error,
                             shape: BoxShape.circle,
                           ),
                           constraints: BoxConstraints(
@@ -385,7 +397,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                           ),
                           child: Text(
                             '$_unreadCount',
-                            style: TextStyle(color: Colors.white, fontSize: 10),
+                            style: TextStyle(color: cs.onError, fontSize: 10),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -393,12 +405,12 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.people_outline),
+                  icon: Icon(Icons.people_outline, color: cs.onSurface),
                   onPressed: _showRequestsSheet,
                 ),
                 Chip(
                   label: Text('Score: ${_myProfile?.impactScore ?? 0}'),
-                  backgroundColor: Colors.white,
+                  backgroundColor: cs.surfaceContainerHighest,
                 ),
                 SizedBox(width: 16),
               ],
@@ -413,10 +425,11 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
             ),
             SliverPersistentHeader(
               delegate: _SliverAppBarDelegate(
-                ModeSelector(
+                child: ModeSelector(
                   selectedIndex: _selectedIndex,
                   onTap: _onModeTapped,
                 ),
+                height: 100,
               ),
               pinned: true,
             ),
@@ -439,18 +452,20 @@ class ScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final score = profile?.impactScore ?? 0;
     final level = profile?.level ?? 1;
     final pointsToNextLevel = (level * 1000) - score;
     final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
+    
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            Color(0xFF8B5CF6),
-            Color(0xFF06B6D4),
+            cs.primary,
+            cs.tertiary,
           ],
         ),
       ),
@@ -460,7 +475,7 @@ class ScoreCard extends StatelessWidget {
           Text(
             '🎯 Your Impact Score',
             style: TextStyle(
-              color: Colors.white,
+              color: cs.onPrimary,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -468,18 +483,20 @@ class ScoreCard extends StatelessWidget {
           SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: Colors.white.withValues(alpha: 0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            backgroundColor: cs.onPrimary.withValues(alpha: 0.3),
+            valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
           ),
           SizedBox(height: 8),
           Text(
             '$score pts • $pointsToNextLevel to Level ${level + 1}',
             style: TextStyle(
-              color: Colors.white,
+              color: cs.onPrimary,
             ),
           ),
           SizedBox(height: 16),
-              Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
             children: [
               ElevatedButton(
                 onPressed: () {
@@ -492,11 +509,10 @@ class ScoreCard extends StatelessWidget {
                 },
                 child: Text('View Badges'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Color(0xFF8B5CF6),
+                  backgroundColor: cs.surface,
+                  foregroundColor: cs.primary,
                 ),
               ),
-              SizedBox(width: 16),
               ElevatedButton(
                 onPressed: () {
                   showModalBottomSheet(
@@ -508,8 +524,8 @@ class ScoreCard extends StatelessWidget {
                 },
                 child: Text('Leaderboard'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Color(0xFF8B5CF6),
+                  backgroundColor: cs.surface,
+                  foregroundColor: cs.primary,
                 ),
               ),
             ],
@@ -559,6 +575,9 @@ class _BadgesSheetState extends State<BadgesSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -573,7 +592,7 @@ class _BadgesSheetState extends State<BadgesSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Your Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Your Badges', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   Chip(label: Text('${_mine.length}/${_all.length}')),
                 ],
               ),
@@ -598,7 +617,7 @@ class _BadgesSheetState extends State<BadgesSheet> {
                             opacity: earned ? 1 : 0.4,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
+                                color: cs.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               padding: const EdgeInsets.all(12),
@@ -609,7 +628,7 @@ class _BadgesSheetState extends State<BadgesSheet> {
                                   const SizedBox(height: 8),
                                   Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                                   const SizedBox(height: 4),
-                                  Text(b.rarity, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                                  Text(b.rarity, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
                                 ],
                               ),
                             ),
@@ -659,6 +678,8 @@ class _LeaderboardSheetState extends State<LeaderboardSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -670,7 +691,7 @@ class _LeaderboardSheetState extends State<LeaderboardSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Leaderboard', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Leaderboard', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Expanded(
                 child: _loading
@@ -718,9 +739,12 @@ class ModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final selectorHeight = (screenHeight * 0.12).clamp(80.0, 120.0);
+    
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      height: 100,
+      height: selectorHeight,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(vertical: 10),
@@ -771,6 +795,8 @@ class ModePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -779,7 +805,7 @@ class ModePill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Color(0xFF8B5CF6) : Colors.grey[200],
+          color: isSelected ? cs.primary : cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Column(
@@ -787,13 +813,13 @@ class ModePill extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.black,
+              color: isSelected ? cs.onPrimary : cs.onSurface,
             ),
             SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
+                color: isSelected ? cs.onPrimary : cs.onSurface,
                 fontSize: 12,
               ),
             ),
@@ -805,29 +831,23 @@ class ModePill extends StatelessWidget {
 }
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
+  _SliverAppBarDelegate({required this.child, this.height = 100});
 
-  final ModeSelector _tabBar;
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
+  final Widget child;
+  final double height;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return new Container(
-      child: _tabBar,
-    );
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(height: height, child: child);
   }
 
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
-}
-
-extension on ModeSelector {
-  Size get preferredSize => Size.fromHeight(100);
 }
