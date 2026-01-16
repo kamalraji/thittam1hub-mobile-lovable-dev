@@ -42,10 +42,13 @@ class _SpacesPageState extends State<SpacesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cs.surface,
         elevation: 0,
         title: StreamBuilder<List<Space>>(
           stream: _spacesStream,
@@ -62,33 +65,39 @@ class _SpacesPageState extends State<SpacesPage> {
             onPressed: _showCreateSpaceDialog,
             icon: const Icon(Icons.add_circle_outline),
             label: const Text('Create Space'),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF8B5CF6)),
+            style: TextButton.styleFrom(foregroundColor: cs.primary),
           ),
         ],
       ),
-      body: StreamBuilder<List<Space>>(
-        stream: _spacesStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return ListView(children: List.generate(4, (_) => const SpaceCardSkeleton()));
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No live spaces right now.'));
-          } else {
-            final spaces = snapshot.data!;
-            return ListView.builder(
-              itemCount: spaces.length,
-              itemBuilder: (context, index) {
-                final space = spaces[index];
-                return SpaceCard(
-                  space: space,
-                  onTap: () => _navigateToSpace(space),
-                );
-              },
-            );
-          }
-        },
+      body: SafeArea(
+        child: StreamBuilder<List<Space>>(
+          stream: _spacesStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return ListView(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                children: List.generate(4, (_) => const SpaceCardSkeleton()),
+              );
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No live spaces right now.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
+            } else {
+              final spaces = snapshot.data!;
+              return ListView.builder(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                itemCount: spaces.length,
+                itemBuilder: (context, index) {
+                  final space = spaces[index];
+                  return SpaceCard(
+                    space: space,
+                    onTap: () => _navigateToSpace(space),
+                  );
+                },
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -157,6 +166,9 @@ class SpaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -170,7 +182,7 @@ class SpaceCard extends StatelessWidget {
             children: [
               Text(
                 space.topic,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -193,13 +205,14 @@ class SpaceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   // Placeholder for speaker count
-                  const Text('15 speakers'),
+                  Text('15 speakers', style: textTheme.bodySmall),
                   const Spacer(),
                   ElevatedButton(
                     onPressed: () {},
                     child: const Text('Join'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B5CF6),
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),
