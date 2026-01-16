@@ -25,6 +25,12 @@ class HeroConfig {
   
   /// Creates a consistent hero tag for profile names
   static String profileNameTag(String profileId) => 'profile_name_$profileId';
+  
+  /// Creates a consistent hero tag for ticket cards
+  static String ticketCardTag(String registrationId) => 'ticket_card_$registrationId';
+  
+  /// Creates a consistent hero tag for ticket QR codes
+  static String ticketQrTag(String registrationId) => 'ticket_qr_$registrationId';
 }
 
 /// Custom flight shuttle builder for smooth hero transitions with fade effect
