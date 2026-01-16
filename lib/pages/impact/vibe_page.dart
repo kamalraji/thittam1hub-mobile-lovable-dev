@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 
 class VibePage extends StatefulWidget {
   const VibePage({Key? key}) : super(key: key);
@@ -42,6 +43,14 @@ class _VibePageState extends State<VibePage> {
     }
   }
 
+  void _showVibeHistorySheet() {
+    showGlassBottomSheet(
+      context: context,
+      title: 'Your Vibe History',
+      child: const VibeHistoryContent(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -55,14 +64,7 @@ class _VibePageState extends State<VibePage> {
         title: Text('🎮 Vibe Check', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: cs.surface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                builder: (context) => const _MyVibesSheet(),
-              );
-            },
+            onPressed: _showVibeHistorySheet,
             style: TextButton.styleFrom(foregroundColor: cs.primary),
             child: const Text('Your Vibes'),
           )
@@ -74,64 +76,67 @@ class _VibePageState extends State<VibePage> {
                 padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
                 children: List.generate(2, (_) => const VibeGameSkeleton()),
               )
-            : ListView(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
-                children: [
-                  _buildSectionTitle('🔥 Live Now'),
-                  if (_quick != null)
-                    QuickMatchCard(
-                      game: _quick!,
-                      selectedIndex: _selectedQuick,
-                      onOption: (i) async {
-                        setState(() => _selectedQuick = i);
-                        try {
-                          await _svc.submitQuickMatch(gameId: _quick!.id, optionIndex: i);
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Answer submitted. Finding matches...')));
-                        } catch (e) {
-                          debugPrint('Quick match submit error: $e');
-                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
-                        }
-                      },
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text('No live quick match right now.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                    ),
-                  _buildSectionTitle('🏆 Trivia Challenge'),
-                  if (_trivia != null)
-                    TriviaCard(
-                      trivia: _trivia!,
-                      selectedIndex: _selectedTrivia,
-                      onOption: (i) async {
-                        setState(() => _selectedTrivia = i);
-                        try {
-                          final correct = await _svc.submitTrivia(trivia: _trivia!, optionIndex: i);
-                          if (correct) {
-                            await _svc.addImpactPoints(50);
-                            await _svc.awardBadgeIfMissing('quiz_whiz');
+            : BrandedRefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                  children: [
+                    _buildSectionTitle('🔥 Live Now'),
+                    if (_quick != null)
+                      QuickMatchCard(
+                        game: _quick!,
+                        selectedIndex: _selectedQuick,
+                        onOption: (i) async {
+                          setState(() => _selectedQuick = i);
+                          try {
+                            await _svc.submitQuickMatch(gameId: _quick!.id, optionIndex: i);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Answer submitted. Finding matches...')));
+                          } catch (e) {
+                            debugPrint('Quick match submit error: $e');
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
                           }
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(correct ? 'Correct! +50 pts 🧠' : 'Nice try!')));
-                        } catch (e) {
-                          debugPrint('Trivia submit error: $e');
-                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
-                        }
-                      },
-                    )
-                  else
+                        },
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text('No live quick match right now.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                      ),
+                    _buildSectionTitle('🏆 Trivia Challenge'),
+                    if (_trivia != null)
+                      TriviaCard(
+                        trivia: _trivia!,
+                        selectedIndex: _selectedTrivia,
+                        onOption: (i) async {
+                          setState(() => _selectedTrivia = i);
+                          try {
+                            final correct = await _svc.submitTrivia(trivia: _trivia!, optionIndex: i);
+                            if (correct) {
+                              await _svc.addImpactPoints(50);
+                              await _svc.awardBadgeIfMissing('quiz_whiz');
+                            }
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(correct ? 'Correct! +50 pts 🧠' : 'Nice try!')));
+                          } catch (e) {
+                            debugPrint('Trivia submit error: $e');
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
+                          }
+                        },
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text('No active trivia at the moment.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                      ),
+                    _buildSectionTitle('🧊 Icebreaker of the Day'),
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text('No active trivia at the moment.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text('Come back soon for a new icebreaker!', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
                     ),
-                  _buildSectionTitle('🧊 Icebreaker of the Day'),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text('Come back soon for a new icebreaker!', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
       ),
     );
@@ -248,36 +253,57 @@ class TriviaCard extends StatelessWidget {
   }
 }
 
-class _MyVibesSheet extends StatelessWidget {
-  const _MyVibesSheet({Key? key}) : super(key: key);
+/// Content for vibe history glassmorphism sheet
+class VibeHistoryContent extends StatelessWidget {
+  const VibeHistoryContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
-      builder: (context, scrollController) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Your Vibe History', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: 3,
-                itemBuilder: (context, index) => ListTile(
-                  leading: const Icon(Icons.history),
-                  title: Text('Vibe game #${index + 1}'),
-                  subtitle: const Text('Played recently'),
-                ),
-              ),
-            )
-          ]),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 300,
+          child: ListView.builder(
+            itemCount: 3,
+            itemBuilder: (context, index) => ListTile(
+              leading: Icon(Icons.history, color: cs.primary),
+              title: Text('Vibe game #${index + 1}', style: textTheme.bodyMedium),
+              subtitle: Text('Played recently', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class VibeGameSkeleton extends StatelessWidget {
+  const VibeGameSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(height: 14, width: 100, color: cs.surfaceContainerHighest),
+            const SizedBox(height: 12),
+            Container(height: 18, width: double.infinity, color: cs.surfaceContainerHighest),
+            const SizedBox(height: 16),
+            ...List.generate(3, (_) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Container(height: 40, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(10))),
+            )),
+          ],
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/supabase/circle_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 
 class CirclesPage extends StatefulWidget {
   const CirclesPage({Key? key}) : super(key: key);
@@ -17,6 +18,7 @@ class _CirclesPageState extends State<CirclesPage> {
   late Future<List<Circle>> _popularCirclesFuture;
   late Future<List<Circle>> _recommendedCirclesFuture;
   Set<String> _joinedCircles = {};
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -30,6 +32,12 @@ class _CirclesPageState extends State<CirclesPage> {
     _recommendedCirclesFuture = _circleService.getRecommendedCircles();
     _joinedCircles = await _circleService.getUserCircles();
     if (mounted) setState(() {});
+  }
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await _loadData();
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   Future<void> _toggleCircleMembership(Circle circle) async {
@@ -78,6 +86,7 @@ class _CirclesPageState extends State<CirclesPage> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
     final cardWidth = (screenWidth * 0.55).clamp(180.0, 260.0);
     final listHeight = screenWidth < 400 ? 200.0 : 220.0;
     
@@ -100,139 +109,179 @@ class _CirclesPageState extends State<CirclesPage> {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search circles...',
-                  prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
+        child: BrandedRefreshIndicator(
+          onRefresh: _onRefresh,
+          child: ListView(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search circles...',
+                    prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: cs.surfaceContainerHighest,
                   ),
-                  filled: true,
-                  fillColor: cs.surfaceContainerHighest,
                 ),
               ),
-            ),
-            _buildSectionTitle('📍 Auto-Matched Circles'),
-            FutureBuilder<List<Circle>>(
-              future: _autoMatchedCirclesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Column(
-                    children: List.generate(3, (index) => FadeSlideTransition(
-                      delay: staggerDelay(index),
-                      child: const CircleCardSkeleton(),
-                    )),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No auto-matched circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
-                } else {
-                  final circles = snapshot.data!;
-                  return Column(
-                    children: circles
-                        .map((circle) => AutoMatchedCircleCard(
-                              circle: circle,
-                              isJoined: _joinedCircles.contains(circle.id),
-                              onTap: () => _navigateToChat(circle),
-                              onJoinToggle: () => _toggleCircleMembership(circle),
-                            ))
-                        .toList(),
-                  );
-                }
-              },
-            ),
-            _buildSectionTitle('🔥 Popular Circles'),
-            SizedBox(
-              height: listHeight,
-              child: FutureBuilder<List<Circle>>(
+              _buildSectionTitle('📍 Auto-Matched Circles'),
+              FutureBuilder<List<Circle>>(
+                future: _autoMatchedCirclesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Column(
+                      children: List.generate(3, (index) => FadeSlideTransition(
+                        delay: staggerDelay(index),
+                        child: const CircleCardSkeleton(),
+                      )),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No auto-matched circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
+                  } else {
+                    final circles = snapshot.data!;
+                    return Column(
+                      children: circles
+                          .map((circle) => AutoMatchedCircleCard(
+                                circle: circle,
+                                isJoined: _joinedCircles.contains(circle.id),
+                                onTap: () => _navigateToChat(circle),
+                                onJoinToggle: () => _toggleCircleMembership(circle),
+                              ))
+                          .toList(),
+                    );
+                  }
+                },
+              ),
+              _buildSectionTitle('🔥 Popular Circles'),
+              _buildCircleSection(
                 future: _popularCirclesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 3,
-                      itemBuilder: (_, index) => FadeSlideTransition(
-                        delay: staggerDelay(index),
-                        child: const PopularCircleCardSkeleton(),
-                      ),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No popular circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
-                  } else {
-                    final circles = snapshot.data!;
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: circles.length,
-                      itemBuilder: (context, index) {
-                        final circle = circles[index];
-                        return PopularCircleCard(
-                          circle: circle,
-                          isJoined: _joinedCircles.contains(circle.id),
-                          onTap: () => _navigateToChat(circle),
-                          onJoinToggle: () => _toggleCircleMembership(circle),
-                          cardWidth: cardWidth,
-                        );
-                      },
-                    );
-                  }
-                },
+                isTablet: isTablet,
+                cardWidth: cardWidth,
+                listHeight: listHeight,
               ),
-            ),
-            _buildSectionTitle('🎯 Based on Your Interests'),
-            SizedBox(
-              height: listHeight,
-              child: FutureBuilder<List<Circle>>(
+              _buildSectionTitle('🎯 Based on Your Interests'),
+              _buildCircleSection(
                 future: _recommendedCirclesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 3,
-                      itemBuilder: (_, index) => FadeSlideTransition(
-                        delay: staggerDelay(index),
-                        child: const PopularCircleCardSkeleton(),
-                      ),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No recommended circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
-                  } else {
-                    final circles = snapshot.data!;
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: circles.length,
-                      itemBuilder: (context, index) {
-                        final circle = circles[index];
-                        return PopularCircleCard(
-                          circle: circle,
-                          isJoined: _joinedCircles.contains(circle.id),
-                          onTap: () => _navigateToChat(circle),
-                          onJoinToggle: () => _toggleCircleMembership(circle),
-                          cardWidth: cardWidth,
-                        );
-                      },
-                    );
-                  }
-                },
+                isTablet: isTablet,
+                cardWidth: cardWidth,
+                listHeight: listHeight,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCircleSection({
+    required Future<List<Circle>> future,
+    required bool isTablet,
+    required double cardWidth,
+    required double listHeight,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final gridCrossAxisCount = screenWidth > 900 ? 3 : 2;
+    
+    return FutureBuilder<List<Circle>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          if (isTablet) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: gridCrossAxisCount,
+                  childAspectRatio: 1.4,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: 4,
+                itemBuilder: (_, index) => FadeSlideTransition(
+                  delay: staggerDelay(index),
+                  child: const PopularCircleCardSkeleton(),
+                ),
+              ),
+            );
+          }
+          return SizedBox(
+            height: listHeight,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              itemBuilder: (_, index) => FadeSlideTransition(
+                delay: staggerDelay(index),
+                child: const PopularCircleCardSkeleton(),
+              ),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No circles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
+        } else {
+          final circles = snapshot.data!;
+          
+          // Tablet: Grid layout
+          if (isTablet) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: gridCrossAxisCount,
+                  childAspectRatio: 1.4,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: circles.length,
+                itemBuilder: (context, index) {
+                  final circle = circles[index];
+                  return CircleGridCard(
+                    circle: circle,
+                    isJoined: _joinedCircles.contains(circle.id),
+                    onTap: () => _navigateToChat(circle),
+                    onJoinToggle: () => _toggleCircleMembership(circle),
+                  );
+                },
+              ),
+            );
+          }
+          
+          // Phone: Horizontal scroll
+          return SizedBox(
+            height: listHeight,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: circles.length,
+              itemBuilder: (context, index) {
+                final circle = circles[index];
+                return PopularCircleCard(
+                  circle: circle,
+                  isJoined: _joinedCircles.contains(circle.id),
+                  onTap: () => _navigateToChat(circle),
+                  onJoinToggle: () => _toggleCircleMembership(circle),
+                  cardWidth: cardWidth,
+                );
+              },
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -249,12 +298,10 @@ class _CirclesPageState extends State<CirclesPage> {
 
   void _openCreateCircle() {
     final cs = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    showGlassBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => CreateCircleSheet(
+      title: 'Create Circle',
+      child: CreateCircleContent(
         onCreate: (name, description, icon, isPublic, tags) async {
           await _circleService.createCircle(
             name: name,
@@ -389,15 +436,95 @@ class PopularCircleCard extends StatelessWidget {
   }
 }
 
-class CreateCircleSheet extends StatefulWidget {
-  final Future<void> Function(String name, String? description, String icon, bool isPublic, List<String> tags) onCreate;
-  const CreateCircleSheet({super.key, required this.onCreate});
+/// Grid card for tablet layouts
+class CircleGridCard extends StatelessWidget {
+  final Circle circle;
+  final bool isJoined;
+  final VoidCallback onTap;
+  final VoidCallback onJoinToggle;
+
+  const CircleGridCard({
+    Key? key,
+    required this.circle,
+    required this.isJoined,
+    required this.onTap,
+    required this.onJoinToggle,
+  }) : super(key: key);
 
   @override
-  State<CreateCircleSheet> createState() => _CreateCircleSheetState();
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(circle.icon, style: TextStyle(fontSize: 28)),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      circle.name,
+                      style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                circle.description ?? '',
+                style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '👥 ${circle.memberCount} members',
+                      style: textTheme.bodySmall,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: onJoinToggle,
+                    child: Text(isJoined ? 'Joined ✓' : 'Join'),
+                    style: TextButton.styleFrom(
+                      backgroundColor: isJoined ? cs.surfaceContainerHighest : cs.primary.withValues(alpha: 0.1),
+                      foregroundColor: isJoined ? cs.onSurfaceVariant : cs.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _CreateCircleSheetState extends State<CreateCircleSheet> {
+/// Content widget for Create Circle glassmorphism sheet
+class CreateCircleContent extends StatefulWidget {
+  final Future<void> Function(String name, String? description, String icon, bool isPublic, List<String> tags) onCreate;
+  const CreateCircleContent({super.key, required this.onCreate});
+
+  @override
+  State<CreateCircleContent> createState() => _CreateCircleContentState();
+}
+
+class _CreateCircleContentState extends State<CreateCircleContent> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _iconController = TextEditingController(text: '🌟');
@@ -451,11 +578,10 @@ class _CreateCircleSheetState extends State<CreateCircleSheet> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
-    return Padding(
-      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text('Create Circle', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           SizedBox(height: 12),
           TextField(
             controller: _nameController,
@@ -529,6 +655,81 @@ class _CreateCircleSheetState extends State<CreateCircleSheet> {
           ),
         ]),
       ),
+    );
+  }
+}
+
+class CircleCardSkeleton extends StatelessWidget {
+  const CircleCardSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Container(width: 40, height: 40, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(8))),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 14, width: 120, color: cs.surfaceContainerHighest),
+                  SizedBox(height: 8),
+                  Container(height: 10, width: 180, color: cs.surfaceContainerHighest),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PopularCircleCardSkeleton extends StatelessWidget {
+  const PopularCircleCardSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(right: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(width: 32, height: 32, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(8))),
+            SizedBox(height: 12),
+            Container(height: 14, width: 100, color: cs.surfaceContainerHighest),
+            SizedBox(height: 8),
+            Container(height: 10, width: 150, color: cs.surfaceContainerHighest),
+            Spacer(),
+            Container(height: 36, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(20))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Legacy CreateCircleSheet kept for backward compatibility but converted to use CreateCircleContent
+class CreateCircleSheet extends StatelessWidget {
+  final Future<void> Function(String name, String? description, String icon, bool isPublic, List<String> tags) onCreate;
+  const CreateCircleSheet({super.key, required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+      child: CreateCircleContent(onCreate: onCreate),
     );
   }
 }
