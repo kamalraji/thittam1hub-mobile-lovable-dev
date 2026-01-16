@@ -1,10 +1,26 @@
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/utils/result.dart';
 
 class EventService {
+  /// Convert technical errors to user-friendly messages
+  String _userFriendlyMessage(dynamic error) {
+    final msg = error.toString().toLowerCase();
+    if (msg.contains('socket') || msg.contains('network') || msg.contains('connection')) {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (msg.contains('timeout')) {
+      return 'Request timed out. Please try again.';
+    }
+    if (msg.contains('permission') || msg.contains('unauthorized')) {
+      return 'You don\'t have permission to view this content.';
+    }
+    return 'Failed to load events. Please try again.';
+  }
+
   /// Get all published public events
-  Future<List<Event>> getAllEvents() async {
+  Future<Result<List<Event>>> getAllEvents() async {
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -14,15 +30,16 @@ class EventService {
           .inFilter('visibility', ['PUBLIC'])
           .order('start_date', ascending: true);
 
-      return (data as List).map((json) => Event.fromJson(json)).toList();
+      final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      return Success(events);
     } catch (e) {
       debugPrint('❌ Get all events error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get events by category
-  Future<List<Event>> getEventsByCategory(EventCategory category) async {
+  Future<Result<List<Event>>> getEventsByCategory(EventCategory category) async {
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -32,15 +49,16 @@ class EventService {
           .eq('category', category.name)
           .order('start_date', ascending: true);
 
-      return (data as List).map((json) => Event.fromJson(json)).toList();
+      final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      return Success(events);
     } catch (e) {
       debugPrint('❌ Get events by category error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get events by mode
-  Future<List<Event>> getEventsByMode(EventMode mode) async {
+  Future<Result<List<Event>>> getEventsByMode(EventMode mode) async {
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -50,15 +68,16 @@ class EventService {
           .eq('mode', mode.name)
           .order('start_date', ascending: true);
 
-      return (data as List).map((json) => Event.fromJson(json)).toList();
+      final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      return Success(events);
     } catch (e) {
       debugPrint('❌ Get events by mode error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get event by ID
-  Future<Event?> getEventById(String eventId) async {
+  Future<Result<Event?>> getEventById(String eventId) async {
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -66,16 +85,16 @@ class EventService {
           .eq('id', eventId)
           .maybeSingle();
 
-      if (data == null) return null;
-      return Event.fromJson(data);
+      if (data == null) return const Success(null);
+      return Success(Event.fromJson(data));
     } catch (e) {
       debugPrint('❌ Get event by ID error: $e');
-      return null;
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get ticket tiers for an event
-  Future<List<TicketTier>> getTicketTiers(String eventId) async {
+  Future<Result<List<TicketTier>>> getTicketTiers(String eventId) async {
     try {
       final data = await SupabaseConfig.client
           .from('ticket_tiers')
@@ -84,17 +103,18 @@ class EventService {
           .eq('is_active', true)
           .order('sort_order', ascending: true);
 
-      return (data as List).map((json) => TicketTier.fromJson(json)).toList();
+      final tiers = (data as List).map((json) => TicketTier.fromJson(json)).toList();
+      return Success(tiers);
     } catch (e) {
       debugPrint('❌ Get ticket tiers error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get ticket tiers for multiple events in a single query
   /// Returns a map of eventId -> list of active tiers (sorted by sort_order)
-  Future<Map<String, List<TicketTier>>> getTicketTiersForEvents(List<String> eventIds) async {
-    if (eventIds.isEmpty) return {};
+  Future<Result<Map<String, List<TicketTier>>>> getTicketTiersForEvents(List<String> eventIds) async {
+    if (eventIds.isEmpty) return const Success({});
     try {
       final data = await SupabaseConfig.client
           .from('ticket_tiers')
@@ -108,15 +128,15 @@ class EventService {
       for (final t in tiers) {
         map.putIfAbsent(t.eventId, () => []).add(t);
       }
-      return map;
+      return Success(map);
     } catch (e) {
       debugPrint('❌ Get ticket tiers for events error: $e');
-      return {};
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Search events by name
-  Future<List<Event>> searchEvents(String query) async {
+  Future<Result<List<Event>>> searchEvents(String query) async {
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -126,15 +146,16 @@ class EventService {
           .ilike('name', '%$query%')
           .order('start_date', ascending: true);
 
-      return (data as List).map((json) => Event.fromJson(json)).toList();
+      final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      return Success(events);
     } catch (e) {
       debugPrint('❌ Search events error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Get upcoming events
-  Future<List<Event>> getUpcomingEvents() async {
+  Future<Result<List<Event>>> getUpcomingEvents() async {
     try {
       final now = DateTime.now().toIso8601String();
       final data = await SupabaseConfig.client
@@ -146,15 +167,16 @@ class EventService {
           .order('start_date', ascending: true)
           .limit(20);
 
-      return (data as List).map((json) => Event.fromJson(json)).toList();
+      final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      return Success(events);
     } catch (e) {
       debugPrint('❌ Get upcoming events error: $e');
-      return [];
+      return Failure(_userFriendlyMessage(e), e);
     }
   }
 
   /// Create a new event
-  Future<Event?> createEvent(Event event) async {
+  Future<Result<Event>> createEvent(Event event) async {
     try {
       final json = event.toJson();
       json.remove('organization'); // Remove nested object
@@ -165,15 +187,15 @@ class EventService {
           .select('*, organization:organizations(*)')
           .single();
 
-      return Event.fromJson(data);
+      return Success(Event.fromJson(data));
     } catch (e) {
       debugPrint('❌ Create event error: $e');
-      return null;
+      return Failure('Failed to create event. Please try again.', e);
     }
   }
 
   /// Update an event
-  Future<bool> updateEvent(Event event) async {
+  Future<Result<bool>> updateEvent(Event event) async {
     try {
       final json = event.toJson();
       json.remove('organization'); // Remove nested object
@@ -183,22 +205,21 @@ class EventService {
           .update(json)
           .eq('id', event.id);
 
-      return true;
+      return const Success(true);
     } catch (e) {
       debugPrint('❌ Update event error: $e');
-      return false;
+      return Failure('Failed to update event. Please try again.', e);
     }
   }
 
   /// Delete an event
-  Future<bool> deleteEvent(String eventId) async {
+  Future<Result<bool>> deleteEvent(String eventId) async {
     try {
       await SupabaseConfig.client.from('events').delete().eq('id', eventId);
-      return true;
+      return const Success(true);
     } catch (e) {
       debugPrint('❌ Delete event error: $e');
-      return false;
+      return Failure('Failed to delete event. Please try again.', e);
     }
   }
-
 }
