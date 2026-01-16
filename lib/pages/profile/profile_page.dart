@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/services/profile_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
+import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
+import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Profile Tab - Main screen showing user profile, stats, and menu options
 class ProfilePage extends StatefulWidget {
@@ -43,7 +48,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     final userId = SupabaseConfig.auth.currentUser?.id;
     if (userId == null) return;
 
-    setState(() => _isLoading = true);
+    if (!_isLoading) {
+      setState(() => _isLoading = true);
+    }
 
     try {
       final profile = await _profileService.getUserProfile(userId);
@@ -97,11 +104,76 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
+  void _showQuickActionsSheet() {
+    showGlassBottomSheet(
+      context: context,
+      title: 'Quick Actions',
+      child: GlassActionList(
+        actions: [
+          GlassActionButton(
+            icon: Icons.edit_outlined,
+            label: 'Edit Profile',
+            onTap: () async {
+              Navigator.pop(context);
+              await context.push('/profile/edit');
+              _loadProfile();
+            },
+          ),
+          GlassActionButton(
+            icon: Icons.qr_code,
+            label: 'Show QR Code',
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/profile/qr');
+            },
+          ),
+          GlassActionButton(
+            icon: Icons.share,
+            label: 'Share Profile',
+            onTap: () {
+              Navigator.pop(context);
+              _shareProfile();
+            },
+          ),
+          GlassActionButton(
+            icon: Icons.settings_outlined,
+            label: 'Settings',
+            onTap: () {
+              Navigator.pop(context);
+              context.push('/profile/settings');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareProfile() {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile sharing coming soon!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            children: [
+              const ProfileHeaderSkeleton(),
+              const SizedBox(height: AppSpacing.lg),
+              const QuickStatsRowSkeleton(),
+              const SizedBox(height: AppSpacing.lg),
+              ...List.generate(5, (index) => FadeSlideTransition(
+                delay: staggerDelay(index),
+                child: const MenuCardSkeleton(),
+              )),
+            ],
+          ),
+        ),
       );
     }
 
@@ -109,25 +181,35 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     final completeness = _profile?.completeness ?? 0;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showQuickActionsSheet,
+        child: const Icon(Icons.bolt),
+      ),
       body: SafeArea(
-        child: RefreshIndicator(
+        child: BrandedRefreshIndicator(
           onRefresh: _loadProfile,
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              // Profile Header
+              // Profile Header with Hero animation
               _ProfileHeader(
                 profile: _profile,
                 email: email,
                 completeness: completeness,
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Social Links Row
+              if (_profile != null)
+                _SocialLinksRow(profile: _profile!),
               const SizedBox(height: AppSpacing.lg),
 
-              // Quick Stats
+              // Quick Stats with responsive layout
               _QuickStatsRow(
                 eventsAttended: _eventsAttended,
                 upcomingEvents: _upcomingEvents,
                 savedEvents: _savedEvents,
+                completeness: completeness,
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -137,50 +219,126 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 const SizedBox(height: AppSpacing.lg),
               ],
 
-              // Menu Items
-              _MenuCard(
-                icon: Icons.edit_outlined,
-                title: 'Edit Profile',
-                onTap: () async {
-                  await context.push('/profile/edit');
-                  _loadProfile(); // Refresh after edit
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _MenuCard(
-                icon: Icons.qr_code,
-                title: 'My QR Code',
-                subtitle: 'For event check-in',
-                onTap: () => context.push('/profile/qr'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _MenuCard(
-                icon: Icons.confirmation_number_outlined,
-                title: 'My Registrations',
-                subtitle: '$_upcomingEvents upcoming',
-                onTap: () => context.push('/profile/registrations'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _MenuCard(
-                icon: Icons.favorite_border,
-                title: 'Saved Events',
-                subtitle: '$_savedEvents saved',
-                onTap: () => context.push('/profile/saved'),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _MenuCard(
-                icon: Icons.settings_outlined,
-                title: 'Settings',
-                onTap: () => context.push('/profile/settings'),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _MenuCard(
-                icon: Icons.logout,
-                title: 'Log Out',
-                textColor: AppColors.error,
-                onTap: _handleLogout,
-              ),
+              // Menu Items with staggered animation
+              ..._buildMenuItems(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildMenuItems() {
+    final menuItems = [
+      (Icons.edit_outlined, 'Edit Profile', null, () async {
+        await context.push('/profile/edit');
+        _loadProfile();
+      }),
+      (Icons.qr_code, 'My QR Code', 'For event check-in', () => context.push('/profile/qr')),
+      (Icons.confirmation_number_outlined, 'My Registrations', '$_upcomingEvents upcoming', () => context.push('/profile/registrations')),
+      (Icons.favorite_border, 'Saved Events', '$_savedEvents saved', () => context.push('/profile/saved')),
+      (Icons.settings_outlined, 'Settings', null, () => context.push('/profile/settings')),
+    ];
+
+    return [
+      ...menuItems.asMap().entries.map((entry) {
+        final index = entry.key;
+        final item = entry.value;
+        return FadeSlideTransition(
+          delay: staggerDelay(index),
+          child: Column(
+            children: [
+              _MenuCard(
+                icon: item.$1,
+                title: item.$2,
+                subtitle: item.$3,
+                onTap: item.$4,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        );
+      }),
+      FadeSlideTransition(
+        delay: staggerDelay(menuItems.length),
+        child: Column(
+          children: [
+            const SizedBox(height: AppSpacing.md),
+            _MenuCard(
+              icon: Icons.logout,
+              title: 'Log Out',
+              textColor: AppColors.error,
+              onTap: _handleLogout,
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+}
+
+/// Social links row with icon buttons
+class _SocialLinksRow extends StatelessWidget {
+  final UserProfile profile;
+
+  const _SocialLinksRow({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final links = <(IconData, String?, String)>[
+      (Icons.language, profile.website, 'Website'),
+      (Icons.business, profile.linkedinUrl, 'LinkedIn'),
+      (Icons.alternate_email, profile.twitterUrl, 'X'),
+      (Icons.code, profile.githubUrl, 'GitHub'),
+    ].where((link) => link.$2 != null && link.$2!.isNotEmpty).toList();
+
+    if (links.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: links.map((link) => _SocialIconButton(
+        icon: link.$1,
+        url: link.$2!,
+        tooltip: link.$3,
+      )).toList(),
+    );
+  }
+}
+
+class _SocialIconButton extends StatelessWidget {
+  final IconData icon;
+  final String url;
+  final String tooltip;
+
+  const _SocialIconButton({
+    required this.icon,
+    required this.url,
+    required this.tooltip,
+  });
+
+  Future<void> _launchUrl() async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: _launchUrl,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(icon, size: 20, color: cs.primary),
           ),
         ),
       ),
@@ -244,6 +402,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
     final organization = widget.profile?.organization;
     final avatarUrl = widget.profile?.avatarUrl;
     final showPrompt = widget.completeness < 80;
+    final cs = Theme.of(context).colorScheme;
 
     return Column(
       children: [
@@ -260,22 +419,25 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
                 builder: (context, child) => CircularProgressIndicator(
                   value: _progressAnimation.value,
                   strokeWidth: 4,
-                  backgroundColor: AppColors.border,
-                  color: AppColors.primary,
+                  backgroundColor: cs.outline.withValues(alpha: 0.3),
+                  color: cs.primary,
                 ),
               ),
             ),
-            // Avatar
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppColors.primary,
-              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-              child: avatarUrl == null
-                  ? Text(
-                      fullName[0].toUpperCase(),
-                      style: context.textStyles.headlineMedium?.copyWith(color: Colors.white),
-                    )
-                  : null,
+            // Avatar with Hero animation
+            AnimatedHero(
+              tag: HeroConfig.profileAvatarTag(widget.profile?.id ?? 'avatar'),
+              child: CircleAvatar(
+                radius: 40,
+                backgroundColor: cs.primary,
+                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                child: avatarUrl == null
+                    ? Text(
+                        fullName[0].toUpperCase(),
+                        style: context.textStyles.headlineMedium?.copyWith(color: cs.onPrimary),
+                      )
+                    : null,
+              ),
             ),
           ],
         ),
@@ -293,7 +455,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
           const SizedBox(height: 4),
           Text(
             organization,
-            style: context.textStyles.bodyMedium?.withColor(AppColors.textMuted),
+            style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],
@@ -302,7 +464,7 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
         const SizedBox(height: 4),
         Text(
           widget.email,
-          style: context.textStyles.bodySmall?.withColor(AppColors.textMuted),
+          style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
 
@@ -311,7 +473,9 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
         Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
           decoration: BoxDecoration(
-            color: showPrompt ? AppColors.warning.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.1),
+            color: showPrompt 
+                ? AppColors.warning.withValues(alpha: 0.1) 
+                : cs.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(100),
           ),
           child: Row(
@@ -320,13 +484,13 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
               Icon(
                 showPrompt ? Icons.info_outline : Icons.check_circle_outline,
                 size: 16,
-                color: showPrompt ? AppColors.warning : AppColors.primary,
+                color: showPrompt ? AppColors.warning : cs.primary,
               ),
               const SizedBox(width: 6),
               Text(
                 showPrompt ? 'Complete your profile (${widget.completeness}%)' : 'Profile ${widget.completeness}% complete',
                 style: context.textStyles.labelSmall?.semiBold.withColor(
-                  showPrompt ? AppColors.warning : AppColors.primary,
+                  showPrompt ? AppColors.warning : cs.primary,
                 ),
               ),
             ],
@@ -345,6 +509,7 @@ class _EventHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +517,7 @@ class _EventHistorySection extends StatelessWidget {
           padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
           child: Text(
             'EVENT HISTORY',
-            style: context.textStyles.labelSmall?.withColor(AppColors.textMuted),
+            style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
           ),
         ),
         Card(
@@ -363,11 +528,11 @@ class _EventHistorySection extends StatelessWidget {
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     children: [
-                      Icon(Icons.event_busy, size: 48, color: AppColors.textMuted),
+                      Icon(Icons.event_busy, size: 48, color: cs.onSurfaceVariant),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         'No events attended yet',
-                        style: context.textStyles.bodyMedium?.withColor(AppColors.textMuted),
+                        style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -405,6 +570,7 @@ class _EventHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () => context.push('/event/${event.eventId}'),
       child: Padding(
@@ -417,17 +583,17 @@ class _EventHistoryCard extends StatelessWidget {
               child: Container(
                 width: 60,
                 height: 60,
-                color: AppColors.border,
+                color: cs.surfaceContainerHighest,
                 child: event.bannerUrl != null
                     ? Image.network(
                         event.bannerUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stack) => Icon(
                           Icons.event,
-                          color: AppColors.textMuted,
+                          color: cs.onSurfaceVariant,
                         ),
                       )
-                    : Icon(Icons.event, color: AppColors.textMuted),
+                    : Icon(Icons.event, color: cs.onSurfaceVariant),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -445,7 +611,7 @@ class _EventHistoryCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(event.startDate),
-                    style: context.textStyles.bodySmall?.withColor(AppColors.textMuted),
+                    style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 4),
                   Container(
@@ -462,7 +628,7 @@ class _EventHistoryCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textMuted),
+            Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
           ],
         ),
       ),
@@ -470,43 +636,67 @@ class _EventHistoryCard extends StatelessWidget {
   }
 }
 
-/// Quick stats row with three cards
+/// Quick stats row with responsive layout
 class _QuickStatsRow extends StatelessWidget {
   final int eventsAttended;
   final int upcomingEvents;
   final int savedEvents;
+  final int completeness;
 
   const _QuickStatsRow({
     required this.eventsAttended,
     required this.upcomingEvents,
     required this.savedEvents,
+    required this.completeness,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            label: 'Events\nAttended',
-            value: eventsAttended.toString(),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: _StatCard(
-            label: 'Upcoming\nEvents',
-            value: upcomingEvents.toString(),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: _StatCard(
-            label: 'Saved\nEvents',
-            value: savedEvents.toString(),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 600;
+        
+        if (isWide) {
+          // Tablet: 4-column layout with profile completeness
+          return Row(
+            children: [
+              Expanded(child: _StatCard(label: 'Events\nAttended', value: eventsAttended.toString())),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(label: 'Upcoming\nEvents', value: upcomingEvents.toString())),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(label: 'Saved\nEvents', value: savedEvents.toString())),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(label: 'Profile\nComplete', value: '$completeness%')),
+            ],
+          );
+        }
+        
+        // Mobile: 3-column layout
+        return Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Events\nAttended',
+                value: eventsAttended.toString(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _StatCard(
+                label: 'Upcoming\nEvents',
+                value: upcomingEvents.toString(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _StatCard(
+                label: 'Saved\nEvents',
+                value: savedEvents.toString(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -520,6 +710,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -527,12 +718,12 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               value,
-              style: context.textStyles.headlineMedium?.bold.withColor(AppColors.primary),
+              style: context.textStyles.headlineMedium?.bold.withColor(cs.primary),
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: context.textStyles.labelSmall?.withColor(AppColors.textMuted),
+              style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
               textAlign: TextAlign.center,
               maxLines: 2,
             ),
@@ -561,6 +752,7 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -569,7 +761,7 @@ class _MenuCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              Icon(icon, color: textColor ?? AppColors.primary),
+              Icon(icon, color: textColor ?? cs.primary),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -577,19 +769,19 @@ class _MenuCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: context.textStyles.titleMedium?.withColor(textColor ?? AppColors.textPrimary),
+                      style: context.textStyles.titleMedium?.withColor(textColor ?? cs.onSurface),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         subtitle!,
-                        style: context.textStyles.bodySmall?.withColor(AppColors.textMuted),
+                        style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
                       ),
                     ],
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppColors.textMuted),
+              Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
             ],
           ),
         ),
