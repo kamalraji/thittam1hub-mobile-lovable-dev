@@ -11,6 +11,7 @@ import 'spark_page.dart';
 import 'vibe_page.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
@@ -107,82 +108,60 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
-    showModalBottomSheet(
+    showGlassBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) => Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Notifications', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      if (_unreadCount > 0)
-                        TextButton(
-                          onPressed: () async {
-                            await _notificationService.markAllAsRead();
-                            await _loadNotifications();
-                          },
-                          child: Text('Mark all read'),
-                        ),
-                      Chip(label: Text('${_unreadCount} new')),
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Expanded(
-                child: _notifications.isEmpty
-                    ? Center(child: Text('No notifications', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)))
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: _notifications.length,
-                        itemBuilder: (context, index) {
-                          final n = _notifications[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            color: n.isRead ? cs.surfaceContainerHighest : cs.primary.withValues(alpha: 0.05),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage: n.avatarUrl != null ? NetworkImage(n.avatarUrl!) : null,
-                                child: n.avatarUrl == null ? Icon(_getNotificationIcon(n.type)) : null,
-                                backgroundColor: _getNotificationColor(n.type).withValues(alpha: 0.2),
-                              ),
-                              title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold)),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(n.message),
-                                  SizedBox(height: 4),
-                                  Text(_formatTimestamp(n.createdAt), style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-                                ],
-                              ),
-                              onTap: () async {
-                                if (!n.isRead) {
-                                  await _notificationService.markAsRead(n.id);
-                                  await _loadNotifications();
-                                }
-                              },
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+      title: 'Notifications',
+      maxHeight: MediaQuery.of(context).size.height * 0.8,
+      actions: [
+        if (_unreadCount > 0)
+          TextButton(
+            onPressed: () async {
+              await _notificationService.markAllAsRead();
+              await _loadNotifications();
+            },
+            child: Text('Mark all read', style: TextStyle(color: cs.primary)),
           ),
-        ),
-      ),
+        Chip(label: Text('${_unreadCount} new')),
+      ],
+      child: _notifications.isEmpty
+          ? Center(child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text('No notifications', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+            ))
+          : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final n = _notifications[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  color: n.isRead ? cs.surfaceContainerHighest : cs.primary.withValues(alpha: 0.05),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: n.avatarUrl != null ? NetworkImage(n.avatarUrl!) : null,
+                      child: n.avatarUrl == null ? Icon(_getNotificationIcon(n.type)) : null,
+                      backgroundColor: _getNotificationColor(n.type).withValues(alpha: 0.2),
+                    ),
+                    title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(n.message),
+                        SizedBox(height: 4),
+                        Text(_formatTimestamp(n.createdAt), style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                      ],
+                    ),
+                    onTap: () async {
+                      if (!n.isRead) {
+                        await _notificationService.markAsRead(n.id);
+                        await _loadNotifications();
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -192,78 +171,58 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
-    showModalBottomSheet(
+    showGlassBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (context, scrollController) => Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Connection Requests', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Chip(label: Text('${_pendingRequests.length}')),
-                ],
-              ),
-              SizedBox(height: 8),
-              Expanded(
-                child: _pendingRequests.isEmpty
-                    ? Center(child: Text('No pending requests', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)))
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: _pendingRequests.length,
-                        itemBuilder: (context, index) {
-                          final r = _pendingRequests[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage: r.requesterAvatar != null ? NetworkImage(r.requesterAvatar!) : null,
-                                child: r.requesterAvatar == null ? Text(r.requesterName.isNotEmpty ? r.requesterName[0] : '?') : null,
-                              ),
-                              title: Text(r.requesterName),
-                              subtitle: Text('${r.connectionType} • ${r.matchScore}% match'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    tooltip: 'Decline',
-                                    icon: Icon(Icons.close, color: cs.error),
-                                    onPressed: () async {
-                                      await _impactService.respondToConnectionRequest(requestId: r.id, accept: false);
-                                      await _loadPendingRequests();
-                                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Declined ${r.requesterName}')));
-                                    },
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Accept',
-                                    icon: Icon(Icons.check_circle, color: cs.primary),
-                                    onPressed: () async {
-                                      await _impactService.respondToConnectionRequest(requestId: r.id, accept: true);
-                                      await _loadPendingRequests();
-                                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Connected with ${r.requesterName}')));
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      title: 'Connection Requests',
+      maxHeight: MediaQuery.of(context).size.height * 0.7,
+      actions: [Chip(label: Text('${_pendingRequests.length}'))],
+      child: _pendingRequests.isEmpty
+          ? Center(child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text('No pending requests', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+            ))
+          : ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _pendingRequests.length,
+              itemBuilder: (context, index) {
+                final r = _pendingRequests[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: r.requesterAvatar != null ? NetworkImage(r.requesterAvatar!) : null,
+                      child: r.requesterAvatar == null ? Text(r.requesterName.isNotEmpty ? r.requesterName[0] : '?') : null,
+                    ),
+                    title: Text(r.requesterName),
+                    subtitle: Text('${r.connectionType} • ${r.matchScore}% match'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Decline',
+                          icon: Icon(Icons.close, color: cs.error),
+                          onPressed: () async {
+                            await _impactService.respondToConnectionRequest(requestId: r.id, accept: false);
+                            await _loadPendingRequests();
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Declined ${r.requesterName}')));
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'Accept',
+                          icon: Icon(Icons.check_circle, color: cs.primary),
+                          onPressed: () async {
+                            await _impactService.respondToConnectionRequest(requestId: r.id, accept: true);
+                            await _loadPendingRequests();
+                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Connected with ${r.requesterName}')));
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -500,11 +459,11 @@ class ScoreCard extends StatelessWidget {
             children: [
               ElevatedButton(
                 onPressed: () {
-                  showModalBottomSheet(
+                  showGlassBottomSheet(
                     context: context,
-                    isScrollControlled: true,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                    builder: (context) => const BadgesSheet(),
+                    title: 'Your Badges',
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                    child: const BadgesContent(),
                   );
                 },
                 child: Text('View Badges'),
@@ -515,11 +474,11 @@ class ScoreCard extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  showModalBottomSheet(
+                  showGlassBottomSheet(
                     context: context,
-                    isScrollControlled: true,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                    builder: (context) => const LeaderboardSheet(),
+                    title: 'Leaderboard',
+                    maxHeight: MediaQuery.of(context).size.height * 0.8,
+                    child: const LeaderboardContent(),
                   );
                 },
                 child: Text('Leaderboard'),
@@ -536,14 +495,15 @@ class ScoreCard extends StatelessWidget {
   }
 }
 
-class BadgesSheet extends StatefulWidget {
-  const BadgesSheet({Key? key}) : super(key: key);
+/// Content widget for Badges glassmorphism sheet
+class BadgesContent extends StatefulWidget {
+  const BadgesContent({Key? key}) : super(key: key);
 
   @override
-  State<BadgesSheet> createState() => _BadgesSheetState();
+  State<BadgesContent> createState() => _BadgesContentState();
 }
 
-class _BadgesSheetState extends State<BadgesSheet> {
+class _BadgesContentState extends State<BadgesContent> {
   final _svc = GamificationService();
   List<BadgeItem> _all = [];
   List<String> _mine = [];
@@ -568,7 +528,7 @@ class _BadgesSheetState extends State<BadgesSheet> {
         _loading = false;
       });
     } catch (e) {
-      debugPrint('BadgesSheet load error: $e');
+      debugPrint('BadgesContent load error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -578,80 +538,74 @@ class _BadgesSheetState extends State<BadgesSheet> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (context, scrollController) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Your Badges', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Chip(label: Text('${_mine.length}/${_all.length}')),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : GridView.builder(
-                        controller: scrollController,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 0.82,
-                        ),
-                        itemCount: _all.length,
-                        itemBuilder: (context, index) {
-                          final b = _all[index];
-                          final earned = _mine.contains(b.id);
-                          return AnimatedOpacity(
-                            duration: const Duration(milliseconds: 250),
-                            opacity: earned ? 1 : 0.4,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: cs.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(b.icon, style: const TextStyle(fontSize: 28)),
-                                  const SizedBox(height: 8),
-                                  Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                  const SizedBox(height: 4),
-                                  Text(b.rarity, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+    if (_loading) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(32),
+        child: CircularProgressIndicator(),
+      ));
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Chip(label: Text('${_mine.length}/${_all.length}')),
+          ],
         ),
-      ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.82,
+          ),
+          itemCount: _all.length,
+          itemBuilder: (context, index) {
+            final b = _all[index];
+            final earned = _mine.contains(b.id);
+            return AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              opacity: earned ? 1 : 0.4,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(b.icon, style: const TextStyle(fontSize: 28)),
+                    const SizedBox(height: 8),
+                    Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text(b.rarity, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class LeaderboardSheet extends StatefulWidget {
-  const LeaderboardSheet({Key? key}) : super(key: key);
+/// Content widget for Leaderboard glassmorphism sheet
+class LeaderboardContent extends StatefulWidget {
+  const LeaderboardContent({Key? key}) : super(key: key);
 
   @override
-  State<LeaderboardSheet> createState() => _LeaderboardSheetState();
+  State<LeaderboardContent> createState() => _LeaderboardContentState();
 }
 
-class _LeaderboardSheetState extends State<LeaderboardSheet> {
+class _LeaderboardContentState extends State<LeaderboardContent> {
   final _svc = GamificationService();
   List<LeaderboardEntry> _entries = [];
   bool _loading = true;
@@ -680,47 +634,76 @@ class _LeaderboardSheetState extends State<LeaderboardSheet> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     
+    if (_loading) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(32),
+        child: CircularProgressIndicator(),
+      ));
+    }
+    
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _entries.length,
+      itemBuilder: (context, index) {
+        final e = _entries[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: e.avatarUrl != null ? NetworkImage(e.avatarUrl!) : null,
+            child: e.avatarUrl == null ? Text(e.name.isNotEmpty ? e.name[0] : '?') : null,
+          ),
+          title: Text('#${e.rank}  ${e.name}'),
+          subtitle: Text('${e.score} pts'),
+          trailing: index == 0
+              ? const Text('🥇')
+              : index == 1
+                  ? const Text('🥈')
+                  : index == 2
+                      ? const Text('🥉')
+                      : null,
+        );
+      },
+    );
+  }
+}
+
+// Legacy sheet widgets kept for backward compatibility
+class BadgesSheet extends StatelessWidget {
+  const BadgesSheet({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
       maxChildSize: 0.95,
       minChildSize: 0.5,
       builder: (context, scrollController) => SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
+          controller: scrollController,
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Leaderboard', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: _entries.length,
-                        itemBuilder: (context, index) {
-                          final e = _entries[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: e.avatarUrl != null ? NetworkImage(e.avatarUrl!) : null,
-                              child: e.avatarUrl == null ? Text(e.name.isNotEmpty ? e.name[0] : '?') : null,
-                            ),
-                            title: Text('#${e.rank}  ${e.name}'),
-                            subtitle: Text('${e.score} pts'),
-                            trailing: index == 0
-                                ? const Text('🥇')
-                                : index == 1
-                                    ? const Text('🥈')
-                                    : index == 2
-                                        ? const Text('🥉')
-                                        : null,
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+          child: const BadgesContent(),
+        ),
+      ),
+    );
+  }
+}
+
+class LeaderboardSheet extends StatelessWidget {
+  const LeaderboardSheet({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.7,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (context, scrollController) => SafeArea(
+        child: SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(16.0),
+          child: const LeaderboardContent(),
         ),
       ),
     );
@@ -849,5 +832,39 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
     return oldDelegate.height != height || oldDelegate.child != child;
+  }
+}
+
+class ScoreCardSkeleton extends StatelessWidget {
+  const ScoreCardSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: cs.surfaceContainerHighest,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(height: 18, width: 150, color: cs.surfaceContainerHigh),
+          SizedBox(height: 12),
+          Container(height: 8, width: double.infinity, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
+          SizedBox(height: 12),
+          Container(height: 14, width: 200, color: cs.surfaceContainerHigh),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Container(height: 36, width: 100, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(18))),
+              SizedBox(width: 12),
+              Container(height: 36, width: 100, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(18))),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

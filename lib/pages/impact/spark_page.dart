@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 
 class SparkPage extends StatefulWidget {
   const SparkPage({Key? key}) : super(key: key);
@@ -41,15 +42,10 @@ class _SparkPageState extends State<SparkPage> {
   }
 
   void _showNewPostDialog() {
-    final cs = Theme.of(context).colorScheme;
-    showModalBottomSheet(
+    showGlassBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: cs.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => NewSparkPostSheet(
+      title: 'New Spark Post',
+      child: NewSparkPostContent(
         onSubmit: (type, title, content, tags) async {
           await _sparkService.createSparkPost(
             type: type,
@@ -203,16 +199,17 @@ class _SparkPageState extends State<SparkPage> {
   }
 }
 
-class NewSparkPostSheet extends StatefulWidget {
+/// Content widget for New Spark Post glassmorphism sheet
+class NewSparkPostContent extends StatefulWidget {
   final Function(SparkPostType, String, String, List<String>) onSubmit;
 
-  const NewSparkPostSheet({Key? key, required this.onSubmit}) : super(key: key);
+  const NewSparkPostContent({Key? key, required this.onSubmit}) : super(key: key);
 
   @override
-  State<NewSparkPostSheet> createState() => _NewSparkPostSheetState();
+  State<NewSparkPostContent> createState() => _NewSparkPostContentState();
 }
 
-class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
+class _NewSparkPostContentState extends State<NewSparkPostContent> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   final _tagController = TextEditingController();
@@ -278,20 +275,14 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('New Spark Post', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             Text('Post Type', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
             Wrap(
@@ -389,6 +380,26 @@ class _NewSparkPostSheetState extends State<NewSparkPostSheet> {
   }
 }
 
+// Legacy NewSparkPostSheet kept for backward compatibility
+class NewSparkPostSheet extends StatelessWidget {
+  final Function(SparkPostType, String, String, List<String>) onSubmit;
+
+  const NewSparkPostSheet({Key? key, required this.onSubmit}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: NewSparkPostContent(onSubmit: onSubmit),
+    );
+  }
+}
+
 class SparkPostCard extends StatelessWidget {
   final SparkPost post;
   final bool hasSparked;
@@ -478,5 +489,41 @@ class SparkPostCard extends StatelessWidget {
     } else {
       return 'just now';
     }
+  }
+}
+
+class SparkPostSkeleton extends StatelessWidget {
+  const SparkPostSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(height: 14, width: 80, color: cs.surfaceContainerHighest),
+            SizedBox(height: 12),
+            Container(height: 18, width: double.infinity, color: cs.surfaceContainerHighest),
+            SizedBox(height: 12),
+            Container(height: 12, width: double.infinity, color: cs.surfaceContainerHighest),
+            SizedBox(height: 6),
+            Container(height: 12, width: 200, color: cs.surfaceContainerHighest),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Container(height: 24, width: 60, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(12))),
+                SizedBox(width: 8),
+                Container(height: 24, width: 60, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(12))),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
