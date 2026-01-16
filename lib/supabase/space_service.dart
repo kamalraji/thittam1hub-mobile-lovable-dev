@@ -6,12 +6,23 @@ import 'package:thittam1hub/supabase/supabase_config.dart';
 class SpaceService {
   final _supabase = SupabaseConfig.client;
 
-  /// Fetches a list of currently live spaces.
+  /// Fetches a list of currently live spaces as a stream.
   Stream<List<Space>> getLiveSpaces() {
     return _supabase
         .from('spaces')
         .stream(primaryKey: ['id'])
         .map((payload) => payload.map((e) => Space.fromMap(e)).toList());
+  }
+
+  /// Fetches a list of currently live spaces as a one-time Future.
+  Future<List<Space>> fetchLiveSpaces() async {
+    try {
+      final response = await _supabase.from('spaces').select();
+      return (response as List).map((e) => Space.fromMap(e)).toList();
+    } catch (e) {
+      print('Error fetching live spaces: $e');
+      return [];
+    }
   }
 
   /// Creates a new space.
