@@ -18,10 +18,13 @@ import 'package:thittam1hub/pages/profile/profile_page.dart';
 import 'package:thittam1hub/pages/profile/edit_profile_page.dart';
 import 'package:thittam1hub/pages/profile/qr_code_page.dart';
 import 'package:thittam1hub/pages/profile/settings_page.dart';
+import 'package:thittam1hub/pages/profile/tickets_page.dart';
+import 'package:thittam1hub/pages/profile/ticket_detail_page.dart';
 import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/models/user_ticket.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 
 /// Custom fade-slide page transition
@@ -221,11 +224,22 @@ class AppRouter {
               pageBuilder: (context, state) => _buildPageTransition(const SettingsPage(), state),
             ),
             GoRoute(
-              path: '/profile/registrations',
+              path: '/profile/tickets',
               pageBuilder: (context, state) => _buildPageTransition(
-                const _PlaceholderPage(title: 'My Registrations'),
+                const TicketsPage(),
                 state,
               ),
+            ),
+            GoRoute(
+              path: '/profile/tickets/:id',
+              pageBuilder: (context, state) {
+                final id = state.pathParameters['id']!;
+                final ticket = state.extra as UserTicket?;
+                return _buildHeroPageTransition(
+                  TicketDetailPage(registrationId: id, ticket: ticket),
+                  state,
+                );
+              },
             ),
             GoRoute(
               path: '/profile/saved',

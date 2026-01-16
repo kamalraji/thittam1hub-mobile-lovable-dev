@@ -294,7 +294,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         _loadProfile();
       }),
       (Icons.qr_code, 'My QR Code', 'For event check-in', () => context.push('/profile/qr')),
-      (Icons.confirmation_number_outlined, 'My Registrations', '$_upcomingEvents upcoming', () => context.push('/profile/registrations')),
+      (Icons.confirmation_number_outlined, 'My Tickets', '$_upcomingEvents upcoming', () => context.push('/profile/tickets')),
       (Icons.favorite_border, 'Saved Events', '$_savedEvents saved', () => context.push('/profile/saved')),
       (Icons.settings_outlined, 'Settings', null, () => context.push('/profile/settings')),
     ];
