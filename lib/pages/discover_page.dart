@@ -375,23 +375,22 @@ class _EventsTab extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     
     if (isLoading) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ShimmerLoading(width: 100, height: 100, borderRadius: BorderRadius.circular(12)),
-            const SizedBox(height: 12),
-            ShimmerLoading(width: 150, height: 16, borderRadius: BorderRadius.circular(4)),
-          ],
+      return ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 3,
+        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        itemBuilder: (_, index) => FadeSlideTransition(
+          delay: staggerDelay(index),
+          child: const EventCardSkeleton(),
         ),
       );
     }
 
     // Show error state when there's an error
     if (errorMessage != null) {
-      return RefreshIndicator(
+      return BrandedRefreshIndicator(
         onRefresh: onRefresh,
-        color: cs.primary,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
@@ -428,9 +427,8 @@ class _EventsTab extends StatelessWidget {
       );
     }
 
-    return RefreshIndicator(
+    return BrandedRefreshIndicator(
       onRefresh: onRefresh,
-      color: cs.primary,
       child: events.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
