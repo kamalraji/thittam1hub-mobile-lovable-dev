@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/models/connection_request_item.dart';
+import 'package:thittam1hub/models/match_insight.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,8 +33,15 @@ class ImpactService {
   /// skills/interests overlap and looking-for complementarity.
   /// Weights: skills 50%, interests 30%, looking-for complementarity 20%.
   int calculateMatchScore(ImpactProfile me, ImpactProfile other) {
-    int pct(Set a, Set b) => a.isEmpty ? 0 : ((a.intersection(b).length / a.length) * 100).round();
-
+    final result = calculateMatchInsights(me, other);
+    return result.totalScore;
+  }
+  
+  /// Calculate detailed match insights explaining WHY two profiles match
+  /// Returns a MatchResult with breakdown of all match categories
+  MatchResult calculateMatchInsights(ImpactProfile me, ImpactProfile other) {
+    final insights = <MatchInsight>[];
+    
     final meSkills = me.skills.toSet();
     final otherSkills = other.skills.toSet();
     final meInterests = me.interests.toSet();
@@ -40,17 +49,220 @@ class ImpactService {
     final meLF = me.lookingFor.toSet();
     final otherLF = other.lookingFor.toSet();
 
-    // Direct overlaps
-    final skillsOverlap = pct(meSkills, otherSkills);
-    final interestsOverlap = pct(meInterests, otherInterests);
-
-    // Complementarity: my skills match what they are looking for OR vice versa
-    final skillToLF = pct(meSkills, otherLF);
-    final theirSkillToMyLF = pct(otherSkills, meLF);
-    final complement = ((skillToLF + theirSkillToMyLF) / 2).round();
-
-    final score = (skillsOverlap * 0.5 + interestsOverlap * 0.3 + complement * 0.2).round();
-    return score.clamp(0, 100);
+    // 1. SKILLS MATCH (Professional - like LinkedIn)
+    final sharedSkills = meSkills.intersection(otherSkills);
+    if (sharedSkills.isNotEmpty) {
+      final contribution = (sharedSkills.length * 12).clamp(0, 40);
+      insights.add(MatchInsight(
+        category: MatchCategory.skills,
+        title: 'Shared Expertise',
+        description: 'You both have ${sharedSkills.length} skill${sharedSkills.length > 1 ? 's' : ''} in common',
+        items: sharedSkills.toList(),
+        contribution: contribution,
+        icon: Icons.code_rounded,
+        color: Colors.blue,
+        emoji: '💻',
+      ));
+    }
+    
+    // 2. INTERESTS MATCH (Social - like Instagram)
+    final sharedInterests = meInterests.intersection(otherInterests);
+    if (sharedInterests.isNotEmpty) {
+      final contribution = (sharedInterests.length * 10).clamp(0, 30);
+      insights.add(MatchInsight(
+        category: MatchCategory.interests,
+        title: 'Common Passions',
+        description: 'You share ${sharedInterests.length} interest${sharedInterests.length > 1 ? 's' : ''}',
+        items: sharedInterests.toList(),
+        contribution: contribution,
+        icon: Icons.favorite_rounded,
+        color: Colors.pink,
+        emoji: '💕',
+      ));
+    }
+    
+    // 3. GOAL COMPLEMENTARITY (You offer what they seek)
+    final iCanHelp = meSkills.intersection(otherLF);
+    final theyCanHelp = otherSkills.intersection(meLF);
+    if (iCanHelp.isNotEmpty || theyCanHelp.isNotEmpty) {
+      final allComplementary = {...iCanHelp, ...theyCanHelp};
+      String description;
+      if (iCanHelp.isNotEmpty && theyCanHelp.isNotEmpty) {
+        description = 'You can help with ${iCanHelp.first}, they can help with ${theyCanHelp.first}';
+      } else if (iCanHelp.isNotEmpty) {
+        description = 'You can help them with ${iCanHelp.join(", ")}';
+      } else {
+        description = 'They can help you with ${theyCanHelp.join(", ")}';
+      }
+      
+      insights.add(MatchInsight(
+        category: MatchCategory.goals,
+        title: 'Perfect Fit',
+        description: description,
+        items: allComplementary.toList(),
+        contribution: 25,
+        icon: Icons.handshake_rounded,
+        color: Colors.teal,
+        isComplementary: true,
+        emoji: '🎯',
+      ));
+    }
+    
+    // 4. SAME EVENT/ACTIVITY
+    if (me.currentEventId != null && 
+        other.currentEventId != null && 
+        me.currentEventId == other.currentEventId) {
+      insights.add(MatchInsight(
+        category: MatchCategory.activity,
+        title: 'Same Event',
+        description: 'You\'re both attending this event',
+        items: [],
+        contribution: 15,
+        icon: Icons.event_rounded,
+        color: Colors.purple,
+        emoji: '📍',
+      ));
+    }
+    
+    // 5. ORGANIZATION MATCH
+    if (me.organization != null && 
+        other.organization != null &&
+        me.organization!.toLowerCase() == other.organization!.toLowerCase()) {
+      insights.add(MatchInsight(
+        category: MatchCategory.organization,
+        title: 'Same Organization',
+        description: 'You\'re both from ${me.organization}',
+        items: [me.organization!],
+        contribution: 12,
+        icon: Icons.business_rounded,
+        color: Colors.blueGrey,
+        emoji: '🏢',
+      ));
+    }
+    
+    // 6. EDUCATION MATCH
+    if (me.educationStatus == other.educationStatus && 
+        me.educationStatus != 'PROFESSIONAL') {
+      final eduLabel = _getEducationLabel(me.educationStatus);
+      insights.add(MatchInsight(
+        category: MatchCategory.education,
+        title: 'Academic Match',
+        description: 'You\'re both $eduLabel',
+        items: [eduLabel],
+        contribution: 8,
+        icon: Icons.school_rounded,
+        color: Colors.green,
+        emoji: '🎓',
+      ));
+    }
+    
+    // Calculate total score
+    final totalScore = insights
+        .fold<int>(0, (sum, i) => sum + i.contribution)
+        .clamp(0, 100);
+    
+    // Sort by contribution
+    insights.sort((a, b) => b.contribution.compareTo(a.contribution));
+    
+    // Determine summary
+    final summaryEmoji = _getScoreEmoji(totalScore);
+    final summaryText = _getSummaryText(insights);
+    final primaryCategory = insights.isNotEmpty ? insights.first.category : null;
+    final matchStory = _generateMatchStory(me, other, insights, totalScore);
+    
+    return MatchResult(
+      totalScore: totalScore,
+      insights: insights,
+      summaryEmoji: summaryEmoji,
+      summaryText: summaryText,
+      primaryCategory: primaryCategory,
+      matchStory: matchStory,
+    );
+  }
+  
+  String _getScoreEmoji(int score) {
+    if (score >= 85) return '🔥';
+    if (score >= 70) return '⭐';
+    if (score >= 50) return '✨';
+    if (score >= 30) return '👍';
+    return '👋';
+  }
+  
+  String _getSummaryText(List<MatchInsight> insights) {
+    if (insights.isEmpty) return 'New potential connection';
+    
+    final categories = insights.map((i) => i.category).toSet();
+    
+    if (categories.contains(MatchCategory.goals)) {
+      return 'You can help each other grow';
+    }
+    if (categories.contains(MatchCategory.skills) && 
+        categories.contains(MatchCategory.interests)) {
+      return 'Strong professional & social match';
+    }
+    if (categories.contains(MatchCategory.skills)) {
+      return 'Professional expertise alignment';
+    }
+    if (categories.contains(MatchCategory.interests)) {
+      return 'You share common passions';
+    }
+    if (categories.contains(MatchCategory.activity)) {
+      return 'You\'re at the same event!';
+    }
+    if (categories.contains(MatchCategory.organization)) {
+      return 'Colleagues in the same org';
+    }
+    if (categories.contains(MatchCategory.education)) {
+      return 'Same academic journey';
+    }
+    
+    return 'Potential connection';
+  }
+  
+  String? _generateMatchStory(
+    ImpactProfile me, 
+    ImpactProfile other, 
+    List<MatchInsight> insights, 
+    int score,
+  ) {
+    if (insights.isEmpty) return null;
+    
+    final parts = <String>[];
+    parts.add('You and ${other.fullName} are a **$score% match**!');
+    
+    // Add skill story
+    final skillInsight = insights.where((i) => i.category == MatchCategory.skills).firstOrNull;
+    if (skillInsight != null && skillInsight.items.isNotEmpty) {
+      if (skillInsight.items.length == 1) {
+        parts.add('You both know ${skillInsight.items.first}.');
+      } else {
+        parts.add('You share expertise in ${skillInsight.items.take(2).join(" and ")}.');
+      }
+    }
+    
+    // Add goal story
+    final goalInsight = insights.where((i) => i.category == MatchCategory.goals).firstOrNull;
+    if (goalInsight != null) {
+      parts.add(goalInsight.description + '.');
+    }
+    
+    // Add interest story
+    final interestInsight = insights.where((i) => i.category == MatchCategory.interests).firstOrNull;
+    if (interestInsight != null && interestInsight.items.isNotEmpty) {
+      parts.add('You\'re both into ${interestInsight.items.first}.');
+    }
+    
+    return parts.join(' ');
+  }
+  
+  String _getEducationLabel(String status) {
+    switch (status) {
+      case 'UNDERGRADUATE': return 'undergrad students';
+      case 'GRADUATE': return 'grad students';
+      case 'PHD': return 'PhD candidates';
+      case 'HIGH_SCHOOL': return 'high school students';
+      default: return 'students';
+    }
   }
 
   /// Get a profile by user id
