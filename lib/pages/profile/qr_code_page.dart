@@ -57,7 +57,8 @@ class _QrCodePageState extends State<QrCodePage> {
             content: const Text('QR code copied to clipboard'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -82,7 +83,7 @@ class _QrCodePageState extends State<QrCodePage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Check-in QR'),
@@ -94,7 +95,8 @@ class _QrCodePageState extends State<QrCodePage> {
               tooltip: 'Share QR Code',
             ),
             IconButton(
-              icon: Icon(_isBright ? Icons.brightness_high : Icons.brightness_medium),
+              icon: Icon(
+                  _isBright ? Icons.brightness_high : Icons.brightness_medium),
               onPressed: _toggleBrightness,
               tooltip: _isBright ? 'Normal brightness' : 'Boost brightness',
             ),
@@ -113,7 +115,7 @@ class _QrCodePageState extends State<QrCodePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Spacer(),
-                    
+
                     // QR Code with brightness boost
                     if (_qrCode != null)
                       FadeSlideTransition(
@@ -125,7 +127,7 @@ class _QrCodePageState extends State<QrCodePage> {
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                             boxShadow: [
                               BoxShadow(
-                                color: _isBright 
+                                color: _isBright
                                     ? Colors.black.withValues(alpha: 0.2)
                                     : Colors.black.withValues(alpha: 0.1),
                                 blurRadius: _isBright ? 30 : 20,
@@ -166,14 +168,15 @@ class _QrCodePageState extends State<QrCodePage> {
                             const SizedBox(height: AppSpacing.md),
                             Text(
                               'No QR code available',
-                              style: context.textStyles.bodyLarge?.withColor(cs.onSurfaceVariant),
+                              style: context.textStyles.bodyLarge
+                                  ?.withColor(cs.onSurfaceVariant),
                             ),
                           ],
                         ),
                       ),
-                    
+
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // User name
                     FadeSlideTransition(
                       delay: const Duration(milliseconds: 100),
@@ -183,9 +186,9 @@ class _QrCodePageState extends State<QrCodePage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: AppSpacing.sm),
-                    
+
                     // Instruction text
                     FadeSlideTransition(
                       delay: const Duration(milliseconds: 200),
@@ -209,16 +212,17 @@ class _QrCodePageState extends State<QrCodePage> {
                             const SizedBox(width: 6),
                             Text(
                               'Show this QR at event check-in',
-                              style: context.textStyles.labelMedium?.withColor(cs.primary),
+                              style: context.textStyles.labelMedium
+                                  ?.withColor(cs.primary),
                               textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
                     ),
-                    
+
                     const Spacer(),
-                    
+
                     // Action buttons
                     if (_qrCode != null)
                       FadeSlideTransition(

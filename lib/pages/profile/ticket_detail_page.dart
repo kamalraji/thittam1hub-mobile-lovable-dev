@@ -77,10 +77,10 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
   Future<void> _shareTicket() async {
     if (_ticket == null) return;
     HapticFeedback.lightImpact();
-    
+
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
     final timeFormat = DateFormat('h:mm a');
-    
+
     await Share.share(
       '''🎫 My Event Ticket
 
@@ -107,7 +107,8 @@ Get your ticket on Thittam1Hub!''',
           content: const Text('Ticket code copied to clipboard'),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -163,7 +164,8 @@ Get your ticket on Thittam1Hub!''',
             tooltip: 'Share Ticket',
           ),
           IconButton(
-            icon: Icon(_isBright ? Icons.brightness_high : Icons.brightness_medium),
+            icon: Icon(
+                _isBright ? Icons.brightness_high : Icons.brightness_medium),
             onPressed: _toggleBrightness,
             tooltip: _isBright ? 'Normal brightness' : 'Boost brightness',
           ),
@@ -234,7 +236,8 @@ Get your ticket on Thittam1Hub!''',
 
   Widget _buildFullScreenQR(UserTicket ticket, ColorScheme cs, bool isDark) {
     return Scaffold(
-      backgroundColor: _isBright ? Colors.white : (isDark ? Colors.black : cs.surface),
+      backgroundColor:
+          _isBright ? Colors.white : (isDark ? Colors.black : cs.surface),
       body: GestureDetector(
         onTap: _toggleFullScreen,
         child: Container(
@@ -247,7 +250,8 @@ Get your ticket on Thittam1Hub!''',
               children: [
                 // Event name
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                   child: Text(
                     ticket.eventName,
                     style: context.textStyles.titleLarge?.bold?.copyWith(
@@ -275,7 +279,8 @@ Get your ticket on Thittam1Hub!''',
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: _isBright ? 0.15 : 0.1),
+                        color: Colors.black
+                            .withValues(alpha: _isBright ? 0.15 : 0.1),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -300,7 +305,8 @@ Get your ticket on Thittam1Hub!''',
 
                 // Tier badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: cs.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(100),
@@ -400,7 +406,8 @@ class _TicketDetailCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isBright ? 0.15 : 0.08),
+                              color: Colors.black
+                                  .withValues(alpha: isBright ? 0.15 : 0.08),
                               blurRadius: 20,
                               offset: const Offset(0, 4),
                             ),
@@ -423,7 +430,8 @@ class _TicketDetailCard extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(100),
@@ -431,11 +439,13 @@ class _TicketDetailCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.fullscreen, size: 16, color: cs.onSurfaceVariant),
+                            Icon(Icons.fullscreen,
+                                size: 16, color: cs.onSurfaceVariant),
                             const SizedBox(width: 4),
                             Text(
                               'Tap for full screen',
-                              style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
+                              style: context.textStyles.labelSmall
+                                  ?.withColor(cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -463,7 +473,8 @@ class _TicketDetailCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       ticket.organizationName,
-                      style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
+                      style: context.textStyles.bodySmall
+                          ?.withColor(cs.onSurfaceVariant),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -605,7 +616,8 @@ class _EventDetailsCard extends StatelessWidget {
           _DetailRow(
             icon: Icons.schedule,
             label: 'Time',
-            value: '${timeFormat.format(ticket.startDate)} - ${timeFormat.format(ticket.endDate)}',
+            value:
+                '${timeFormat.format(ticket.startDate)} - ${timeFormat.format(ticket.endDate)}',
           ),
           const SizedBox(height: AppSpacing.sm),
           _DetailRow(
@@ -713,7 +725,8 @@ class _DetailRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
+                style: context.textStyles.labelSmall
+                    ?.withColor(cs.onSurfaceVariant),
               ),
               Text(
                 value,

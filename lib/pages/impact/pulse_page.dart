@@ -29,12 +29,12 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   final Map<String, int> _matchScores = {};
   final Map<String, bool> _onlineStatus = {};
   RealtimeChannel? _onlineStatusChannel;
-  
+
   // Filters
   List<String> _selectedSkills = [];
   List<String> _selectedInterests = [];
   List<String> _selectedLookingFor = [];
-  
+
   // Intent selector
   String? _selectedIntent;
   late AnimationController _intentAnimController;
@@ -49,7 +49,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     _loadProfiles();
     _subscribeToOnlineStatus();
     _impactService.updateOnlineStatus(true);
-    
+
     // Stagger intent card animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) _intentAnimController.forward();
@@ -57,7 +57,8 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   }
 
   void _subscribeToOnlineStatus() {
-    _onlineStatusChannel = _impactService.subscribeToOnlineStatus((userId, isOnline) {
+    _onlineStatusChannel =
+        _impactService.subscribeToOnlineStatus((userId, isOnline) {
       if (mounted) {
         setState(() => _onlineStatus[userId] = isOnline);
       }
@@ -75,7 +76,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   Future<void> _loadProfiles() async {
     setState(() => _isLoading = true);
     _myProfile = await _impactService.getMyImpactProfile();
-    
+
     // Build lookingFor filter with complementary matching
     List<String>? lookingForFilter;
     if (_selectedIntent != null) {
@@ -88,7 +89,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     } else if (_selectedLookingFor.isNotEmpty) {
       lookingForFilter = _selectedLookingFor;
     }
-    
+
     final profiles = await _impactService.getImpactProfiles(
       skills: _selectedSkills.isEmpty ? null : _selectedSkills,
       interests: _selectedInterests.isEmpty ? null : _selectedInterests,
@@ -103,12 +104,14 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         _onlineStatus.clear();
         if (_myProfile != null) {
           for (final p in _filteredProfiles) {
-            final result = _impactService.calculateMatchInsights(_myProfile!, p);
+            final result =
+                _impactService.calculateMatchInsights(_myProfile!, p);
             _matchResults[p.userId] = result;
             _matchScores[p.userId] = result.totalScore;
             _onlineStatus[p.userId] = p.isOnline;
           }
-          _filteredProfiles.sort((a, b) => (_matchScores[b.userId] ?? 0).compareTo((_matchScores[a.userId] ?? 0)));
+          _filteredProfiles.sort((a, b) => (_matchScores[b.userId] ?? 0)
+              .compareTo((_matchScores[a.userId] ?? 0)));
         }
         _currentIndex = 0;
         _isLoading = false;
@@ -167,7 +170,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     if (_currentIndex >= _filteredProfiles.length) return;
     final profile = _filteredProfiles[_currentIndex];
     _impactService.skipProfile(profile.userId);
-    
+
     setState(() {
       if (_currentIndex < _filteredProfiles.length - 1) {
         _currentIndex++;
@@ -184,13 +187,16 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     if (_currentIndex >= _filteredProfiles.length) return;
     final profile = _filteredProfiles[_currentIndex];
     final cs = Theme.of(context).colorScheme;
-    
+
     try {
       await _impactService.sendConnectionRequest(
         profile.userId,
-        _selectedIntent ?? (profile.lookingFor.isNotEmpty ? profile.lookingFor.first : 'NETWORKING'),
+        _selectedIntent ??
+            (profile.lookingFor.isNotEmpty
+                ? profile.lookingFor.first
+                : 'NETWORKING'),
       );
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -199,7 +205,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
           ),
         );
       }
-      
+
       setState(() {
         if (_currentIndex < _filteredProfiles.length - 1) {
           _currentIndex++;
@@ -222,10 +228,10 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   void _onSave() async {
     if (_currentIndex >= _filteredProfiles.length) return;
     final profile = _filteredProfiles[_currentIndex];
-    
+
     try {
       await _impactService.saveProfile(profile.userId);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -234,7 +240,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
           ),
         );
       }
-      
+
       setState(() {
         if (_currentIndex < _filteredProfiles.length - 1) {
           _currentIndex++;
@@ -258,7 +264,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -270,17 +276,19 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
               onIntentSelected: _onIntentSelected,
               animationController: _intentAnimController,
             ),
-            
+
             // Search and Filter Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: 'Search by name, skill, etc...',
-                        prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                        prefixIcon:
+                            Icon(Icons.search, color: cs.onSurfaceVariant),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
@@ -294,7 +302,8 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                     icon: Stack(
                       children: [
                         Icon(Icons.filter_list, color: cs.onSurfaceVariant),
-                        if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
+                        if (_selectedSkills.isNotEmpty ||
+                            _selectedInterests.isNotEmpty)
                           Positioned(
                             right: 0,
                             top: 0,
@@ -314,7 +323,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            
+
             // Active Intent Badge
             if (_selectedIntent != null)
               _ActiveIntentBadge(
@@ -322,7 +331,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                 profileCount: _filteredProfiles.length,
                 onClear: () => _onIntentSelected(null),
               ),
-            
+
             // Filter chips (skills, interests - not lookingFor since we have intent selector)
             if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
               Container(
@@ -332,17 +341,17 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                   scrollDirection: Axis.horizontal,
                   children: [
                     ..._selectedSkills.map((s) => _buildFilterChip(s, () {
-                      setState(() => _selectedSkills.remove(s));
-                      _loadProfiles();
-                    })),
+                          setState(() => _selectedSkills.remove(s));
+                          _loadProfiles();
+                        })),
                     ..._selectedInterests.map((i) => _buildFilterChip(i, () {
-                      setState(() => _selectedInterests.remove(i));
-                      _loadProfiles();
-                    })),
+                          setState(() => _selectedInterests.remove(i));
+                          _loadProfiles();
+                        })),
                   ],
                 ),
               ),
-            
+
             // Profile Cards
             Expanded(
               child: _isLoading
@@ -358,9 +367,14 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                       ? _buildEmptyState(cs, textTheme)
                       : ProfileCard(
                           profile: _filteredProfiles[_currentIndex],
-                          matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
-                          matchResult: _matchResults[_filteredProfiles[_currentIndex].userId],
-                          isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
+                          matchScore: _matchScores[
+                                  _filteredProfiles[_currentIndex].userId] ??
+                              0,
+                          matchResult: _matchResults[
+                              _filteredProfiles[_currentIndex].userId],
+                          isOnline: _onlineStatus[
+                                  _filteredProfiles[_currentIndex].userId] ??
+                              false,
                           selectedIntent: _selectedIntent,
                           onSkip: _onSkip,
                           onConnect: _onConnect,
@@ -379,22 +393,24 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyState(ColorScheme cs, TextTheme textTheme) {
-    final config = _selectedIntent != null ? IntentConfig.getByKey(_selectedIntent!) : null;
-    
+    final config = _selectedIntent != null
+        ? IntentConfig.getByKey(_selectedIntent!)
+        : null;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            config?.icon ?? Icons.people_outline, 
-            size: 64, 
+            config?.icon ?? Icons.people_outline,
+            size: 64,
             color: config?.color ?? cs.onSurfaceVariant,
           ),
           SizedBox(height: 16),
           Text(
-            _selectedIntent != null 
-              ? 'No ${config?.label ?? 'profiles'} matches found.'
-              : 'No profiles found.',
+            _selectedIntent != null
+                ? 'No ${config?.label ?? 'profiles'} matches found.'
+                : 'No profiles found.',
             style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           SizedBox(height: 8),
@@ -454,7 +470,7 @@ class _IntentSelectorSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -490,14 +506,16 @@ class _IntentSelectorSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final config = IntentConfig.all[index];
               final isSelected = selectedIntent == config.key;
-              
+
               return AnimatedBuilder(
                 animation: animationController,
                 builder: (context, child) {
                   // Staggered animation
                   final delay = index * 0.1;
-                  final animValue = ((animationController.value - delay) / (1 - delay)).clamp(0.0, 1.0);
-                  
+                  final animValue =
+                      ((animationController.value - delay) / (1 - delay))
+                          .clamp(0.0, 1.0);
+
                   return Transform.translate(
                     offset: Offset(0, 20 * (1 - animValue)),
                     child: Opacity(
@@ -535,7 +553,8 @@ class _IntentCard extends StatefulWidget {
   State<_IntentCard> createState() => _IntentCardState();
 }
 
-class _IntentCardState extends State<_IntentCard> with SingleTickerProviderStateMixin {
+class _IntentCardState extends State<_IntentCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
@@ -574,7 +593,7 @@ class _IntentCardState extends State<_IntentCard> with SingleTickerProviderState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -588,18 +607,20 @@ class _IntentCardState extends State<_IntentCard> with SingleTickerProviderState
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: widget.isSelected 
-                ? widget.config.color 
-                : cs.outlineVariant.withValues(alpha: 0.3),
+              color: widget.isSelected
+                  ? widget.config.color
+                  : cs.outlineVariant.withValues(alpha: 0.3),
               width: widget.isSelected ? 2 : 1,
             ),
-            boxShadow: widget.isSelected ? [
-              BoxShadow(
-                color: widget.config.color.withValues(alpha: 0.3),
-                blurRadius: 8,
-                spreadRadius: 0,
-              ),
-            ] : null,
+            boxShadow: widget.isSelected
+                ? [
+                    BoxShadow(
+                      color: widget.config.color.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(15),
@@ -610,15 +631,17 @@ class _IntentCardState extends State<_IntentCard> with SingleTickerProviderState
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: widget.isSelected 
-                      ? [
-                          widget.config.color.withValues(alpha: 0.25),
-                          widget.config.color.withValues(alpha: 0.1),
-                        ]
-                      : [
-                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.02),
-                        ],
+                    colors: widget.isSelected
+                        ? [
+                            widget.config.color.withValues(alpha: 0.25),
+                            widget.config.color.withValues(alpha: 0.1),
+                          ]
+                        : [
+                            (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.05),
+                            (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.02),
+                          ],
                   ),
                 ),
                 child: Column(
@@ -633,10 +656,12 @@ class _IntentCardState extends State<_IntentCard> with SingleTickerProviderState
                       widget.config.label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: widget.isSelected 
-                          ? widget.config.color 
-                          : cs.onSurface,
+                        fontWeight: widget.isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: widget.isSelected
+                            ? widget.config.color
+                            : cs.onSurface,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -765,17 +790,11 @@ class _FilterSheetState extends State<FilterSheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
-    final allSkills = widget.allProfiles
-        .expand((p) => p.skills)
-        .toSet()
-        .toList()
-      ..sort();
-    final allInterests = widget.allProfiles
-        .expand((p) => p.interests)
-        .toSet()
-        .toList()
-      ..sort();
+
+    final allSkills =
+        widget.allProfiles.expand((p) => p.skills).toSet().toList()..sort();
+    final allInterests =
+        widget.allProfiles.expand((p) => p.interests).toSet().toList()..sort();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -790,7 +809,9 @@ class _FilterSheetState extends State<FilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Advanced Filters', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Advanced Filters',
+                    style: textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -843,14 +864,16 @@ class _FilterSheetState extends State<FilterSheet> {
     );
   }
 
-  Widget _buildSection(String title, List<String> options, List<String> selected) {
+  Widget _buildSection(
+      String title, List<String> options, List<String> selected) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        Text(title,
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -880,11 +903,12 @@ class _FilterSheetState extends State<FilterSheet> {
 
   Widget _buildIntentSection() {
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Looking For', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        Text('Looking For',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -946,7 +970,8 @@ class ProfileCard extends StatefulWidget {
   State<ProfileCard> createState() => _ProfileCardState();
 }
 
-class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStateMixin {
+class _ProfileCardState extends State<ProfileCard>
+    with SingleTickerProviderStateMixin {
   final ImpactService _impactService = ImpactService();
   List<ImpactProfile> _mutualConnections = [];
   bool _loadingMutuals = false;
@@ -971,7 +996,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
 
   Future<void> _loadMutualConnections() async {
     setState(() => _loadingMutuals = true);
-    final mutuals = await _impactService.getMutualConnections(widget.profile.userId);
+    final mutuals =
+        await _impactService.getMutualConnections(widget.profile.userId);
     if (mounted) {
       setState(() {
         _mutualConnections = mutuals;
@@ -1024,12 +1050,12 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
     final isSwipingRight = _dragPosition > 0;
     final avatarHeroTag = HeroConfig.profileAvatarTag(widget.profile.userId);
     final nameHeroTag = HeroConfig.profileNameTag(widget.profile.userId);
-    
+
     // Get intent config for styling
-    final intentConfig = widget.selectedIntent != null 
-      ? IntentConfig.getByKey(widget.selectedIntent!) 
-      : null;
-    
+    final intentConfig = widget.selectedIntent != null
+        ? IntentConfig.getByKey(widget.selectedIntent!)
+        : null;
+
     return GestureDetector(
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
@@ -1044,7 +1070,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
               children: [
                 Card(
                   margin: const EdgeInsets.all(16.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20)),
                   elevation: 4,
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -1060,8 +1087,17 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                                   enabled: widget.enableHero,
                                   child: CircleAvatar(
                                     radius: 30,
-                                    backgroundImage: widget.profile.avatarUrl != null ? NetworkImage(widget.profile.avatarUrl!) : null,
-                                    child: widget.profile.avatarUrl == null ? Text(widget.profile.fullName.substring(0, 1), style: TextStyle(fontSize: 24)) : null,
+                                    backgroundImage:
+                                        widget.profile.avatarUrl != null
+                                            ? NetworkImage(
+                                                widget.profile.avatarUrl!)
+                                            : null,
+                                    child: widget.profile.avatarUrl == null
+                                        ? Text(
+                                            widget.profile.fullName
+                                                .substring(0, 1),
+                                            style: TextStyle(fontSize: 24))
+                                        : null,
                                   ),
                                 ),
                                 if (widget.isOnline)
@@ -1074,7 +1110,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                                       decoration: BoxDecoration(
                                         color: Colors.green,
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: cs.surface, width: 2),
+                                        border: Border.all(
+                                            color: cs.surface, width: 2),
                                       ),
                                     ),
                                   ),
@@ -1088,10 +1125,15 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                                   TextHero(
                                     tag: nameHeroTag,
                                     enabled: widget.enableHero,
-                                    child: Text(widget.profile.fullName, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                    child: Text(widget.profile.fullName,
+                                        style: textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold)),
                                   ),
                                   SizedBox(height: 4),
-                                  Text(widget.profile.headline, style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant), overflow: TextOverflow.ellipsis),
+                                  Text(widget.profile.headline,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                          color: cs.onSurfaceVariant),
+                                      overflow: TextOverflow.ellipsis),
                                 ],
                               ),
                             ),
@@ -1099,7 +1141,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                             // Match Insights Badge (tappable to expand)
                             if (widget.matchResult != null)
                               GestureDetector(
-                                onTap: () => setState(() => _showInsights = !_showInsights),
+                                onTap: () => setState(
+                                    () => _showInsights = !_showInsights),
                                 child: MatchInsightsCard(
                                   matchResult: widget.matchResult!,
                                   compact: true,
@@ -1107,16 +1150,25 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                               )
                             else
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: (intentConfig?.color ?? cs.primary).withValues(alpha: 0.1),
+                                  color: (intentConfig?.color ?? cs.primary)
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.favorite, color: intentConfig?.color ?? cs.primary, size: 16),
+                                    Icon(Icons.favorite,
+                                        color:
+                                            intentConfig?.color ?? cs.primary,
+                                        size: 16),
                                     SizedBox(width: 6),
-                                    Text('${widget.matchScore}%', style: TextStyle(color: intentConfig?.color ?? cs.primary, fontWeight: FontWeight.bold)),
+                                    Text('${widget.matchScore}%',
+                                        style: TextStyle(
+                                            color: intentConfig?.color ??
+                                                cs.primary,
+                                            fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ),
@@ -1139,7 +1191,11 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                             children: [
                               Icon(Icons.people, size: 16, color: cs.primary),
                               SizedBox(width: 4),
-                              Text('${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+                              Text(
+                                  '${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}',
+                                  style: TextStyle(
+                                      color: cs.primary,
+                                      fontWeight: FontWeight.bold)),
                             ],
                           ),
                           SizedBox(height: 8),
@@ -1154,8 +1210,17 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                                   message: _mutualConnections[i].fullName,
                                   child: CircleAvatar(
                                     radius: 18,
-                                    backgroundImage: _mutualConnections[i].avatarUrl != null ? NetworkImage(_mutualConnections[i].avatarUrl!) : null,
-                                    child: _mutualConnections[i].avatarUrl == null ? Text(_mutualConnections[i].fullName[0]) : null,
+                                    backgroundImage: _mutualConnections[i]
+                                                .avatarUrl !=
+                                            null
+                                        ? NetworkImage(
+                                            _mutualConnections[i].avatarUrl!)
+                                        : null,
+                                    child: _mutualConnections[i].avatarUrl ==
+                                            null
+                                        ? Text(
+                                            _mutualConnections[i].fullName[0])
+                                        : null,
                                   ),
                                 ),
                               ),
@@ -1166,20 +1231,30 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                         Wrap(
                           spacing: 8,
                           runSpacing: 4,
-                          children: widget.profile.interests.take(3).map((interest) => Chip(label: Text(interest))).toList(),
+                          children: widget.profile.interests
+                              .take(3)
+                              .map((interest) => Chip(label: Text(interest)))
+                              .toList(),
                         ),
                         SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Vibe: ${widget.profile.vibeEmoji}', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                            Text('🔥 Level ${widget.profile.level}', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('Vibe: ${widget.profile.vibeEmoji}',
+                                style: textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold)),
+                            Text('🔥 Level ${widget.profile.level}',
+                                style: TextStyle(
+                                    color: cs.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16)),
                           ],
                         ),
                         Spacer(),
                         Text(
                           'Swipe left to skip, right to save, or use buttons below',
-                          style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          style: textTheme.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
                           textAlign: TextAlign.center,
                         ),
                         SizedBox(height: 12),
@@ -1190,7 +1265,8 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                               return Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       _buildSkipButton(cs),
                                       _buildSaveButton(),
@@ -1222,18 +1298,24 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                 if (_dragPosition.abs() > 20)
                   Positioned.fill(
                     child: Align(
-                      alignment: isSwipingRight ? Alignment.centerLeft : Alignment.centerRight,
+                      alignment: isSwipingRight
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
                       child: Padding(
                         padding: EdgeInsets.all(32),
                         child: Container(
                           padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isSwipingRight ? Colors.amber[600]!.withValues(alpha: swipeProgress) : cs.error.withValues(alpha: swipeProgress),
+                            color: isSwipingRight
+                                ? Colors.amber[600]!
+                                    .withValues(alpha: swipeProgress)
+                                : cs.error.withValues(alpha: swipeProgress),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             isSwipingRight ? Icons.star : Icons.close,
-                            color: Colors.white.withValues(alpha: swipeProgress),
+                            color:
+                                Colors.white.withValues(alpha: swipeProgress),
                             size: 48,
                           ),
                         ),
@@ -1257,22 +1339,25 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
       spacing: 6,
       runSpacing: 6,
       children: [
-        Text('🎯 Looking for:', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        Text('🎯 Looking for:',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
         ...lookingForItems.take(3).map((item) {
           final config = IntentConfig.getByKey(item);
-          final isMatched = widget.selectedIntent == item || 
-            (IntentConfig.getByKey(widget.selectedIntent ?? '')?.complementaryKey == item);
-          
+          final isMatched = widget.selectedIntent == item ||
+              (IntentConfig.getByKey(widget.selectedIntent ?? '')
+                      ?.complementaryKey ==
+                  item);
+
           return Container(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: config != null 
-                ? config.color.withValues(alpha: isMatched ? 0.2 : 0.1)
-                : Colors.grey.withValues(alpha: 0.1),
+              color: config != null
+                  ? config.color.withValues(alpha: isMatched ? 0.2 : 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: isMatched && config != null
-                ? Border.all(color: config.color.withValues(alpha: 0.5))
-                : null,
+                  ? Border.all(color: config.color.withValues(alpha: 0.5))
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1310,10 +1395,10 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
   }
 
   Widget _buildConnectButton(ColorScheme cs) {
-    final intentConfig = widget.selectedIntent != null 
-      ? IntentConfig.getByKey(widget.selectedIntent!) 
-      : null;
-    
+    final intentConfig = widget.selectedIntent != null
+        ? IntentConfig.getByKey(widget.selectedIntent!)
+        : null;
+
     return ElevatedButton(
       onPressed: widget.onConnect,
       child: Text('Connect', style: TextStyle(fontSize: 18)),
@@ -1347,7 +1432,7 @@ class ProfileCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     return Card(
       margin: const EdgeInsets.all(16.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1404,8 +1489,9 @@ class ProfileCardSkeleton extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Row(
-              children: List.generate(3, (i) => 
-                Container(
+              children: List.generate(
+                3,
+                (i) => Container(
                   margin: EdgeInsets.only(right: 8),
                   height: 32,
                   width: 70,
@@ -1419,8 +1505,9 @@ class ProfileCardSkeleton extends StatelessWidget {
             Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(3, (i) => 
-                Container(
+              children: List.generate(
+                3,
+                (i) => Container(
                   height: 56,
                   width: i == 1 ? 120 : 56,
                   decoration: BoxDecoration(
