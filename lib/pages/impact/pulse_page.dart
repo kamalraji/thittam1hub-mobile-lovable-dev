@@ -277,6 +277,18 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
               animationController: _intentAnimController,
             ),
 
+            // Discovery Mode Toggle (People/Groups/All)
+            _DiscoveryModeToggle(
+              currentMode: _discoveryMode,
+              onModeChanged: (mode) {
+                HapticFeedback.lightImpact();
+                setState(() => _discoveryMode = mode);
+                if (mode == DiscoveryMode.groups || mode == DiscoveryMode.all) {
+                  _loadCircles();
+                }
+              },
+            ),
+
             // Search and Filter Row
             Padding(
               padding:
@@ -286,7 +298,9 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Search by name, skill, etc...',
+                        hintText: _discoveryMode == DiscoveryMode.groups 
+                            ? 'Search groups...' 
+                            : 'Search by name, skill, etc...',
                         prefixIcon:
                             Icon(Icons.search, color: cs.onSurfaceVariant),
                         border: OutlineInputBorder(
@@ -352,7 +366,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                 ),
               ),
 
-            // Profile Cards
+            // Content Area - switches based on discovery mode
             Expanded(
               child: _isLoading
                   ? Center(
@@ -363,27 +377,11 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                         ),
                       ),
                     )
-                  : _filteredProfiles.isEmpty
-                      ? _buildEmptyState(cs, textTheme)
-                      : ProfileCard(
-                          profile: _filteredProfiles[_currentIndex],
-                          matchScore: _matchScores[
-                                  _filteredProfiles[_currentIndex].userId] ??
-                              0,
-                          matchResult: _matchResults[
-                              _filteredProfiles[_currentIndex].userId],
-                          isOnline: _onlineStatus[
-                                  _filteredProfiles[_currentIndex].userId] ??
-                              false,
-                          selectedIntent: _selectedIntent,
-                          onSkip: _onSkip,
-                          onConnect: _onConnect,
-                          onSave: _onSave,
-                          onTap: () => context.push(
-                            '/impact/profile/${_filteredProfiles[_currentIndex].userId}',
-                            extra: _filteredProfiles[_currentIndex],
-                          ),
-                        ),
+                  : _discoveryMode == DiscoveryMode.groups
+                      ? _buildGroupsContent(cs, textTheme)
+                      : _discoveryMode == DiscoveryMode.all
+                          ? _buildMixedContent(cs, textTheme)
+                          : _buildPeopleContent(cs, textTheme),
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
@@ -392,7 +390,118 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme cs, TextTheme textTheme) {
+  Widget _buildPeopleContent(ColorScheme cs, TextTheme textTheme) {
+    if (_filteredProfiles.isEmpty) {
+      return _buildEmptyState(cs, textTheme, 'profiles');
+    }
+    return ProfileCard(
+      profile: _filteredProfiles[_currentIndex],
+      matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
+      matchResult: _matchResults[_filteredProfiles[_currentIndex].userId],
+      isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
+      selectedIntent: _selectedIntent,
+      onSkip: _onSkip,
+      onConnect: _onConnect,
+      onSave: _onSave,
+      onTap: () => context.push(
+        '/impact/profile/${_filteredProfiles[_currentIndex].userId}',
+        extra: _filteredProfiles[_currentIndex],
+      ),
+    );
+  }
+
+  Widget _buildGroupsContent(ColorScheme cs, TextTheme textTheme) {
+    if (_matchedCircles.isEmpty) {
+      return _buildEmptyState(cs, textTheme, 'groups');
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _matchedCircles.length,
+      itemBuilder: (context, index) {
+        final result = _matchedCircles[index];
+        return CircleDiscoveryCard(
+          circle: result.circle,
+          matchScore: result.matchScore,
+          insights: result.insights,
+          onJoin: () async {
+            await _circleService.joinCircle(result.circle.id);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Joined ${result.circle.name}')),
+              );
+              _loadCircles();
+            }
+          },
+          onTap: () => context.push('/impact/circles/${result.circle.id}'),
+        );
+      },
+    );
+  }
+
+  Widget _buildMixedContent(ColorScheme cs, TextTheme textTheme) {
+    // Combine profiles and circles, interleaved by score
+    final combinedItems = <_MixedDiscoveryItem>[];
+    
+    for (final profile in _filteredProfiles) {
+      combinedItems.add(_MixedDiscoveryItem(
+        type: 'profile',
+        profile: profile,
+        score: _matchScores[profile.userId] ?? 0,
+      ));
+    }
+    
+    for (final circleResult in _matchedCircles) {
+      combinedItems.add(_MixedDiscoveryItem(
+        type: 'circle',
+        circleResult: circleResult,
+        score: circleResult.matchScore,
+      ));
+    }
+    
+    combinedItems.sort((a, b) => b.score.compareTo(a.score));
+    
+    if (combinedItems.isEmpty) {
+      return _buildEmptyState(cs, textTheme, 'matches');
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: combinedItems.length,
+      itemBuilder: (context, index) {
+        final item = combinedItems[index];
+        if (item.type == 'circle') {
+          return CircleDiscoveryCard(
+            circle: item.circleResult!.circle,
+            matchScore: item.circleResult!.matchScore,
+            insights: item.circleResult!.insights,
+            onJoin: () async {
+              await _circleService.joinCircle(item.circleResult!.circle.id);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Joined ${item.circleResult!.circle.name}')),
+                );
+                _loadCircles();
+              }
+            },
+            onTap: () => context.push('/impact/circles/${item.circleResult!.circle.id}'),
+          );
+        } else {
+          // Mini profile card for list view
+          return _MiniProfileCard(
+            profile: item.profile!,
+            matchScore: item.score,
+            isOnline: _onlineStatus[item.profile!.userId] ?? false,
+            onTap: () => context.push(
+              '/impact/profile/${item.profile!.userId}',
+              extra: item.profile,
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildEmptyState(ColorScheme cs, TextTheme textTheme, String type) {
     final config = _selectedIntent != null
         ? IntentConfig.getByKey(_selectedIntent!)
         : null;
@@ -402,15 +511,15 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            config?.icon ?? Icons.people_outline,
+            type == 'groups' ? Icons.groups_outlined : (config?.icon ?? Icons.people_outline),
             size: 64,
             color: config?.color ?? cs.onSurfaceVariant,
           ),
           SizedBox(height: 16),
           Text(
             _selectedIntent != null
-                ? 'No ${config?.label ?? 'profiles'} matches found.'
-                : 'No profiles found.',
+                ? 'No ${config?.label ?? type} matches found.'
+                : 'No $type found.',
             style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           SizedBox(height: 8),
@@ -1518,6 +1627,165 @@ class ProfileCardSkeleton extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== Discovery Mode Toggle ====================
+
+class _DiscoveryModeToggle extends StatelessWidget {
+  final DiscoveryMode currentMode;
+  final ValueChanged<DiscoveryMode> onModeChanged;
+
+  const _DiscoveryModeToggle({
+    required this.currentMode,
+    required this.onModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: DiscoveryMode.values.map((mode) {
+            final isSelected = currentMode == mode;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onModeChanged(mode),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? cs.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        mode == DiscoveryMode.people ? '👤' : mode == DiscoveryMode.groups ? '👥' : '🌐',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        mode == DiscoveryMode.people ? 'People' : mode == DiscoveryMode.groups ? 'Groups' : 'All',
+                        style: TextStyle(
+                          color: isSelected ? cs.onPrimary : cs.onSurface,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== Mixed Discovery Item ====================
+
+class _MixedDiscoveryItem {
+  final String type; // 'profile' or 'circle'
+  final ImpactProfile? profile;
+  final GroupMatchResult? circleResult;
+  final int score;
+
+  _MixedDiscoveryItem({
+    required this.type,
+    this.profile,
+    this.circleResult,
+    required this.score,
+  });
+}
+
+// ==================== Mini Profile Card for List View ====================
+
+class _MiniProfileCard extends StatelessWidget {
+  final ImpactProfile profile;
+  final int matchScore;
+  final bool isOnline;
+  final VoidCallback onTap;
+
+  const _MiniProfileCard({
+    required this.profile,
+    required this.matchScore,
+    required this.isOnline,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: profile.avatarUrl != null ? NetworkImage(profile.avatarUrl!) : null,
+                    child: profile.avatarUrl == null ? Text(profile.fullName[0]) : null,
+                  ),
+                  if (isOnline)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: cs.surface, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profile.fullName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    if (profile.headline.isNotEmpty)
+                      Text(profile.headline, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$matchScore%', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ],
+          ),
         ),
       ),
     );
