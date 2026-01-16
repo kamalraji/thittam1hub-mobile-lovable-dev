@@ -287,11 +287,11 @@ Get your ticket on Thittam1Hub!''',
                     size: MediaQuery.of(context).size.width * 0.7,
                     backgroundColor: Colors.white,
                     eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.roundedOuter,
+                      eyeShape: QrEyeShape.square,
                       color: Colors.black,
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.roundedSq,
+                      dataModuleShape: QrDataModuleShape.square,
                       color: Colors.black,
                     ),
                   ),
@@ -412,11 +412,11 @@ class _TicketDetailCard extends StatelessWidget {
                           size: 200,
                           backgroundColor: Colors.white,
                           eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.roundedOuter,
+                            eyeShape: QrEyeShape.square,
                             color: Colors.black,
                           ),
                           dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.roundedSq,
+                            dataModuleShape: QrDataModuleShape.square,
                             color: Colors.black,
                           ),
                         ),

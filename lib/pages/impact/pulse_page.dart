@@ -952,8 +952,6 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
   bool _loadingMutuals = false;
   bool _showInsights = false;
   double _dragPosition = 0;
-  bool _loadingMutuals = false;
-  double _dragPosition = 0;
   late AnimationController _resetController;
   late Animation<double> _resetAnimation;
 
@@ -1041,7 +1039,7 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
         child: Transform.rotate(
           angle: _dragPosition * 0.005,
           child: Opacity(
-            opacity: 1 - (swipeProgress * 0.3),
+            opacity: (1 - (swipeProgress * 0.3)).toDouble(),
             child: Stack(
               children: [
                 Card(

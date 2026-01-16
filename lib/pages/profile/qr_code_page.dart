@@ -139,11 +139,11 @@ class _QrCodePageState extends State<QrCodePage> {
                             size: 250,
                             backgroundColor: Colors.white,
                             eyeStyle: const QrEyeStyle(
-                              eyeShape: QrEyeShape.roundedOuter,
+                              eyeShape: QrEyeShape.square,
                               color: Colors.black,
                             ),
                             dataModuleStyle: const QrDataModuleStyle(
-                              dataModuleShape: QrDataModuleShape.roundedSq,
+                              dataModuleShape: QrDataModuleShape.square,
                               color: Colors.black,
                             ),
                           ),
