@@ -1,10 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/intent_config.dart';
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
@@ -13,7 +16,7 @@ class PulsePage extends StatefulWidget {
   State<PulsePage> createState() => _PulsePageState();
 }
 
-class _PulsePageState extends State<PulsePage> {
+class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   final ImpactService _impactService = ImpactService();
   List<ImpactProfile> _allProfiles = [];
   List<ImpactProfile> _filteredProfiles = [];
@@ -28,13 +31,26 @@ class _PulsePageState extends State<PulsePage> {
   List<String> _selectedSkills = [];
   List<String> _selectedInterests = [];
   List<String> _selectedLookingFor = [];
+  
+  // Intent selector
+  String? _selectedIntent;
+  late AnimationController _intentAnimController;
 
   @override
   void initState() {
     super.initState();
+    _intentAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
     _loadProfiles();
     _subscribeToOnlineStatus();
     _impactService.updateOnlineStatus(true);
+    
+    // Stagger intent card animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _intentAnimController.forward();
+    });
   }
 
   void _subscribeToOnlineStatus() {
@@ -49,16 +65,31 @@ class _PulsePageState extends State<PulsePage> {
   void dispose() {
     _onlineStatusChannel?.unsubscribe();
     _impactService.updateOnlineStatus(false);
+    _intentAnimController.dispose();
     super.dispose();
   }
 
   Future<void> _loadProfiles() async {
     setState(() => _isLoading = true);
     _myProfile = await _impactService.getMyImpactProfile();
+    
+    // Build lookingFor filter with complementary matching
+    List<String>? lookingForFilter;
+    if (_selectedIntent != null) {
+      lookingForFilter = [_selectedIntent!];
+      // Add complementary key for reciprocal matching
+      final config = IntentConfig.getByKey(_selectedIntent!);
+      if (config?.complementaryKey != null) {
+        lookingForFilter.add(config!.complementaryKey!);
+      }
+    } else if (_selectedLookingFor.isNotEmpty) {
+      lookingForFilter = _selectedLookingFor;
+    }
+    
     final profiles = await _impactService.getImpactProfiles(
       skills: _selectedSkills.isEmpty ? null : _selectedSkills,
       interests: _selectedInterests.isEmpty ? null : _selectedInterests,
-      lookingFor: _selectedLookingFor.isEmpty ? null : _selectedLookingFor,
+      lookingFor: lookingForFilter,
     );
     if (mounted) {
       setState(() {
@@ -79,6 +110,22 @@ class _PulsePageState extends State<PulsePage> {
     }
   }
 
+  void _onIntentSelected(String? intentKey) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (_selectedIntent == intentKey) {
+        // Deselect if tapping the same intent
+        _selectedIntent = null;
+        _selectedLookingFor.clear();
+      } else {
+        _selectedIntent = intentKey;
+        // Sync with filter
+        _selectedLookingFor = intentKey != null ? [intentKey] : [];
+      }
+    });
+    _loadProfiles();
+  }
+
   void _showFilterDialog() {
     showModalBottomSheet(
       context: context,
@@ -97,6 +144,12 @@ class _PulsePageState extends State<PulsePage> {
             _selectedSkills = skills;
             _selectedInterests = interests;
             _selectedLookingFor = lookingFor;
+            // Sync intent with filter if single lookingFor selected
+            if (lookingFor.length == 1) {
+              _selectedIntent = lookingFor.first;
+            } else {
+              _selectedIntent = null;
+            }
           });
           _loadProfiles();
         },
@@ -129,7 +182,7 @@ class _PulsePageState extends State<PulsePage> {
     try {
       await _impactService.sendConnectionRequest(
         profile.userId,
-        profile.lookingFor.isNotEmpty ? profile.lookingFor.first : 'NETWORKING',
+        _selectedIntent ?? (profile.lookingFor.isNotEmpty ? profile.lookingFor.first : 'NETWORKING'),
       );
       
       if (mounted) {
@@ -205,6 +258,14 @@ class _PulsePageState extends State<PulsePage> {
       body: SafeArea(
         child: Column(
           children: [
+            // Intent Selector Section
+            _IntentSelectorSection(
+              selectedIntent: _selectedIntent,
+              onIntentSelected: _onIntentSelected,
+              animationController: _intentAnimController,
+            ),
+            
+            // Search and Filter Row
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
@@ -224,13 +285,40 @@ class _PulsePageState extends State<PulsePage> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.filter_list, color: cs.onSurfaceVariant),
+                    icon: Stack(
+                      children: [
+                        Icon(Icons.filter_list, color: cs.onSurfaceVariant),
+                        if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: cs.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     onPressed: _showFilterDialog,
                   ),
                 ],
               ),
             ),
-            if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty || _selectedLookingFor.isNotEmpty)
+            
+            // Active Intent Badge
+            if (_selectedIntent != null)
+              _ActiveIntentBadge(
+                intentKey: _selectedIntent!,
+                profileCount: _filteredProfiles.length,
+                onClear: () => _onIntentSelected(null),
+              ),
+            
+            // Filter chips (skills, interests - not lookingFor since we have intent selector)
+            if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
               Container(
                 height: 50,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -245,13 +333,11 @@ class _PulsePageState extends State<PulsePage> {
                       setState(() => _selectedInterests.remove(i));
                       _loadProfiles();
                     })),
-                    ..._selectedLookingFor.map((l) => _buildFilterChip(l, () {
-                      setState(() => _selectedLookingFor.remove(l));
-                      _loadProfiles();
-                    })),
                   ],
                 ),
               ),
+            
+            // Profile Cards
             Expanded(
               child: _isLoading
                   ? Center(
@@ -263,32 +349,12 @@ class _PulsePageState extends State<PulsePage> {
                       ),
                     )
                   : _filteredProfiles.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.people_outline, size: 64, color: cs.onSurfaceVariant),
-                              SizedBox(height: 16),
-                              Text('No profiles found.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                              SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedSkills.clear();
-                                    _selectedInterests.clear();
-                                    _selectedLookingFor.clear();
-                                  });
-                                  _loadProfiles();
-                                },
-                                child: Text('Clear Filters'),
-                              ),
-                            ],
-                          ),
-                        )
+                      ? _buildEmptyState(cs, textTheme)
                       : ProfileCard(
                           profile: _filteredProfiles[_currentIndex],
                           matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
                           isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
+                          selectedIntent: _selectedIntent,
                           onSkip: _onSkip,
                           onConnect: _onConnect,
                           onSave: _onSave,
@@ -301,6 +367,50 @@ class _PulsePageState extends State<PulsePage> {
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ColorScheme cs, TextTheme textTheme) {
+    final config = _selectedIntent != null ? IntentConfig.getByKey(_selectedIntent!) : null;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            config?.icon ?? Icons.people_outline, 
+            size: 64, 
+            color: config?.color ?? cs.onSurfaceVariant,
+          ),
+          SizedBox(height: 16),
+          Text(
+            _selectedIntent != null 
+              ? 'No ${config?.label ?? 'profiles'} matches found.'
+              : 'No profiles found.',
+            style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          ),
+          SizedBox(height: 8),
+          if (_selectedIntent != null)
+            TextButton.icon(
+              onPressed: () => _onIntentSelected(null),
+              icon: Icon(Icons.close),
+              label: Text('Clear ${config?.label ?? 'intent'} filter'),
+            )
+          else
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedSkills.clear();
+                  _selectedInterests.clear();
+                  _selectedLookingFor.clear();
+                  _selectedIntent = null;
+                });
+                _loadProfiles();
+              },
+              child: Text('Clear All Filters'),
+            ),
+        ],
       ),
     );
   }
@@ -319,6 +429,297 @@ class _PulsePageState extends State<PulsePage> {
     );
   }
 }
+
+// ==================== Intent Selector Section ====================
+
+class _IntentSelectorSection extends StatelessWidget {
+  final String? selectedIntent;
+  final Function(String?) onIntentSelected;
+  final AnimationController animationController;
+
+  const _IntentSelectorSection({
+    required this.selectedIntent,
+    required this.onIntentSelected,
+    required this.animationController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                'What are you looking for today?',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Spacer(),
+              if (selectedIntent != null)
+                TextButton(
+                  onPressed: () => onIntentSelected(null),
+                  child: Text('View All'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: IntentConfig.all.length,
+            itemBuilder: (context, index) {
+              final config = IntentConfig.all[index];
+              final isSelected = selectedIntent == config.key;
+              
+              return AnimatedBuilder(
+                animation: animationController,
+                builder: (context, child) {
+                  // Staggered animation
+                  final delay = index * 0.1;
+                  final animValue = ((animationController.value - delay) / (1 - delay)).clamp(0.0, 1.0);
+                  
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - animValue)),
+                    child: Opacity(
+                      opacity: animValue,
+                      child: child,
+                    ),
+                  );
+                },
+                child: _IntentCard(
+                  config: config,
+                  isSelected: isSelected,
+                  onTap: () => onIntentSelected(config.key),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _IntentCard extends StatefulWidget {
+  final IntentConfig config;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _IntentCard({
+    required this.config,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_IntentCard> createState() => _IntentCardState();
+}
+
+class _IntentCardState extends State<_IntentCard> with SingleTickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    _scaleController.forward();
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    _scaleController.reverse();
+    widget.onTap();
+  }
+
+  void _onTapCancel() {
+    _scaleController.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 85,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: widget.isSelected 
+                ? widget.config.color 
+                : cs.outlineVariant.withValues(alpha: 0.3),
+              width: widget.isSelected ? 2 : 1,
+            ),
+            boxShadow: widget.isSelected ? [
+              BoxShadow(
+                color: widget.config.color.withValues(alpha: 0.3),
+                blurRadius: 8,
+                spreadRadius: 0,
+              ),
+            ] : null,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: widget.isSelected 
+                      ? [
+                          widget.config.color.withValues(alpha: 0.25),
+                          widget.config.color.withValues(alpha: 0.1),
+                        ]
+                      : [
+                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.02),
+                        ],
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.config.emoji,
+                      style: TextStyle(fontSize: 28),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      widget.config.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: widget.isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: widget.isSelected 
+                          ? widget.config.color 
+                          : cs.onSurface,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== Active Intent Badge ====================
+
+class _ActiveIntentBadge extends StatelessWidget {
+  final String intentKey;
+  final int profileCount;
+  final VoidCallback onClear;
+
+  const _ActiveIntentBadge({
+    required this.intentKey,
+    required this.profileCount,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final config = IntentConfig.getByKey(intentKey);
+    if (config == null) return SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: config.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: config.color.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(config.emoji, style: TextStyle(fontSize: 14)),
+                SizedBox(width: 6),
+                Text(
+                  'Looking for ${config.label}',
+                  style: TextStyle(
+                    color: config.color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: config.color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$profileCount',
+                    style: TextStyle(
+                      color: config.color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 4),
+                GestureDetector(
+                  onTap: onClear,
+                  child: Icon(Icons.close, size: 16, color: config.color),
+                ),
+              ],
+            ),
+          ),
+          Spacer(),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== Filter Sheet ====================
 
 class FilterSheet extends StatefulWidget {
   final List<ImpactProfile> allProfiles;
@@ -368,11 +769,6 @@ class _FilterSheetState extends State<FilterSheet> {
         .toSet()
         .toList()
       ..sort();
-    final allLookingFor = widget.allProfiles
-        .expand((p) => p.lookingFor)
-        .toSet()
-        .toList()
-      ..sort();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -387,7 +783,7 @@ class _FilterSheetState extends State<FilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filters', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Advanced Filters', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -400,6 +796,11 @@ class _FilterSheetState extends State<FilterSheet> {
                 ),
               ],
             ),
+            SizedBox(height: 8),
+            Text(
+              'Use the intent cards above for quick filtering, or use these advanced options.',
+              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
             SizedBox(height: 16),
             Expanded(
               child: ListView(
@@ -409,7 +810,7 @@ class _FilterSheetState extends State<FilterSheet> {
                   SizedBox(height: 16),
                   _buildSection('Interests', allInterests, _interests),
                   SizedBox(height: 16),
-                  _buildSection('Looking For', allLookingFor, _lookingFor),
+                  _buildIntentSection(),
                 ],
               ),
             ),
@@ -469,12 +870,50 @@ class _FilterSheetState extends State<FilterSheet> {
       ],
     );
   }
+
+  Widget _buildIntentSection() {
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Looking For', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: IntentConfig.all.map((config) {
+            final isSelected = _lookingFor.contains(config.key);
+            return FilterChip(
+              avatar: Text(config.emoji, style: TextStyle(fontSize: 14)),
+              label: Text(config.label),
+              selected: isSelected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _lookingFor.add(config.key);
+                  } else {
+                    _lookingFor.remove(config.key);
+                  }
+                });
+              },
+              selectedColor: config.color.withValues(alpha: 0.2),
+              checkmarkColor: config.color,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
 }
+
+// ==================== Profile Card ====================
 
 class ProfileCard extends StatefulWidget {
   final ImpactProfile profile;
   final int matchScore;
   final bool isOnline;
+  final String? selectedIntent;
   final VoidCallback onSkip;
   final VoidCallback onConnect;
   final VoidCallback onSave;
@@ -486,6 +925,7 @@ class ProfileCard extends StatefulWidget {
     required this.profile,
     required this.matchScore,
     required this.isOnline,
+    this.selectedIntent,
     required this.onSkip,
     required this.onConnect,
     required this.onSave,
@@ -575,6 +1015,11 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
     final avatarHeroTag = HeroConfig.profileAvatarTag(widget.profile.userId);
     final nameHeroTag = HeroConfig.profileNameTag(widget.profile.userId);
     
+    // Get intent config for styling
+    final intentConfig = widget.selectedIntent != null 
+      ? IntentConfig.getByKey(widget.selectedIntent!) 
+      : null;
+    
     return GestureDetector(
       onPanUpdate: _onPanUpdate,
       onPanEnd: _onPanEnd,
@@ -644,21 +1089,21 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: cs.primary.withValues(alpha: 0.1),
+                                color: (intentConfig?.color ?? cs.primary).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.favorite, color: cs.primary, size: 16),
+                                  Icon(Icons.favorite, color: intentConfig?.color ?? cs.primary, size: 16),
                                   SizedBox(width: 6),
-                                  Text('${widget.matchScore}%', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+                                  Text('${widget.matchScore}%', style: TextStyle(color: intentConfig?.color ?? cs.primary, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ),
                           ],
                         ),
                         SizedBox(height: 24),
-                        Text('🎯 Looking for: ${widget.profile.lookingFor.join(', ')}', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        _buildLookingForSection(textTheme),
                         SizedBox(height: 12),
                         if (_mutualConnections.isNotEmpty) ...[
                           Row(
@@ -774,6 +1219,55 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
     );
   }
 
+  Widget _buildLookingForSection(TextTheme textTheme) {
+    // Show looking for with intent-aware styling
+    final lookingForItems = widget.profile.lookingFor;
+    if (lookingForItems.isEmpty) return SizedBox.shrink();
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        Text('🎯 Looking for:', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        ...lookingForItems.take(3).map((item) {
+          final config = IntentConfig.getByKey(item);
+          final isMatched = widget.selectedIntent == item || 
+            (IntentConfig.getByKey(widget.selectedIntent ?? '')?.complementaryKey == item);
+          
+          return Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: config != null 
+                ? config.color.withValues(alpha: isMatched ? 0.2 : 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: isMatched && config != null
+                ? Border.all(color: config.color.withValues(alpha: 0.5))
+                : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (config != null) ...[
+                  Text(config.emoji, style: TextStyle(fontSize: 12)),
+                  SizedBox(width: 4),
+                ],
+                Text(
+                  config?.label ?? item,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isMatched ? FontWeight.bold : FontWeight.normal,
+                    color: config?.color,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
   Widget _buildSkipButton(ColorScheme cs) {
     return ElevatedButton(
       onPressed: widget.onSkip,
@@ -787,14 +1281,18 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
   }
 
   Widget _buildConnectButton(ColorScheme cs) {
+    final intentConfig = widget.selectedIntent != null 
+      ? IntentConfig.getByKey(widget.selectedIntent!) 
+      : null;
+    
     return ElevatedButton(
       onPressed: widget.onConnect,
       child: Text('Connect', style: TextStyle(fontSize: 18)),
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         padding: EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
+        backgroundColor: intentConfig?.color ?? cs.primary,
+        foregroundColor: Colors.white,
       ),
     );
   }
@@ -807,6 +1305,104 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
         shape: CircleBorder(),
         padding: EdgeInsets.all(20),
         backgroundColor: Colors.amber[600],
+      ),
+    );
+  }
+}
+
+// ==================== Profile Card Skeleton ====================
+
+class ProfileCardSkeleton extends StatelessWidget {
+  const ProfileCardSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return Card(
+      margin: const EdgeInsets.all(16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: cs.surfaceContainerHighest,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 20,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Container(
+                        height: 14,
+                        width: 200,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+            Container(
+              height: 16,
+              width: 180,
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: List.generate(3, (i) => 
+                Container(
+                  margin: EdgeInsets.only(right: 8),
+                  height: 32,
+                  width: 70,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(3, (i) => 
+                Container(
+                  height: 56,
+                  width: i == 1 ? 120 : 56,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(i == 1 ? 28 : 28),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
