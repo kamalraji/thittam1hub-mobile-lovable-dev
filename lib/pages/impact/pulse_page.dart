@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
+import 'package:thittam1hub/models/match_insight.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
+import 'package:thittam1hub/widgets/match_insights_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
@@ -23,6 +25,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   int _currentIndex = 0;
   bool _isLoading = true;
   ImpactProfile? _myProfile;
+  final Map<String, MatchResult> _matchResults = {};
   final Map<String, int> _matchScores = {};
   final Map<String, bool> _onlineStatus = {};
   RealtimeChannel? _onlineStatusChannel;
@@ -96,10 +99,13 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         _allProfiles = profiles;
         _filteredProfiles = List.of(profiles);
         _matchScores.clear();
+        _matchResults.clear();
         _onlineStatus.clear();
         if (_myProfile != null) {
           for (final p in _filteredProfiles) {
-            _matchScores[p.userId] = _impactService.calculateMatchScore(_myProfile!, p);
+            final result = _impactService.calculateMatchInsights(_myProfile!, p);
+            _matchResults[p.userId] = result;
+            _matchScores[p.userId] = result.totalScore;
             _onlineStatus[p.userId] = p.isOnline;
           }
           _filteredProfiles.sort((a, b) => (_matchScores[b.userId] ?? 0).compareTo((_matchScores[a.userId] ?? 0)));
@@ -353,6 +359,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                       : ProfileCard(
                           profile: _filteredProfiles[_currentIndex],
                           matchScore: _matchScores[_filteredProfiles[_currentIndex].userId] ?? 0,
+                          matchResult: _matchResults[_filteredProfiles[_currentIndex].userId],
                           isOnline: _onlineStatus[_filteredProfiles[_currentIndex].userId] ?? false,
                           selectedIntent: _selectedIntent,
                           onSkip: _onSkip,
@@ -912,6 +919,7 @@ class _FilterSheetState extends State<FilterSheet> {
 class ProfileCard extends StatefulWidget {
   final ImpactProfile profile;
   final int matchScore;
+  final MatchResult? matchResult;
   final bool isOnline;
   final String? selectedIntent;
   final VoidCallback onSkip;
@@ -924,6 +932,7 @@ class ProfileCard extends StatefulWidget {
     Key? key,
     required this.profile,
     required this.matchScore,
+    this.matchResult,
     required this.isOnline,
     this.selectedIntent,
     required this.onSkip,
@@ -940,6 +949,9 @@ class ProfileCard extends StatefulWidget {
 class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStateMixin {
   final ImpactService _impactService = ImpactService();
   List<ImpactProfile> _mutualConnections = [];
+  bool _loadingMutuals = false;
+  bool _showInsights = false;
+  double _dragPosition = 0;
   bool _loadingMutuals = false;
   double _dragPosition = 0;
   late AnimationController _resetController;
@@ -1086,22 +1098,41 @@ class _ProfileCardState extends State<ProfileCard> with SingleTickerProviderStat
                               ),
                             ),
                             SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: (intentConfig?.color ?? cs.primary).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
+                            // Match Insights Badge (tappable to expand)
+                            if (widget.matchResult != null)
+                              GestureDetector(
+                                onTap: () => setState(() => _showInsights = !_showInsights),
+                                child: MatchInsightsCard(
+                                  matchResult: widget.matchResult!,
+                                  compact: true,
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: (intentConfig?.color ?? cs.primary).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.favorite, color: intentConfig?.color ?? cs.primary, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('${widget.matchScore}%', style: TextStyle(color: intentConfig?.color ?? cs.primary, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.favorite, color: intentConfig?.color ?? cs.primary, size: 16),
-                                  SizedBox(width: 6),
-                                  Text('${widget.matchScore}%', style: TextStyle(color: intentConfig?.color ?? cs.primary, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
                           ],
                         ),
+                        // Expandable Match Insights
+                        if (_showInsights && widget.matchResult != null) ...[
+                          SizedBox(height: 16),
+                          MatchInsightsCard(
+                            matchResult: widget.matchResult!,
+                            initiallyExpanded: true,
+                            onTap: () => setState(() => _showInsights = false),
+                          ),
+                        ],
                         SizedBox(height: 24),
                         _buildLookingForSection(textTheme),
                         SizedBox(height: 12),
