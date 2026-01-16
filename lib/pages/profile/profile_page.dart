@@ -1,8 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/services/profile_service.dart';
+import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
@@ -20,11 +24,14 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
   final _profileService = ProfileService();
+  final _gamificationService = GamificationService();
   UserProfile? _profile;
   int _eventsAttended = 0;
   int _upcomingEvents = 0;
   int _savedEvents = 0;
   List<EventHistory> _eventHistory = [];
+  List<BadgeItem> _earnedBadges = [];
+  List<String> _myBadgeIds = [];
   bool _isLoading = true;
   late AnimationController _progressController;
 
@@ -53,19 +60,29 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
 
     try {
-      final profile = await _profileService.getUserProfile(userId);
-      final attended = await _profileService.getEventsAttendedCount(userId);
-      final upcoming = await _profileService.getUpcomingEventsCount(userId);
-      final saved = await _profileService.getSavedEventsCount(userId);
-      final history = await _profileService.getEventHistory(userId);
+      final results = await Future.wait([
+        _profileService.getUserProfile(userId),
+        _profileService.getEventsAttendedCount(userId),
+        _profileService.getUpcomingEventsCount(userId),
+        _profileService.getSavedEventsCount(userId),
+        _profileService.getEventHistory(userId),
+        _gamificationService.getAllBadges(),
+        _gamificationService.getMyBadgeIds(),
+      ]);
 
       if (mounted) {
+        final allBadges = results[5] as List<BadgeItem>;
+        final myBadgeIds = results[6] as List<String>;
+        final earnedBadges = allBadges.where((b) => myBadgeIds.contains(b.id)).toList();
+        
         setState(() {
-          _profile = profile;
-          _eventsAttended = attended;
-          _upcomingEvents = upcoming;
-          _savedEvents = saved;
-          _eventHistory = history;
+          _profile = results[0] as UserProfile?;
+          _eventsAttended = results[1] as int;
+          _upcomingEvents = results[2] as int;
+          _savedEvents = results[3] as int;
+          _eventHistory = results[4] as List<EventHistory>;
+          _earnedBadges = earnedBadges;
+          _myBadgeIds = myBadgeIds;
           _isLoading = false;
         });
         // Animate progress ring
@@ -150,8 +167,41 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
   void _shareProfile() {
     HapticFeedback.lightImpact();
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null || _profile == null) return;
+    
+    // Generate deep link URL
+    final profileUrl = 'https://thittam1hub.app/profile/$userId';
+    final shareText = '${_profile!.fullName ?? 'Check out my profile'} on Thittam1Hub\n\n$profileUrl';
+    
+    Share.share(
+      shareText,
+      subject: 'My Thittam1Hub Profile',
+    );
+  }
+  
+  void _copyProfileLink() {
+    HapticFeedback.mediumImpact();
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+    
+    final profileUrl = 'https://thittam1hub.app/profile/$userId';
+    Clipboard.setData(ClipboardData(text: profileUrl));
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile sharing coming soon!')),
+      SnackBar(
+        content: const Text('Profile link copied to clipboard!'),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Open',
+          onPressed: () async {
+            final uri = Uri.parse(profileUrl);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -212,6 +262,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 completeness: completeness,
               ),
               const SizedBox(height: AppSpacing.lg),
+
+              // Badge Showcase Section
+              if (_earnedBadges.isNotEmpty) ...[
+                _BadgeShowcaseSection(
+                  earnedBadges: _earnedBadges,
+                  onViewAll: () => context.push('/impact'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
 
               // Event History Section
               if (_eventHistory.isNotEmpty) ...[
@@ -497,6 +556,297 @@ class _ProfileHeaderState extends State<_ProfileHeader> with SingleTickerProvide
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Badge Showcase Section with glassmorphism styling
+class _BadgeShowcaseSection extends StatelessWidget {
+  final List<BadgeItem> earnedBadges;
+  final VoidCallback onViewAll;
+
+  const _BadgeShowcaseSection({
+    required this.earnedBadges,
+    required this.onViewAll,
+  });
+
+  Color _getRarityColor(String rarity) {
+    switch (rarity.toUpperCase()) {
+      case 'LEGENDARY':
+        return const Color(0xFFFFD700); // Gold
+      case 'EPIC':
+        return const Color(0xFF9C27B0); // Purple
+      case 'RARE':
+        return const Color(0xFF2196F3); // Blue
+      default:
+        return const Color(0xFF4CAF50); // Green for COMMON
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final displayBadges = earnedBadges.take(4).toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.emoji_events, size: 16, color: cs.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'ACHIEVEMENTS',
+                    style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${earnedBadges.length}',
+                      style: context.textStyles.labelSmall?.semiBold.withColor(cs.primary),
+                    ),
+                  ),
+                ],
+              ),
+              if (earnedBadges.length > 4)
+                TextButton(
+                  onPressed: onViewAll,
+                  child: const Text('View All'),
+                ),
+            ],
+          ),
+        ),
+        // Glassmorphism badge container
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    cs.surfaceContainerHighest.withValues(alpha: 0.8),
+                    cs.surfaceContainerHigh.withValues(alpha: 0.6),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: cs.outline.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.shadow.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Badge grid
+                  Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    alignment: WrapAlignment.center,
+                    children: displayBadges.map((badge) => _BadgeCard(
+                      badge: badge,
+                      rarityColor: _getRarityColor(badge.rarity),
+                    )).toList(),
+                  ),
+                  // Empty state placeholder
+                  if (earnedBadges.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        children: [
+                          Icon(Icons.military_tech_outlined, size: 48, color: cs.onSurfaceVariant),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'No badges earned yet',
+                            style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Connect with others in Impact Hub to earn badges!',
+                            style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Individual badge card with glassmorphism effect
+class _BadgeCard extends StatelessWidget {
+  final BadgeItem badge;
+  final Color rarityColor;
+
+  const _BadgeCard({
+    required this.badge,
+    required this.rarityColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return GestureDetector(
+      onTap: () => _showBadgeDetails(context),
+      child: Container(
+        width: 72,
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              rarityColor.withValues(alpha: 0.15),
+              rarityColor.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: rarityColor.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Badge icon with glow
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    rarityColor.withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  badge.icon,
+                  style: const TextStyle(fontSize: 28),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Badge name
+            Text(
+              badge.name,
+              style: context.textStyles.labelSmall?.semiBold.withColor(cs.onSurface),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBadgeDetails(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    showGlassBottomSheet(
+      context: context,
+      title: badge.name,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Large badge icon with animated glow
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  rarityColor.withValues(alpha: 0.4),
+                  rarityColor.withValues(alpha: 0.1),
+                  Colors.transparent,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: rarityColor.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                badge.icon,
+                style: const TextStyle(fontSize: 56),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Rarity badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: rarityColor.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: rarityColor.withValues(alpha: 0.5),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              badge.rarity,
+              style: context.textStyles.labelSmall?.semiBold.withColor(rarityColor),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Description
+          Text(
+            badge.description,
+            style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          // Category
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.category_outlined, size: 14, color: cs.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                badge.category,
+                style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+      ),
     );
   }
 }
