@@ -6,6 +6,8 @@ import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/services/profile_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
+import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/hero_animations.dart';
 
 /// Edit Profile screen with form validation
 class EditProfilePage extends StatefulWidget {
@@ -212,30 +214,60 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: [
+                  const Center(
+                    child: ShimmerLoading(
+                      width: 100,
+                      height: 100,
+                      borderRadius: BorderRadius.all(Radius.circular(50)),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ...List.generate(8, (index) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: FadeSlideTransition(
+                      delay: staggerDelay(index),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 56,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )),
+                ],
+              ),
+            )
           : Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 children: [
-                  // Avatar Section
+                  // Avatar Section with Hero animation
                   Center(
                     child: Column(
                       children: [
                         Stack(
                           children: [
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundColor: AppColors.primary,
-                              backgroundImage: (_newAvatarUrl ?? _profile?.avatarUrl) != null
-                                  ? NetworkImage(_newAvatarUrl ?? _profile!.avatarUrl!)
-                                  : null,
-                              child: (_newAvatarUrl ?? _profile?.avatarUrl) == null
-                                  ? Text(
-                                      (_profile?.fullName ?? 'U')[0].toUpperCase(),
-                                      style: context.textStyles.displaySmall?.copyWith(color: Colors.white),
-                                    )
-                                  : null,
+                            AnimatedHero(
+                              tag: HeroConfig.profileAvatarTag(_profile?.id ?? 'avatar'),
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                backgroundImage: (_newAvatarUrl ?? _profile?.avatarUrl) != null
+                                    ? NetworkImage(_newAvatarUrl ?? _profile!.avatarUrl!)
+                                    : null,
+                                child: (_newAvatarUrl ?? _profile?.avatarUrl) == null
+                                    ? Text(
+                                        (_profile?.fullName ?? 'U')[0].toUpperCase(),
+                                        style: context.textStyles.displaySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                        ),
+                                      )
+                                    : null,
+                              ),
                             ),
                             if (_newAvatarUrl != null)
                               Positioned(

@@ -1165,3 +1165,178 @@ class _BounceAnimationState extends State<BounceAnimation>
     );
   }
 }
+
+// =============================================================================
+// PROFILE PAGE SKELETONS
+// =============================================================================
+
+/// Profile page header skeleton (avatar ring + info)
+class ProfileHeaderSkeleton extends StatelessWidget {
+  const ProfileHeaderSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Avatar with progress ring placeholder
+        const ShimmerLoading(
+          width: 96,
+          height: 96,
+          borderRadius: BorderRadius.all(Radius.circular(48)),
+        ),
+        const SizedBox(height: 16),
+        // Name
+        ShimmerLoading(
+          width: 150,
+          height: 24,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 8),
+        // Organization
+        ShimmerLoading(
+          width: 120,
+          height: 16,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 8),
+        // Email
+        ShimmerLoading(
+          width: 180,
+          height: 14,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 16),
+        // Completeness badge
+        ShimmerLoading(
+          width: 200,
+          height: 32,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ],
+    );
+  }
+}
+
+/// Quick stats row skeleton
+class QuickStatsRowSkeleton extends StatelessWidget {
+  const QuickStatsRowSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(3, (i) => Expanded(
+        child: Container(
+          margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              ShimmerLoading(
+                width: 40,
+                height: 32,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const SizedBox(height: 8),
+              ShimmerLoading(
+                width: 60,
+                height: 14,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ],
+          ),
+        ),
+      )),
+    );
+  }
+}
+
+/// Menu card skeleton
+class MenuCardSkeleton extends StatelessWidget {
+  const MenuCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const ShimmerLoading(
+            width: 24,
+            height: 24,
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ShimmerLoading(
+              width: 120,
+              height: 16,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const ShimmerLoading(
+            width: 20,
+            height: 20,
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// QR code page skeleton
+class QrCodeSkeleton extends StatelessWidget {
+  const QrCodeSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Spacer(),
+        // QR code placeholder
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const ShimmerLoading(
+            width: 250,
+            height: 250,
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Name
+        ShimmerLoading(
+          width: 150,
+          height: 24,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 8),
+        // Instructions
+        ShimmerLoading(
+          width: 200,
+          height: 16,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const Spacer(),
+        // Button
+        ShimmerLoading(
+          width: double.infinity,
+          height: 48,
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ],
+    );
+  }
+}
