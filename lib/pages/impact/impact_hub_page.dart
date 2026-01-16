@@ -10,6 +10,7 @@ import 'circles_page.dart';
 import 'spark_page.dart';
 import 'vibe_page.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
+import 'package:thittam1hub/utils/animations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
@@ -405,7 +406,9 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: ScoreCard(profile: _myProfile),
+                child: _myProfile == null
+                    ? const FadeSlideTransition(child: ScoreCardSkeleton())
+                    : ScoreCard(profile: _myProfile),
               ),
             ),
             SliverPersistentHeader(
