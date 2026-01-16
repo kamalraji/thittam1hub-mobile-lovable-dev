@@ -4,6 +4,7 @@ import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/services/event_service.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
+import 'package:thittam1hub/utils/result.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;
@@ -43,8 +44,27 @@ class _EventDetailPageState extends State<EventDetailPage> {
       setState(() => _isLoading = true);
     }
     try {
-      final event = await _eventService.getEventById(widget.eventId);
-      final tiers = event != null ? await _eventService.getTicketTiers(widget.eventId) : <TicketTier>[];
+      final eventResult = await _eventService.getEventById(widget.eventId);
+      
+      Event? event;
+      if (eventResult case Success(:final data)) {
+        event = data;
+      } else if (eventResult case Failure(:final message)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
+      }
+      
+      List<TicketTier> tiers = [];
+      if (event != null) {
+        final tiersResult = await _eventService.getTicketTiers(widget.eventId);
+        if (tiersResult case Success(:final data)) {
+          tiers = data;
+        }
+      }
+      
       if (mounted) {
         setState(() {
           _event = event;
