@@ -114,7 +114,12 @@ class _CirclesPageState extends State<CirclesPage> {
             future: _autoMatchedCirclesFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Column(children: List.generate(3, (_) => const CircleCardSkeleton()));
+                return Column(
+                  children: List.generate(3, (index) => FadeSlideTransition(
+                    delay: staggerDelay(index),
+                    child: const CircleCardSkeleton(),
+                  )),
+                );
               } else if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -141,7 +146,15 @@ class _CirclesPageState extends State<CirclesPage> {
               future: _popularCirclesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: 3,
+                    itemBuilder: (_, index) => FadeSlideTransition(
+                      delay: staggerDelay(index),
+                      child: const PopularCircleCardSkeleton(),
+                    ),
+                  );
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -173,7 +186,15 @@ class _CirclesPageState extends State<CirclesPage> {
               future: _recommendedCirclesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: 3,
+                    itemBuilder: (_, index) => FadeSlideTransition(
+                      delay: staggerDelay(index),
+                      child: const PopularCircleCardSkeleton(),
+                    ),
+                  );
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {

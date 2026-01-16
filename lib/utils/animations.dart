@@ -621,6 +621,107 @@ class SparkPostSkeleton extends StatelessWidget {
   }
 }
 
+/// Score card skeleton for Impact Hub
+class ScoreCardSkeleton extends StatelessWidget {
+  const ScoreCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          ShimmerLoading(
+            width: 140,
+            height: 18,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Progress bar
+          ShimmerLoading(
+            width: double.infinity,
+            height: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 8),
+          // Points text
+          ShimmerLoading(
+            width: 180,
+            height: 14,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Popular/Recommended circle card skeleton (horizontal layout)
+class PopularCircleCardSkeleton extends StatelessWidget {
+  const PopularCircleCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon
+          const ShimmerLoading(
+            width: 32,
+            height: 32,
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+          const SizedBox(height: 12),
+          // Name
+          ShimmerLoading(
+            width: 140,
+            height: 16,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 8),
+          // Description
+          ShimmerLoading(
+            width: 180,
+            height: 12,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const Spacer(),
+          // Tags
+          ShimmerLoading(
+            width: 120,
+            height: 12,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 12),
+          // Button
+          ShimmerLoading(
+            width: double.infinity,
+            height: 36,
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Space card skeleton
 class SpaceCardSkeleton extends StatelessWidget {
   const SpaceCardSkeleton({super.key});

@@ -4,6 +4,7 @@ import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
+import 'package:thittam1hub/utils/animations.dart';
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
@@ -247,7 +248,14 @@ class _PulsePageState extends State<PulsePage> {
             ),
           Expanded(
             child: _isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: FadeSlideTransition(
+                        child: const ProfileCardSkeleton(),
+                      ),
+                    ),
+                  )
                 : _filteredProfiles.isEmpty
                     ? Center(
                         child: Column(
