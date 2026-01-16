@@ -3,6 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
+import 'package:thittam1hub/widgets/would_you_rather_card.dart';
+import 'package:thittam1hub/widgets/compatibility_quiz.dart';
+import 'package:thittam1hub/widgets/personality_game.dart';
+import 'package:thittam1hub/widgets/icebreaker_card.dart';
 
 class VibePage extends StatefulWidget {
   const VibePage({Key? key}) : super(key: key);
@@ -132,7 +136,79 @@ class _VibePageState extends State<VibePage> {
                     _buildSectionTitle('🧊 Icebreaker of the Day'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text('Come back soon for a new icebreaker!', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                      child: IcebreakerCard(
+                        question: "What's the most underrated skill in your field?",
+                        onAnswer: (answer) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Answer shared with the community!')),
+                          );
+                        },
+                        onViewAnswers: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => IcebreakerAnswersSheet(
+                              question: "What's the most underrated skill in your field?",
+                              answers: const [
+                                IcebreakerAnswer(userName: 'Alex', userAvatar: null, answer: 'Communication skills', timestamp: 'Just now'),
+                                IcebreakerAnswer(userName: 'Sam', userAvatar: null, answer: 'Time management', timestamp: '5m ago'),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSectionTitle('💭 Would You Rather'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: WouldYouRatherCard(
+                        optionA: 'Work remotely forever',
+                        optionB: 'Work in office forever',
+                        onVote: (choice) async {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('You chose: $choice')),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSectionTitle('🧠 Personality Quiz'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: PersonalityGameCard(
+                        onTakeQuiz: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PersonalityQuizPage(
+                                onComplete: (type) {
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('You are: ${type.title}!')),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildSectionTitle('💕 Compatibility Check'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: CompatibilityQuizCard(
+                        partnerName: 'Find a partner',
+                        onStartQuiz: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Select a connection to take the quiz with!')),
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],

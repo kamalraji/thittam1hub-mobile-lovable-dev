@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
+import 'package:thittam1hub/models/work_experience.dart';
+import 'package:thittam1hub/models/portfolio_project.dart';
+import 'package:thittam1hub/models/skill_endorsement.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
+import 'package:thittam1hub/supabase/professional_service.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
+import 'package:thittam1hub/widgets/work_experience_timeline.dart';
+import 'package:thittam1hub/widgets/portfolio_showcase.dart';
+import 'package:thittam1hub/widgets/skill_endorsements.dart';
 
 class ProfileDetailPage extends StatefulWidget {
   final String profileId;
@@ -23,11 +30,17 @@ class ProfileDetailPage extends StatefulWidget {
 
 class _ProfileDetailPageState extends State<ProfileDetailPage> {
   final ImpactService _impactService = ImpactService();
+  final ProfessionalService _professionalService = ProfessionalService();
   ImpactProfile? _profile;
   bool _isLoading = true;
   List<ImpactProfile> _mutualConnections = [];
   bool _isConnected = false;
   bool _isPending = false;
+  
+  // Professional data
+  List<WorkExperience> _workExperiences = [];
+  List<PortfolioProject> _portfolioProjects = [];
+  Map<String, SkillEndorsementSummary> _endorsements = {};
 
   @override
   void initState() {
@@ -45,16 +58,25 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
       setState(() => _isLoading = true);
     }
     try {
-      final profile = await _impactService.getProfileById(widget.profileId);
-      final mutuals = await _impactService.getMutualConnections(widget.profileId);
-      final connectionStatus = await _impactService.getConnectionStatus(widget.profileId);
+      final results = await Future.wait([
+        _impactService.getProfileById(widget.profileId),
+        _impactService.getMutualConnections(widget.profileId),
+        _impactService.getConnectionStatus(widget.profileId),
+        _professionalService.getWorkExperiences(widget.profileId),
+        _professionalService.getPortfolioProjects(widget.profileId),
+        _professionalService.getEndorsements(widget.profileId),
+      ]);
       
       if (mounted) {
         setState(() {
-          _profile = profile ?? _profile;
-          _mutualConnections = mutuals;
+          _profile = (results[0] as ImpactProfile?) ?? _profile;
+          _mutualConnections = results[1] as List<ImpactProfile>;
+          final connectionStatus = results[2] as String?;
           _isConnected = connectionStatus == 'CONNECTED';
           _isPending = connectionStatus == 'PENDING';
+          _workExperiences = results[3] as List<WorkExperience>;
+          _portfolioProjects = results[4] as List<PortfolioProject>;
+          _endorsements = results[5] as Map<String, SkillEndorsementSummary>;
           _isLoading = false;
         });
       }
@@ -408,17 +430,31 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                     const SizedBox(height: 24),
                   ],
 
-                  // Skills
+                  // Work Experience Timeline
+                  if (_workExperiences.isNotEmpty) ...[
+                    WorkExperienceTimeline(
+                      experiences: _workExperiences,
+                      isEditable: false,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Portfolio Showcase
+                  if (_portfolioProjects.isNotEmpty) ...[
+                    PortfolioShowcase(
+                      projects: _portfolioProjects,
+                      isEditable: false,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Skills with Endorsements
                   if (p.skills.isNotEmpty) ...[
-                    Text('Skills', style: text.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: p.skills.map((skill) => Chip(
-                        label: Text(skill),
-                        backgroundColor: isDark ? cs.surfaceContainerHighest : AppColors.card,
-                      )).toList(),
+                    SkillEndorsements(
+                      skills: p.skills,
+                      endorsements: _endorsements,
+                      isEditable: false,
+                      profileUserId: widget.profileId,
                     ),
                     const SizedBox(height: 24),
                   ],
