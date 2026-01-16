@@ -14,12 +14,37 @@ class SpacesPage extends StatefulWidget {
 
 class _SpacesPageState extends State<SpacesPage> {
   final SpaceService _spaceService = SpaceService();
-  late Stream<List<Space>> _spacesStream;
+  List<Space> _spaces = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _spacesStream = _spaceService.getLiveSpaces();
+    _loadSpaces();
+  }
+
+  Future<void> _loadSpaces() async {
+    if (!_isLoading) {
+      setState(() => _isLoading = true);
+    }
+    try {
+      final spaces = await _spaceService.fetchLiveSpaces();
+      if (mounted) {
+        setState(() {
+          _spaces = spaces;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _navigateToSpace(Space space) {
@@ -40,25 +65,58 @@ class _SpacesPageState extends State<SpacesPage> {
     }
   }
 
+  Widget _buildErrorState() {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: cs.error),
+          const SizedBox(height: 16),
+          Text('Something went wrong', style: textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(_error ?? 'Unknown error', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _loadSpaces,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.mic_none, size: 48, color: cs.onSurfaceVariant),
+          const SizedBox(height: 16),
+          Text('No live spaces right now', style: textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text('Start one and invite others to join!', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
-        title: StreamBuilder<List<Space>>(
-          stream: _spacesStream,
-          builder: (context, snapshot) {
-            final count = snapshot.data?.length ?? 0;
-            return LiveNowIndicator(
-              liveCount: count,
-              onTap: () { /* TODO: Scroll to live spaces */ },
-            );
-          },
+        title: LiveNowIndicator(
+          liveCount: _spaces.length,
+          onTap: () { /* TODO: Scroll to live spaces */ },
         ),
         actions: [
           TextButton.icon(
@@ -70,33 +128,45 @@ class _SpacesPageState extends State<SpacesPage> {
         ],
       ),
       body: SafeArea(
-        child: StreamBuilder<List<Space>>(
-          stream: _spacesStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return ListView(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
-                children: List.generate(4, (_) => const SpaceCardSkeleton()),
-              );
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No live spaces right now.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)));
-            } else {
-              final spaces = snapshot.data!;
-              return ListView.builder(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
-                itemCount: spaces.length,
-                itemBuilder: (context, index) {
-                  final space = spaces[index];
-                  return SpaceCard(
-                    space: space,
-                    onTap: () => _navigateToSpace(space),
-                  );
-                },
-              );
-            }
-          },
+        child: BrandedRefreshIndicator(
+          onRefresh: _loadSpaces,
+          child: _isLoading
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                  children: List.generate(4, (_) => const SpaceCardSkeleton()),
+                )
+              : _error != null
+                  ? SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: _buildErrorState(),
+                      ),
+                    )
+                  : _spaces.isEmpty
+                      ? SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: _buildEmptyState(),
+                          ),
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                          itemCount: _spaces.length,
+                          itemBuilder: (context, index) {
+                            final space = _spaces[index];
+                            return FadeSlideTransition(
+                              delay: staggerDelay(index),
+                              child: SpaceCard(
+                                space: space,
+                                onTap: () => _navigateToSpace(space),
+                              ),
+                            );
+                          },
+                        ),
         ),
       ),
     );

@@ -662,6 +662,64 @@ class ScoreCardSkeleton extends StatelessWidget {
   }
 }
 
+/// AppBar profile avatar skeleton
+class AppBarAvatarSkeleton extends StatelessWidget {
+  const AppBarAvatarSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerLoading(
+      width: 40,
+      height: 40,
+      borderRadius: BorderRadius.all(Radius.circular(20)),
+    );
+  }
+}
+
+/// Notification badge skeleton
+class NotificationBadgeSkeleton extends StatelessWidget {
+  const NotificationBadgeSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Stack(
+        children: [
+          ShimmerLoading(
+            width: 24,
+            height: 24,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const Positioned(
+            right: 0,
+            top: 0,
+            child: ShimmerLoading(
+              width: 12,
+              height: 12,
+              borderRadius: BorderRadius.all(Radius.circular(6)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Score chip skeleton for AppBar
+class ScoreChipSkeleton extends StatelessWidget {
+  const ScoreChipSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerLoading(
+      width: 80,
+      height: 32,
+      borderRadius: BorderRadius.circular(16),
+    );
+  }
+}
+
 /// Popular/Recommended circle card skeleton (horizontal layout)
 class PopularCircleCardSkeleton extends StatelessWidget {
   const PopularCircleCardSkeleton({super.key});

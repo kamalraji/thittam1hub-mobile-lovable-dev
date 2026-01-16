@@ -31,6 +31,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   List<NotificationItem> _notifications = [];
   int _unreadCount = 0;
   RealtimeChannel? _notificationChannel;
+  bool _notificationsLoading = true;
 
   final List<Widget> _pages = [
     PulsePage(),
@@ -62,12 +63,14 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   }
 
   Future<void> _loadNotifications() async {
+    setState(() => _notificationsLoading = true);
     final notifications = await _notificationService.getNotifications();
     final count = await _notificationService.getUnreadCount();
     if (mounted) {
       setState(() {
         _notifications = notifications;
         _unreadCount = count;
+        _notificationsLoading = false;
       });
     }
   }
@@ -324,53 +327,59 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
               ),
               leading: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: CircleAvatar(
-                  backgroundImage: _myProfile?.avatarUrl != null
-                      ? NetworkImage(_myProfile!.avatarUrl!)
-                      : null,
-                  child: _myProfile?.avatarUrl == null
-                      ? Text(_myProfile?.fullName.substring(0, 1) ?? 'U')
-                      : null,
-                ),
+                child: _myProfile == null
+                    ? const AppBarAvatarSkeleton()
+                    : CircleAvatar(
+                        backgroundImage: _myProfile?.avatarUrl != null
+                            ? NetworkImage(_myProfile!.avatarUrl!)
+                            : null,
+                        child: _myProfile?.avatarUrl == null
+                            ? Text(_myProfile?.fullName.substring(0, 1) ?? 'U')
+                            : null,
+                      ),
               ),
               actions: [
-                Stack(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.notifications_none, color: cs.onSurface),
-                      onPressed: _showNotificationsSheet,
-                    ),
-                    if (_unreadCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: cs.error,
-                            shape: BoxShape.circle,
+                _notificationsLoading
+                    ? const NotificationBadgeSkeleton()
+                    : Stack(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.notifications_none, color: cs.onSurface),
+                            onPressed: _showNotificationsSheet,
                           ),
-                          constraints: BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '$_unreadCount',
-                            style: TextStyle(color: cs.onError, fontSize: 10),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
+                          if (_unreadCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: cs.error,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  '$_unreadCount',
+                                  style: TextStyle(color: cs.onError, fontSize: 10),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
                 IconButton(
                   icon: Icon(Icons.people_outline, color: cs.onSurface),
                   onPressed: _showRequestsSheet,
                 ),
-                Chip(
-                  label: Text('Score: ${_myProfile?.impactScore ?? 0}'),
-                  backgroundColor: cs.surfaceContainerHighest,
-                ),
+                _myProfile == null
+                    ? const ScoreChipSkeleton()
+                    : Chip(
+                        label: Text('Score: ${_myProfile?.impactScore ?? 0}'),
+                        backgroundColor: cs.surfaceContainerHighest,
+                      ),
                 SizedBox(width: 16),
               ],
             ),
