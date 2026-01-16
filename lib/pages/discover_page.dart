@@ -5,6 +5,7 @@ import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/event_card.dart';
 import 'package:thittam1hub/services/event_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/result.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
@@ -22,6 +23,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   final Set<String> _savedEventIds = {};
   List<Event> _events = [];
   bool _isLoading = true;
+  String? _errorMessage;
   Map<String, List<TicketTier>> _tiersByEvent = {};
 
   @override
@@ -32,27 +34,56 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   }
 
   Future<void> _loadEvents() async {
-    setState(() => _isLoading = true);
-    try {
-      final events = await _eventService.getAllEvents();
-      debugPrint('📅 Loaded ${events.length} events');
-      for (final e in events) {
-        debugPrint('  - ${e.name}: ${e.startDate} to ${e.endDate} (${e.status})');
-      }
-      Map<String, List<TicketTier>> tiers = {};
-      if (events.isNotEmpty) {
-        final ids = events.map((e) => e.id).toList();
-        tiers = await _eventService.getTicketTiersForEvents(ids);
-      }
-      if (mounted) {
-        setState(() {
-          _events = events;
-          _tiersByEvent = tiers;
-          _isLoading = false;
-        });
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await _eventService.getAllEvents();
+
+    switch (result) {
+      case Success(data: final events):
+        debugPrint('📅 Loaded ${events.length} events');
+        for (final e in events) {
+          debugPrint('  - ${e.name}: ${e.startDate} to ${e.endDate} (${e.status})');
+        }
+        
+        Map<String, List<TicketTier>> tiers = {};
+        if (events.isNotEmpty) {
+          final ids = events.map((e) => e.id).toList();
+          final tiersResult = await _eventService.getTicketTiersForEvents(ids);
+          if (tiersResult case Success(data: final tiersData)) {
+            tiers = tiersData;
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _events = events;
+            _tiersByEvent = tiers;
+            _isLoading = false;
+          });
+        }
+
+      case Failure(message: final msg):
+        if (mounted) {
+          setState(() {
+            _errorMessage = msg;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Theme.of(context).colorScheme.onError,
+                onPressed: _loadEvents,
+              ),
+            ),
+          );
+        }
     }
   }
 
@@ -266,6 +297,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                   }),
                   hasPastEvents: _events.any((e) => e.endDate.isBefore(DateTime.now())),
                   onViewPastEvents: () => setState(() => _tabController.index = 1),
+                  errorMessage: _errorMessage,
                 ),
                 _EventsTab(
                   key: const ValueKey('tab_past'),
@@ -282,6 +314,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                     }
                   }),
                   isPastTab: true,
+                  errorMessage: _errorMessage,
                 ),
               ],
             ),
@@ -323,6 +356,7 @@ class _EventsTab extends StatelessWidget {
     this.hasPastEvents = false,
     this.onViewPastEvents,
     this.isPastTab = false,
+    this.errorMessage,
   });
 
   final bool isLoading;
@@ -334,10 +368,12 @@ class _EventsTab extends StatelessWidget {
   final bool hasPastEvents;
   final VoidCallback? onViewPastEvents;
   final bool isPastTab;
+  final String? errorMessage;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    
     if (isLoading) {
       return Center(
         child: Column(
@@ -350,6 +386,48 @@ class _EventsTab extends StatelessWidget {
         ),
       );
     }
+
+    // Show error state when there's an error
+    if (errorMessage != null) {
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        color: cs.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+            Center(child: Icon(Icons.cloud_off, size: 48, color: cs.error)),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                'Something went wrong',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: cs.error),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  errorMessage!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: FilledButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Try Again'),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       color: cs.primary,
