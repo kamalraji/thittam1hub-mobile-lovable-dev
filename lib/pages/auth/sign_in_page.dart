@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/auth/supabase_auth_manager.dart';
 import 'package:thittam1hub/nav.dart';
 import 'package:thittam1hub/theme.dart';
+import 'package:thittam1hub/widgets/social_login_button.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -21,6 +22,8 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
   final _auth = SupabaseAuthManager();
   bool _loading = false;
   bool _obscure = true;
+  bool _googleLoading = false;
+  bool _appleLoading = false;
 
   late AnimationController _entryController;
   late AnimationController _logoController;
@@ -379,12 +382,60 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                const SocialLoginDivider(),
+                const SizedBox(height: 20),
+                _buildSocialButtons(cs, isDark),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildSocialButtons(ColorScheme cs, bool isDark) {
+    return Row(
+      children: [
+        Expanded(
+          child: SocialLoginButton(
+            label: 'Google',
+            onTap: _signInWithGoogle,
+            isLoading: _googleLoading,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SocialLoginButton(
+            label: 'Apple',
+            onTap: _signInWithApple,
+            isApple: true,
+            isLoading: _appleLoading,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _googleLoading = true);
+    try {
+      await _auth.signInWithGoogle(context);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _appleLoading = true);
+    try {
+      await _auth.signInWithApple(context);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
+  }
   }
 
   Widget _buildTextField({
