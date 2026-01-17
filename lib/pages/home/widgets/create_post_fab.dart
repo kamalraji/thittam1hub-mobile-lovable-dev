@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
-import 'package:thittam1hub/pages/impact/spark_page.dart';
+import 'package:thittam1hub/pages/home/widgets/new_spark_post_content.dart';
 
 class CreatePostFab extends StatefulWidget {
   final VoidCallback onPostCreated;
