@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/models/profile_stats.dart';
+import 'package:thittam1hub/models/profile_post.dart';
 
 /// Service for managing user profiles and notification preferences
 class ProfileService {
@@ -111,8 +113,6 @@ class ProfileService {
   }
 
   /// Get count of saved (favorited) events
-  /// Note: This would require a separate 'saved_events' table in production
-  /// For now, returning 0 as placeholder
   Future<int> getSavedEventsCount(String userId) async {
     try {
       // TODO: Implement once saved_events table is added
@@ -184,6 +184,140 @@ class ProfileService {
       return response.map((json) => EventHistory.fromJson(json)).toList();
     } catch (e) {
       debugPrint('❌ Get event history error: $e');
+      return [];
+    }
+  }
+
+  /// Get comprehensive profile stats
+  Future<ProfileStats> getProfileStats(String userId) async {
+    try {
+      final results = await Future.wait([
+        getEventsAttendedCount(userId),
+        getUpcomingEventsCount(userId),
+        getSavedEventsCount(userId),
+        getConnectionsCount(userId),
+        getPostsCount(userId),
+        _getImpactData(userId),
+      ]);
+
+      final impactData = results[5] as Map<String, dynamic>;
+
+      return ProfileStats(
+        eventsAttended: results[0] as int,
+        upcomingEvents: results[1] as int,
+        savedEvents: results[2] as int,
+        connectionsCount: results[3] as int,
+        postsCount: results[4] as int,
+        impactScore: impactData['impact_score'] ?? 0,
+        badgesEarned: impactData['badges_count'] ?? 0,
+        currentStreak: impactData['streak_count'] ?? 0,
+        longestStreak: impactData['longest_streak'] ?? 0,
+      );
+    } catch (e) {
+      debugPrint('❌ Get profile stats error: $e');
+      return const ProfileStats();
+    }
+  }
+
+  /// Get impact profile data (score, streak, badges)
+  Future<Map<String, dynamic>> _getImpactData(String userId) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('impact_profiles')
+          .select('impact_score, streak_count, badges')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response == null) {
+        return {'impact_score': 0, 'streak_count': 0, 'badges_count': 0};
+      }
+
+      final badges = response['badges'] as List<dynamic>? ?? [];
+      return {
+        'impact_score': response['impact_score'] ?? 0,
+        'streak_count': response['streak_count'] ?? 0,
+        'badges_count': badges.length,
+      };
+    } catch (e) {
+      debugPrint('❌ Get impact data error: $e');
+      return {'impact_score': 0, 'streak_count': 0, 'badges_count': 0};
+    }
+  }
+
+  /// Get connections count for user
+  Future<int> getConnectionsCount(String userId) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('connections')
+          .select('id')
+          .or('requester_id.eq.$userId,receiver_id.eq.$userId')
+          .eq('status', 'ACCEPTED');
+      return response.length;
+    } catch (e) {
+      debugPrint('❌ Get connections count error: $e');
+      return 0;
+    }
+  }
+
+  /// Get user's posts count
+  Future<int> getPostsCount(String userId) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('spark_posts')
+          .select('id')
+          .eq('author_id', userId);
+      return response.length;
+    } catch (e) {
+      debugPrint('❌ Get posts count error: $e');
+      return 0;
+    }
+  }
+
+  /// Get user's posts for profile display
+  Future<List<ProfilePost>> getUserPosts(String userId, {int limit = 20}) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('spark_posts')
+          .select('*')
+          .eq('author_id', userId)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List)
+          .map((data) => ProfilePost.fromMap(data as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Get user posts error: $e');
+      return [];
+    }
+  }
+
+  /// Get upcoming events for user
+  Future<List<Map<String, dynamic>>> getUpcomingEvents(String userId) async {
+    try {
+      final now = DateTime.now().toIso8601String();
+      final response = await SupabaseConfig.client
+          .from('registrations')
+          .select('''
+            id,
+            status,
+            events!inner(
+              id,
+              name,
+              start_date,
+              end_date,
+              branding
+            )
+          ''')
+          .eq('user_id', userId)
+          .eq('status', 'CONFIRMED')
+          .gte('events.start_date', now)
+          .order('start_date', ascending: true, referencedTable: 'events')
+          .limit(10);
+
+      return (response as List).map((e) => e as Map<String, dynamic>).toList();
+    } catch (e) {
+      debugPrint('❌ Get upcoming events error: $e');
       return [];
     }
   }
