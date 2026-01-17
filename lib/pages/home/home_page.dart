@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription? _notificationSubscription;
   final Set<String> _sparked = {};
   final ScrollController _scrollController = ScrollController();
+  SparkPostType? _selectedFilter;
   
   late AnimationController _greetingAnimController;
   late Animation<double> _waveAnimation;
@@ -122,7 +123,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _homeService.getStreakData(),
       _homeService.getStoriesData(),
       _homeService.getTrendingTags(),
-      _sparkService.getSparkPosts(),
+      _sparkService.getSparkPosts(type: _selectedFilter),
       _homeService.getActivePolls(),
     ]);
     
@@ -136,6 +137,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _isLoading = false;
       });
     }
+  }
+
+  void _setFilter(SparkPostType? type) {
+    if (_selectedFilter == type) return;
+    setState(() => _selectedFilter = type);
+    _loadAllData();
   }
 
   Future<void> _onRefresh() async {
@@ -354,6 +361,61 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
               ),
               
+              // Filter Chips
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _FilterChip(
+                          label: 'All',
+                          emoji: '✨',
+                          isSelected: _selectedFilter == null,
+                          onTap: () => _setFilter(null),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Ideas',
+                          emoji: '💡',
+                          isSelected: _selectedFilter == SparkPostType.IDEA,
+                          onTap: () => _setFilter(SparkPostType.IDEA),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Seeking',
+                          emoji: '🔍',
+                          isSelected: _selectedFilter == SparkPostType.SEEKING,
+                          onTap: () => _setFilter(SparkPostType.SEEKING),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Offering',
+                          emoji: '🎁',
+                          isSelected: _selectedFilter == SparkPostType.OFFERING,
+                          onTap: () => _setFilter(SparkPostType.OFFERING),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Q&A',
+                          emoji: '❓',
+                          isSelected: _selectedFilter == SparkPostType.QUESTION,
+                          onTap: () => _setFilter(SparkPostType.QUESTION),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterChip(
+                          label: 'Announcements',
+                          emoji: '📢',
+                          isSelected: _selectedFilter == SparkPostType.ANNOUNCEMENT,
+                          onTap: () => _setFilter(SparkPostType.ANNOUNCEMENT),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              
               // Streak Card (if streak is at risk)
               if (_streakData != null && !_streakData!.completedToday)
                 SliverToBoxAdapter(
@@ -548,6 +610,81 @@ class _EmptyFeedState extends StatelessWidget {
               label: const Text('Create First Post'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Glassmorphism filter chip for post type filtering
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.emoji,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [cs.primary, cs.tertiary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected 
+              ? null 
+              : isDark 
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected 
+                ? Colors.transparent
+                : isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : cs.outline.withValues(alpha: 0.2),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: cs.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? Colors.white : cs.onSurface,
               ),
             ),
           ],
