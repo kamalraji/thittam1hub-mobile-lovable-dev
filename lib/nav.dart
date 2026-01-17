@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
-import 'package:thittam1hub/main.dart';
 import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/models/space.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/pages/event_detail_page.dart';
 import 'package:thittam1hub/pages/discover_page.dart';
+import 'package:thittam1hub/pages/home/home_page.dart';
 import 'package:thittam1hub/pages/impact/impact_hub_page.dart';
 import 'package:thittam1hub/pages/impact/circle_chat_page.dart';
 import 'package:thittam1hub/pages/impact/space_room_page.dart';
@@ -120,7 +120,7 @@ class AppRouter {
           routes: [
             GoRoute(
               path: AppRoutes.home,
-              pageBuilder: (context, state) => const NoTransitionPage(child: MyHomePage(title: 'Dashboard')),
+              pageBuilder: (context, state) => const NoTransitionPage(child: HomePage()),
             ),
             GoRoute(
               path: AppRoutes.discover,
