@@ -33,13 +33,13 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
     _loadEvents();
   }
 
-  Future<void> _loadEvents() async {
+  Future<void> _loadEvents({bool forceRefresh = false}) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final result = await _eventService.getAllEvents();
+    final result = await _eventService.getAllEvents(forceRefresh: forceRefresh);
 
     switch (result) {
       case Success(data: final events):
@@ -287,7 +287,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                   events: _filteredForTab(0),
                   tiersByEvent: _tiersByEvent,
                   savedEventIds: _savedEventIds,
-                  onRefresh: _loadEvents,
+                  onRefresh: () => _loadEvents(forceRefresh: true),
                   onToggleSave: (id) => setState(() {
                     if (_savedEventIds.contains(id)) {
                       _savedEventIds.remove(id);
@@ -305,7 +305,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
                   events: _filteredForTab(1),
                   tiersByEvent: _tiersByEvent,
                   savedEventIds: _savedEventIds,
-                  onRefresh: _loadEvents,
+                  onRefresh: () => _loadEvents(forceRefresh: true),
                   onToggleSave: (id) => setState(() {
                     if (_savedEventIds.contains(id)) {
                       _savedEventIds.remove(id);
