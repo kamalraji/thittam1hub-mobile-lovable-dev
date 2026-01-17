@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/utils/result.dart';
+import 'package:thittam1hub/services/cache_service.dart';
 
 class EventService {
+  final CacheService _cache = CacheService.instance;
+
   /// Convert technical errors to user-friendly messages
   String _userFriendlyMessage(dynamic error) {
     final msg = error.toString().toLowerCase();
@@ -19,8 +22,17 @@ class EventService {
     return 'Failed to load events. Please try again.';
   }
 
-  /// Get all published public events
-  Future<Result<List<Event>>> getAllEvents() async {
+  /// Get all published public events with cache-first strategy
+  Future<Result<List<Event>>> getAllEvents({bool forceRefresh = false}) async {
+    // Try cache first (unless forced refresh)
+    if (!forceRefresh) {
+      final cached = await _cache.getCachedEvents();
+      if (cached != null) {
+        debugPrint('📦 Events loaded from cache: ${cached.length} items');
+        return Success(cached);
+      }
+    }
+
     try {
       final data = await SupabaseConfig.client
           .from('events')
@@ -31,9 +43,21 @@ class EventService {
           .order('start_date', ascending: true);
 
       final events = (data as List).map((json) => Event.fromJson(json)).toList();
+      
+      // Cache the results
+      await _cache.cacheEvents(events);
+      
       return Success(events);
     } catch (e) {
       debugPrint('❌ Get all events error: $e');
+      
+      // On network error, return stale cache if available
+      final staleCache = await _cache.getCachedEventsStale();
+      if (staleCache != null) {
+        debugPrint('📦 Returning stale cached events due to network error');
+        return Success(staleCache);
+      }
+      
       return Failure(_userFriendlyMessage(e), e);
     }
   }
