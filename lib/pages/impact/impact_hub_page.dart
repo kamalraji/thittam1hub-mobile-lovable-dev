@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/models/connection_request_item.dart';
@@ -9,8 +11,9 @@ import 'pulse_page.dart';
 import 'circles_page.dart';
 import 'vibe_page.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
-import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
+import 'package:thittam1hub/widgets/shimmer_loading.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
@@ -31,6 +34,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   int _unreadCount = 0;
   RealtimeChannel? _notificationChannel;
   bool _notificationsLoading = true;
+  bool _profileLoading = true;
+  bool _profileError = false;
 
   final List<Widget> _pages = [
     PulsePage(),
@@ -54,23 +59,55 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   }
 
   Future<void> _loadMyProfile() async {
-    final profile = await _impactService.getMyImpactProfile();
-    if (mounted) {
-      setState(() => _myProfile = profile);
+    if (!_profileLoading) {
+      setState(() => _profileLoading = true);
+    }
+    try {
+      final profile = await _impactService.getMyImpactProfile();
+      if (mounted) {
+        setState(() {
+          _myProfile = profile;
+          _profileLoading = false;
+          _profileError = profile == null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      if (mounted) {
+        setState(() {
+          _profileLoading = false;
+          _profileError = true;
+        });
+      }
     }
   }
 
   Future<void> _loadNotifications() async {
     setState(() => _notificationsLoading = true);
-    final notifications = await _notificationService.getNotifications();
-    final count = await _notificationService.getUnreadCount();
-    if (mounted) {
-      setState(() {
-        _notifications = notifications;
-        _unreadCount = count;
-        _notificationsLoading = false;
-      });
+    try {
+      final notifications = await _notificationService.getNotifications();
+      final count = await _notificationService.getUnreadCount();
+      if (mounted) {
+        setState(() {
+          _notifications = notifications;
+          _unreadCount = count;
+          _notificationsLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading notifications: $e');
+      if (mounted) {
+        setState(() => _notificationsLoading = false);
+      }
     }
+  }
+
+  Future<void> _onRefresh() async {
+    HapticFeedback.mediumImpact();
+    await Future.wait([
+      _loadMyProfile(),
+      _loadNotifications(),
+    ]);
   }
 
   void _subscribeToNotifications() {
@@ -244,7 +281,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
       case NotificationType.MUTUAL_CONNECTION:
         return Icons.people;
       case NotificationType.HIGH_MATCH_ONLINE:
-        return Icons.favorite; // high match is online now
+        return Icons.favorite;
     }
   }
 
@@ -285,6 +322,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   }
 
   void _onModeTapped(int index) {
+    HapticFeedback.lightImpact();
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -297,208 +335,526 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
     
     return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-          return <Widget>[
-            SliverAppBar(
-              backgroundColor: cs.surface,
-              pinned: true,
-              expandedHeight: 200.0,
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 60),
-                centerTitle: true,
-                title: Text(
-                  'Impact Hub',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        cs.primary,
-                        cs.tertiary,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              leading: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: _myProfile == null
-                    ? const AppBarAvatarSkeleton()
-                    : CircleAvatar(
-                        backgroundImage: _myProfile?.avatarUrl != null
-                            ? NetworkImage(_myProfile!.avatarUrl!)
-                            : null,
-                        child: _myProfile?.avatarUrl == null
-                            ? Text(_myProfile?.fullName.substring(0, 1) ?? 'U')
-                            : null,
+      body: BrandedRefreshIndicator(
+        onRefresh: _onRefresh,
+        child: NestedScrollView(
+          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+            return <Widget>[
+              SliverAppBar(
+                backgroundColor: cs.surface,
+                pinned: true,
+                floating: true,
+                snap: true,
+                expandedHeight: 120.0,
+                collapsedHeight: 60,
+                flexibleSpace: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final expandRatio = ((constraints.maxHeight - 60) / 60).clamp(0.0, 1.0);
+                    final isExpanded = expandRatio > 0.5;
+                    
+                    return FlexibleSpaceBar(
+                      titlePadding: EdgeInsets.only(
+                        left: isExpanded ? 16 : 56,
+                        bottom: 12,
+                        right: isExpanded ? 120 : 140,
                       ),
-              ),
-              actions: [
-                _notificationsLoading
-                    ? const NotificationBadgeSkeleton()
-                    : Stack(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.notifications_none, color: cs.onSurface),
-                            onPressed: _showNotificationsSheet,
+                      centerTitle: false,
+                      title: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: 1,
+                        child: Text(
+                          'Impact Hub',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: isExpanded ? cs.onPrimary : cs.onSurface,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isExpanded ? 20 : 18,
                           ),
-                          if (_unreadCount > 0)
+                        ),
+                      ),
+                      background: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              cs.primary,
+                              cs.tertiary,
+                            ],
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            // Decorative circles
                             Positioned(
-                              right: 8,
-                              top: 8,
+                              top: -20,
+                              right: -30,
                               child: Container(
-                                padding: EdgeInsets.all(4),
+                                width: 100,
+                                height: 100,
                                 decoration: BoxDecoration(
-                                  color: cs.error,
                                   shape: BoxShape.circle,
-                                ),
-                                constraints: BoxConstraints(
-                                  minWidth: 16,
-                                  minHeight: 16,
-                                ),
-                                child: Text(
-                                  '$_unreadCount',
-                                  style: TextStyle(color: cs.onError, fontSize: 10),
-                                  textAlign: TextAlign.center,
+                                  color: cs.onPrimary.withValues(alpha: 0.1),
                                 ),
                               ),
                             ),
-                        ],
+                            Positioned(
+                              bottom: 10,
+                              left: -20,
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: cs.onPrimary.withValues(alpha: 0.08),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                IconButton(
-                  icon: Icon(Icons.people_outline, color: cs.onSurface),
-                  onPressed: _showRequestsSheet,
+                    );
+                  },
                 ),
-                _myProfile == null
-                    ? const ScoreChipSkeleton()
-                    : Chip(
-                        label: Text('Score: ${_myProfile?.impactScore ?? 0}'),
-                        backgroundColor: cs.surfaceContainerHighest,
-                      ),
-                SizedBox(width: 16),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _myProfile == null
-                    ? const FadeSlideTransition(child: ScoreCardSkeleton())
-                    : ScoreCard(profile: _myProfile),
-              ),
-            ),
-            SliverPersistentHeader(
-              delegate: _SliverAppBarDelegate(
-                child: ModeSelector(
-                  selectedIndex: _selectedIndex,
-                  onTap: _onModeTapped,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: _profileLoading
+                      ? const _AppBarAvatarSkeleton()
+                      : CircleAvatar(
+                          backgroundImage: _myProfile?.avatarUrl != null
+                              ? NetworkImage(_myProfile!.avatarUrl!)
+                              : null,
+                          backgroundColor: cs.primaryContainer,
+                          child: _myProfile?.avatarUrl == null
+                              ? Text(
+                                  _myProfile?.fullName.isNotEmpty == true 
+                                      ? _myProfile!.fullName[0] 
+                                      : 'U',
+                                  style: TextStyle(color: cs.onPrimaryContainer),
+                                )
+                              : null,
+                        ),
                 ),
-                height: 100,
+                actions: [
+                  _notificationsLoading
+                      ? const _NotificationBadgeSkeleton()
+                      : Stack(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.notifications_outlined, color: cs.onSurface),
+                              onPressed: _showNotificationsSheet,
+                            ),
+                            if (_unreadCount > 0)
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: cs.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    _unreadCount > 9 ? '9+' : '$_unreadCount',
+                                    style: TextStyle(color: cs.onError, fontSize: 9, fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                  IconButton(
+                    icon: Icon(Icons.people_outline, color: cs.onSurface),
+                    onPressed: _showRequestsSheet,
+                  ),
+                  SizedBox(width: 4),
+                ],
               ),
-              pinned: true,
-            ),
-          ];
-        },
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          children: _pages,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 12 : 16,
+                    vertical: 12,
+                  ),
+                  child: _profileLoading
+                      ? const _ScoreCardSkeleton()
+                      : _profileError
+                          ? _ScoreCardError(onRetry: _loadMyProfile)
+                          : _ScoreCard(profile: _myProfile),
+                ),
+              ),
+              SliverPersistentHeader(
+                delegate: _SliverAppBarDelegate(
+                  child: _ModeSelector(
+                    selectedIndex: _selectedIndex,
+                    onTap: _onModeTapped,
+                  ),
+                  height: 64,
+                ),
+                pinned: true,
+              ),
+            ];
+          },
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            children: _pages,
+          ),
         ),
       ),
     );
   }
 }
 
-class ScoreCard extends StatelessWidget {
+// ============ Modern Glassmorphism ScoreCard ============
+
+class _ScoreCard extends StatelessWidget {
   final ImpactProfile? profile;
 
-  const ScoreCard({Key? key, this.profile}) : super(key: key);
+  const _ScoreCard({Key? key, this.profile}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 380;
+    
     final score = profile?.impactScore ?? 0;
     final level = profile?.level ?? 1;
+    final streak = profile?.streakCount ?? 0;
     final pointsToNextLevel = (level * 1000) - score;
     final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
     
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            cs.primary,
-            cs.tertiary,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.primary.withValues(alpha: 0.9),
+                cs.tertiary.withValues(alpha: 0.85),
+              ],
+            ),
+            border: Border.all(
+              color: cs.onPrimary.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with score
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '🎯 Impact Score',
+                        style: textTheme.labelMedium?.copyWith(
+                          color: cs.onPrimary.withValues(alpha: 0.8),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '$score',
+                        style: textTheme.headlineMedium?.copyWith(
+                          color: cs.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Level badge
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: cs.onPrimary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: cs.onPrimary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.trending_up, size: 16, color: cs.onPrimary),
+                        SizedBox(width: 4),
+                        Text(
+                          'Level $level',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: cs.onPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Progress bar
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                      valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
+                      minHeight: 8,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '$pointsToNextLevel pts to Level ${level + 1}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: cs.onPrimary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Stats row and action buttons
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final useCompact = constraints.maxWidth < 300;
+                  
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.spaceBetween,
+                    children: [
+                      // Streak chip
+                      if (streak > 0)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('🔥', style: TextStyle(fontSize: 14)),
+                              SizedBox(width: 4),
+                              Text(
+                                '$streak day${streak > 1 ? 's' : ''}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: cs.onPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      // Action buttons
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _CompactActionButton(
+                            icon: Icons.emoji_events_outlined,
+                            label: useCompact ? null : 'Badges',
+                            onTap: () {
+                              showGlassBottomSheet(
+                                context: context,
+                                title: 'Your Badges',
+                                maxHeight: MediaQuery.of(context).size.height * 0.8,
+                                child: const BadgesContent(),
+                              );
+                            },
+                          ),
+                          SizedBox(width: 8),
+                          _CompactActionButton(
+                            icon: Icons.leaderboard_outlined,
+                            label: useCompact ? null : 'Rank',
+                            onTap: () {
+                              showGlassBottomSheet(
+                                context: context,
+                                title: 'Leaderboard',
+                                maxHeight: MediaQuery.of(context).size.height * 0.8,
+                                child: const LeaderboardContent(),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactActionButton extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final VoidCallback onTap;
+
+  const _CompactActionButton({
+    required this.icon,
+    this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return Material(
+      color: cs.surface.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: label != null ? 12 : 10,
+            vertical: 8,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: cs.primary),
+              if (label != null) ...[
+                SizedBox(width: 6),
+                Text(
+                  label!,
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============ Score Card Loading & Error States ============
+
+class _ScoreCardSkeleton extends StatelessWidget {
+  const _ScoreCardSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return ShimmerLoading(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: cs.surfaceContainerHighest,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 14, width: 90, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
+                    SizedBox(height: 8),
+                    Container(height: 28, width: 70, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
+                  ],
+                ),
+                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(16))),
+              ],
+            ),
+            SizedBox(height: 16),
+            Container(height: 8, width: double.infinity, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
+            SizedBox(height: 8),
+            Container(height: 12, width: 140, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(12))),
+                SizedBox(width: 8),
+                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(12))),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ScoreCardError extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _ScoreCardError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: cs.errorContainer.withValues(alpha: 0.3),
+        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '🎯 Your Impact Score',
-            style: TextStyle(
-              color: cs.onPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: cs.onPrimary.withValues(alpha: 0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
-          ),
+          Icon(Icons.error_outline, color: cs.error, size: 32),
           SizedBox(height: 8),
           Text(
-            '$score pts • $pointsToNextLevel to Level ${level + 1}',
-            style: TextStyle(
-              color: cs.onPrimary,
-            ),
+            'Unable to load profile',
+            style: textTheme.bodyMedium?.copyWith(color: cs.onErrorContainer),
           ),
-          SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  showGlassBottomSheet(
-                    context: context,
-                    title: 'Your Badges',
-                    maxHeight: MediaQuery.of(context).size.height * 0.8,
-                    child: const BadgesContent(),
-                  );
-                },
-                child: Text('View Badges'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.surface,
-                  foregroundColor: cs.primary,
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  showGlassBottomSheet(
-                    context: context,
-                    title: 'Leaderboard',
-                    maxHeight: MediaQuery.of(context).size.height * 0.8,
-                    child: const LeaderboardContent(),
-                  );
-                },
-                child: Text('Leaderboard'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.surface,
-                  foregroundColor: cs.primary,
-                ),
-              ),
-            ],
+          SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: Icon(Icons.refresh, size: 18),
+            label: Text('Retry'),
+            style: TextButton.styleFrom(foregroundColor: cs.error),
           ),
         ],
       ),
@@ -506,7 +862,162 @@ class ScoreCard extends StatelessWidget {
   }
 }
 
-/// Content widget for Badges glassmorphism sheet
+// ============ Mode Selector (Fixed - Only 3 tabs) ============
+
+class _ModeSelector extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onTap;
+
+  const _ModeSelector({
+    Key? key,
+    required this.selectedIndex,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Mode items - matches _pages list (3 items)
+    final modes = [
+      _ModeItem(Icons.explore_outlined, Icons.explore, 'Pulse'),
+      _ModeItem(Icons.group_outlined, Icons.group, 'Circles'),
+      _ModeItem(Icons.gamepad_outlined, Icons.gamepad, 'Vibe'),
+    ];
+    
+    return Container(
+      height: 64,
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(
+          bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3), width: 0.5),
+        ),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: List.generate(modes.length, (index) {
+          final mode = modes[index];
+          final isSelected = selectedIndex == index;
+          
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onTap(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                margin: EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isSelected ? cs.primary : cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: cs.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isSelected ? mode.selectedIcon : mode.icon,
+                      color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+                      size: 22,
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      mode.label,
+                      style: TextStyle(
+                        color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _ModeItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  _ModeItem(this.icon, this.selectedIcon, this.label);
+}
+
+// ============ AppBar Skeletons ============
+
+class _AppBarAvatarSkeleton extends StatelessWidget {
+  const _AppBarAvatarSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerLoading(
+      child: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+    );
+  }
+}
+
+class _NotificationBadgeSkeleton extends StatelessWidget {
+  const _NotificationBadgeSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerLoading(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============ Sliver Delegate ============
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate({required this.child, this.height = 64});
+
+  final Widget child;
+  final double height;
+
+  @override
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
+  }
+}
+
+// ============ Badges Content ============
+
 class BadgesContent extends StatefulWidget {
   const BadgesContent({Key? key}) : super(key: key);
 
@@ -608,7 +1119,8 @@ class _BadgesContentState extends State<BadgesContent> {
   }
 }
 
-/// Content widget for Leaderboard glassmorphism sheet
+// ============ Leaderboard Content ============
+
 class LeaderboardContent extends StatefulWidget {
   const LeaderboardContent({Key? key}) : super(key: key);
 
@@ -678,49 +1190,43 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
   }
 }
 
-// Legacy sheet widgets kept for backward compatibility
-class BadgesSheet extends StatelessWidget {
-  const BadgesSheet({Key? key}) : super(key: key);
+// Legacy skeleton classes kept for backward compatibility
+class AppBarAvatarSkeleton extends StatelessWidget {
+  const AppBarAvatarSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => const _AppBarAvatarSkeleton();
+}
+
+class NotificationBadgeSkeleton extends StatelessWidget {
+  const NotificationBadgeSkeleton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => const _NotificationBadgeSkeleton();
+}
+
+class ScoreChipSkeleton extends StatelessWidget {
+  const ScoreChipSkeleton({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (context, scrollController) => SafeArea(
-        child: SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(16.0),
-          child: const BadgesContent(),
-        ),
+    return ShimmerLoading(
+      child: Chip(
+        label: Container(width: 50, height: 14),
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
     );
   }
 }
 
-class LeaderboardSheet extends StatelessWidget {
-  const LeaderboardSheet({Key? key}) : super(key: key);
+class ScoreCardSkeleton extends StatelessWidget {
+  const ScoreCardSkeleton({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (context, scrollController) => SafeArea(
-        child: SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(16.0),
-          child: const LeaderboardContent(),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const _ScoreCardSkeleton();
 }
 
+// Legacy ModeSelector and ModePill kept for backward compatibility
 class ModeSelector extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onTap;
@@ -733,43 +1239,7 @@ class ModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final selectorHeight = (screenHeight * 0.12).clamp(80.0, 120.0);
-    
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      height: selectorHeight,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(vertical: 10),
-        children: [
-          ModePill(
-            icon: Icons.search,
-            label: 'Pulse',
-            isSelected: selectedIndex == 0,
-            onTap: () => onTap(0),
-          ),
-          ModePill(
-            icon: Icons.public,
-            label: 'Circles',
-            isSelected: selectedIndex == 1,
-            onTap: () => onTap(1),
-          ),
-          ModePill(
-            icon: Icons.lightbulb_outline,
-            label: 'Spark',
-            isSelected: selectedIndex == 2,
-            onTap: () => onTap(2),
-          ),
-          ModePill(
-            icon: Icons.gamepad_outlined,
-            label: 'Vibe',
-            isSelected: selectedIndex == 3,
-            onTap: () => onTap(3),
-          ),
-        ],
-      ),
-    );
+    return _ModeSelector(selectedIndex: selectedIndex, onTap: onTap);
   }
 }
 
@@ -795,86 +1265,20 @@ class ModePill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(isSelected ? 1.05 : 1.0),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? cs.onPrimary : cs.onSurface,
-            ),
-            SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? cs.onPrimary : cs.onSurface,
-                fontSize: 12,
-              ),
-            ),
+            Icon(icon, color: isSelected ? cs.onPrimary : cs.onSurface, size: 20),
+            SizedBox(height: 2),
+            Text(label, style: TextStyle(color: isSelected ? cs.onPrimary : cs.onSurface, fontSize: 11)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({required this.child, this.height = 100});
-
-  final Widget child;
-  final double height;
-
-  @override
-  double get minExtent => height;
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return oldDelegate.height != height || oldDelegate.child != child;
-  }
-}
-
-class ScoreCardSkeleton extends StatelessWidget {
-  const ScoreCardSkeleton({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: cs.surfaceContainerHighest,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(height: 18, width: 150, color: cs.surfaceContainerHigh),
-          SizedBox(height: 12),
-          Container(height: 8, width: double.infinity, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
-          SizedBox(height: 12),
-          Container(height: 14, width: 200, color: cs.surfaceContainerHigh),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Container(height: 36, width: 100, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(18))),
-              SizedBox(width: 12),
-              Container(height: 36, width: 100, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(18))),
-            ],
-          ),
-        ],
       ),
     );
   }
