@@ -6,7 +6,9 @@ import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'auth_manager.dart';
 
-class SupabaseAuthManager extends AuthManager with EmailSignInManager {
+class SupabaseAuthManager extends AuthManager with EmailSignInManager, GoogleSignInManager, AppleSignInManager {
+  // Deep link redirect URL for OAuth
+  static const String _redirectUrl = 'io.supabase.thittam1hub://login-callback';
   @override
   supabase.User? get currentUser => SupabaseConfig.auth.currentUser;
 
@@ -198,6 +200,72 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
     } catch (e) {
       debugPrint('❌ Update user profile error: $e');
       rethrow;
+    }
+  }
+
+  @override
+  Future<supabase.User?> signInWithGoogle(BuildContext context) async {
+    try {
+      await SupabaseConfig.auth.signInWithOAuth(
+        supabase.OAuthProvider.google,
+        redirectTo: _redirectUrl,
+        authScreenLaunchMode: supabase.LaunchMode.externalApplication,
+      );
+      // OAuth flow handles the rest via deep linking
+      return null; // User will be set via authStateChanges stream
+    } catch (e) {
+      debugPrint('❌ Google sign in error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign in failed: ${e.toString()}')),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<supabase.User?> signInWithApple(BuildContext context) async {
+    try {
+      await SupabaseConfig.auth.signInWithOAuth(
+        supabase.OAuthProvider.apple,
+        redirectTo: _redirectUrl,
+        authScreenLaunchMode: supabase.LaunchMode.externalApplication,
+      );
+      return null;
+    } catch (e) {
+      debugPrint('❌ Apple sign in error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Apple sign in failed: ${e.toString()}')),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Handle OAuth callback - create profile for new social users
+  Future<void> handleOAuthUser(supabase.User user) async {
+    try {
+      // Check if profile exists
+      final existingProfile = await getUserProfile(user.id);
+      if (existingProfile != null) return;
+
+      // Create profile for new OAuth user
+      final qrCode = const Uuid().v4();
+      await SupabaseConfig.client.from('user_profiles').insert({
+        'id': user.id,
+        'email': user.email ?? '',
+        'full_name': user.userMetadata?['full_name'] ??
+            user.userMetadata?['name'] ??
+            'User',
+        'qr_code': qrCode,
+        'avatar_url': user.userMetadata?['avatar_url'] ??
+            user.userMetadata?['picture'],
+      });
+      debugPrint('✅ OAuth user profile created');
+    } catch (e) {
+      debugPrint('❌ Create OAuth profile error: $e');
     }
   }
 }

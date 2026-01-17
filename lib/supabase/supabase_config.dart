@@ -12,6 +12,9 @@ class SupabaseConfig {
       url: supabaseUrl,
       anonKey: anonKey,
       debug: kDebugMode,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
   }
 
