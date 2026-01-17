@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'nav.dart';
 import 'services/theme_service.dart';
+import 'services/cache_service.dart';
 import 'supabase/supabase_config.dart';
 
 /// Main entry point for the application
 ///
 /// This sets up:
 /// - Supabase initialization
+/// - Cache service for offline data
 /// - Theme service for dynamic theme switching
 /// - go_router navigation
 /// - Material 3 theming with light/dark modes
@@ -21,6 +23,14 @@ void main() async {
     debugPrint('✅ Supabase initialized successfully');
   } catch (e) {
     debugPrint('❌ Failed to initialize Supabase: $e');
+  }
+
+  // Initialize cache service for offline support
+  try {
+    await CacheService.instance.init();
+    debugPrint('✅ CacheService initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize CacheService: $e');
   }
 
   // Initialize theme service

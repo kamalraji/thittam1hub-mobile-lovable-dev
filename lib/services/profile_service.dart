@@ -3,11 +3,23 @@ import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/profile_stats.dart';
 import 'package:thittam1hub/models/profile_post.dart';
+import 'package:thittam1hub/services/cache_service.dart';
 
 /// Service for managing user profiles and notification preferences
 class ProfileService {
-  /// Get user profile by user ID
-  Future<UserProfile?> getUserProfile(String userId) async {
+  final CacheService _cache = CacheService.instance;
+
+  /// Get user profile by user ID with cache-first strategy
+  Future<UserProfile?> getUserProfile(String userId, {bool forceRefresh = false}) async {
+    // Try cache first (unless forced refresh)
+    if (!forceRefresh) {
+      final cached = await _cache.getCachedUserProfile(userId);
+      if (cached != null) {
+        debugPrint('📦 Profile loaded from cache: $userId');
+        return cached;
+      }
+    }
+
     try {
       final data = await SupabaseConfig.client
           .from('user_profiles')
@@ -23,9 +35,22 @@ class ProfileService {
       // Ensure qr_code has a fallback (use userId as a stable default if missing)
       mutable['qr_code'] = mutable['qr_code'] ?? userId;
 
-      return UserProfile.fromJson(mutable);
+      final profile = UserProfile.fromJson(mutable);
+      
+      // Cache the result
+      await _cache.cacheUserProfile(profile);
+      
+      return profile;
     } catch (e) {
       debugPrint('❌ Get user profile error: $e');
+      
+      // On network error, return stale cache if available
+      final staleCache = await _cache.getCachedUserProfileStale(userId);
+      if (staleCache != null) {
+        debugPrint('📦 Returning stale cached profile due to network error');
+        return staleCache;
+      }
+      
       return null;
     }
   }
@@ -37,6 +62,10 @@ class ProfileService {
           .from('user_profiles')
           .update(profile.toJson())
           .eq('id', profile.id);
+      
+      // Update cache with new profile
+      await _cache.cacheUserProfile(profile);
+      
       debugPrint('✅ User profile updated');
     } catch (e) {
       debugPrint('❌ Update user profile error: $e');

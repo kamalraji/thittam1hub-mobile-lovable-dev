@@ -1,16 +1,27 @@
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/saved_event.dart';
+import 'package:thittam1hub/services/cache_service.dart';
 
 /// Service for managing saved/bookmarked events
 class SavedEventsService {
   final _supabase = SupabaseConfig.client;
+  final CacheService _cache = CacheService.instance;
 
-  /// Get all saved events for the current user
-  Future<List<SavedEvent>> getSavedEvents() async {
+  /// Get all saved events for the current user with cache-first strategy
+  Future<List<SavedEvent>> getSavedEvents({bool forceRefresh = false}) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return [];
+
+      // Try cache first (unless forced refresh)
+      if (!forceRefresh) {
+        final cached = await _cache.getCachedSavedEvents(userId);
+        if (cached != null) {
+          debugPrint('📦 Saved events loaded from cache: ${cached.length} items');
+          return cached;
+        }
+      }
 
       final response = await _supabase
           .from('saved_events')
@@ -33,11 +44,27 @@ class SavedEventsService {
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
-      return (response as List)
+      final savedEvents = (response as List)
           .map((data) => SavedEvent.fromMap(data as Map<String, dynamic>))
           .toList();
+      
+      // Cache the results
+      await _cache.cacheSavedEvents(savedEvents, userId);
+      
+      return savedEvents;
     } catch (e) {
       debugPrint('❌ Get saved events error: $e');
+      
+      // On network error, return stale cache if available
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        final staleCache = await _cache.getCachedSavedEventsStale(userId);
+        if (staleCache != null) {
+          debugPrint('📦 Returning stale cached saved events due to network error');
+          return staleCache;
+        }
+      }
+      
       return [];
     }
   }
@@ -52,6 +79,9 @@ class SavedEventsService {
         'user_id': userId,
         'event_id': eventId,
       });
+      
+      // Invalidate cache so next fetch gets fresh data
+      await _cache.invalidateCache('${CacheService.savedEventsKey}_$userId');
       
       debugPrint('✅ Event saved: $eventId');
       return true;
@@ -72,6 +102,9 @@ class SavedEventsService {
           .delete()
           .eq('user_id', userId)
           .eq('event_id', eventId);
+      
+      // Invalidate cache so next fetch gets fresh data
+      await _cache.invalidateCache('${CacheService.savedEventsKey}_$userId');
       
       debugPrint('✅ Event unsaved: $eventId');
       return true;
