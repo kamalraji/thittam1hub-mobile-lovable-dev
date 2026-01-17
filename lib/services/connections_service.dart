@@ -260,4 +260,34 @@ class ConnectionsService {
       return false;
     }
   }
+
+  /// Get connection status between two users
+  /// Returns: 'accepted', 'pending', 'none'
+  Future<String?> getConnectionStatus(String currentUserId, String targetUserId) async {
+    try {
+      final response = await _supabase
+          .from('connections')
+          .select('status')
+          .or(
+            'and(requester_id.eq.$currentUserId,receiver_id.eq.$targetUserId),'
+            'and(requester_id.eq.$targetUserId,receiver_id.eq.$currentUserId)'
+          )
+          .maybeSingle();
+
+      if (response == null) return 'none';
+      
+      final status = response['status'] as String?;
+      if (status == 'ACCEPTED') return 'accepted';
+      if (status == 'PENDING') return 'pending';
+      return 'none';
+    } catch (e) {
+      debugPrint('❌ Get connection status error: $e');
+      return null;
+    }
+  }
+
+  /// Send connection request (alias for sendRequest for consistency)
+  Future<bool> sendConnectionRequest(String targetUserId, {String connectionType = 'NETWORKING'}) async {
+    return sendRequest(targetUserId, connectionType: connectionType);
+  }
 }

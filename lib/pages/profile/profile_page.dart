@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/profile_stats.dart';
 import 'package:thittam1hub/models/profile_post.dart';
@@ -19,6 +18,7 @@ import 'package:thittam1hub/widgets/animated_stat_counter.dart';
 import 'package:thittam1hub/widgets/cover_banner.dart';
 import 'package:thittam1hub/widgets/cover_image_picker.dart';
 import 'package:thittam1hub/widgets/profile_tab_bar.dart';
+import 'package:thittam1hub/widgets/share_profile_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Profile Tab - Reddit/Instagram inspired design with tabs
@@ -150,14 +150,21 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   }
 
   void _shareProfile() {
-    HapticFeedback.lightImpact();
     final userId = SupabaseConfig.auth.currentUser?.id;
     if (userId == null || _profile == null) return;
     
-    final profileUrl = 'https://thittam1hub.app/profile/$userId';
-    final shareText = '${_profile!.fullName ?? 'Check out my profile'} on Thittam1Hub\n\n$profileUrl';
-    
-    Share.share(shareText, subject: 'My Thittam1Hub Profile');
+    showShareProfileSheet(
+      context: context,
+      userId: userId,
+      displayName: _profile!.fullName ?? 'User',
+      headline: _profile!.bio,
+      handle: _profile!.socialLinks?['handle'] as String?,
+      avatarUrl: _profile!.avatarUrl,
+      impactScore: _stats.impactScore,
+      eventsAttended: _stats.eventsAttended,
+      connectionsCount: _connectionsCount,
+      skills: _profile!.skills ?? [],
+    );
   }
 
   void _showMoreOptions() {

@@ -22,6 +22,7 @@ import 'package:thittam1hub/pages/profile/tickets_page.dart';
 import 'package:thittam1hub/pages/profile/ticket_detail_page.dart';
 import 'package:thittam1hub/pages/profile/connections_page.dart';
 import 'package:thittam1hub/pages/profile/saved_events_page.dart';
+import 'package:thittam1hub/pages/profile/public_profile_page.dart';
 import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
@@ -256,6 +257,17 @@ class AppRouter {
                 const ConnectionsPage(),
                 state,
               ),
+            ),
+            // Public profile deep link route (accessible without auth)
+            GoRoute(
+              path: '/p/:userId',
+              pageBuilder: (context, state) {
+                final userId = state.pathParameters['userId']!;
+                return _buildHeroPageTransition(
+                  PublicProfilePage(profileId: userId),
+                  state,
+                );
+              },
             ),
           ],
         ),
