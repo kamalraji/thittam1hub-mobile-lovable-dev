@@ -19,43 +19,10 @@ Duration staggerDelay(int index, {int maxItems = 10}) {
 }
 
 // =============================================================================
-// BRANDED REFRESH INDICATOR
+// BRANDED REFRESH INDICATOR - Use lib/widgets/branded_refresh_indicator.dart
 // =============================================================================
-
-/// Custom refresh indicator with branded loading animation
-class BrandedRefreshIndicator extends StatelessWidget {
-  final Widget child;
-  final Future<void> Function() onRefresh;
-  final Color? color;
-  final Color? backgroundColor;
-
-  const BrandedRefreshIndicator({
-    super.key,
-    required this.child,
-    required this.onRefresh,
-    this.color,
-    this.backgroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = color ?? Theme.of(context).colorScheme.primary;
-    final bgColor = backgroundColor ?? (isDark ? const Color(0xFF1E1E2E) : Colors.white);
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        HapticFeedback.mediumImpact();
-        await onRefresh();
-      },
-      color: primaryColor,
-      backgroundColor: bgColor,
-      strokeWidth: 3,
-      displacement: 60,
-      child: child,
-    );
-  }
-}
+// Note: The advanced BrandedRefreshIndicator with custom animations is in
+// lib/widgets/branded_refresh_indicator.dart. Import from there instead.
 
 // =============================================================================
 // LOADING DOTS ANIMATION
