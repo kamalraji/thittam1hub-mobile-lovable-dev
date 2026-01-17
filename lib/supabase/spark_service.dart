@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/spark_comment.dart';
+import 'package:thittam1hub/services/connectivity_service.dart';
+import 'package:thittam1hub/services/offline_action_queue.dart';
 
 enum SparkPostType { IDEA, SEEKING, OFFERING, QUESTION, ANNOUNCEMENT }
 
@@ -17,6 +19,10 @@ class SparkPost {
   final int sparkCount;
   final int commentCount;
   final DateTime createdAt;
+  
+  // Optimistic state
+  final bool isOptimisticallySparked;
+  final int optimisticSparkCount;
 
   const SparkPost({
     required this.id,
@@ -30,6 +36,8 @@ class SparkPost {
     required this.sparkCount,
     required this.commentCount,
     required this.createdAt,
+    this.isOptimisticallySparked = false,
+    this.optimisticSparkCount = 0,
   });
 
   factory SparkPost.fromMap(Map<String, dynamic> map) {
@@ -66,6 +74,28 @@ class SparkPost {
       'created_at': createdAt.toIso8601String(),
     };
   }
+
+  /// Create copy with optimistic spark applied
+  SparkPost withOptimisticSpark() {
+    return SparkPost(
+      id: id,
+      authorId: authorId,
+      authorName: authorName,
+      authorAvatar: authorAvatar,
+      type: type,
+      title: title,
+      content: content,
+      tags: tags,
+      sparkCount: sparkCount,
+      commentCount: commentCount,
+      createdAt: createdAt,
+      isOptimisticallySparked: true,
+      optimisticSparkCount: sparkCount + 1,
+    );
+  }
+
+  /// Get display spark count (considers optimistic state)
+  int get displaySparkCount => isOptimisticallySparked ? optimisticSparkCount : sparkCount;
 }
 
 class SparkService {
@@ -116,12 +146,27 @@ class SparkService {
     }
   }
 
-  /// Add a spark (like) to a post
+  /// Add a spark (like) to a post with optimistic update
+  /// Returns the optimistically updated post for immediate UI feedback
   Future<void> sparkPost(String postId) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Not authenticated');
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
 
+    debugPrint('⚡ Optimistic spark: $postId');
+
+    // If offline, queue for later
+    if (!ConnectivityService.instance.isOnline) {
+      await OfflineActionQueue.instance.enqueue(OfflineAction(
+        id: 'spark_${postId}_${DateTime.now().millisecondsSinceEpoch}',
+        type: OfflineActionType.sparkPost,
+        payload: {'postId': postId},
+        createdAt: DateTime.now(),
+      ));
+      debugPrint('📥 Spark queued for offline sync');
+      return;
+    }
+
+    try {
       await _supabase.from('spark_reactions').insert({
         'post_id': postId,
         'user_id': userId,
@@ -133,17 +178,37 @@ class SparkService {
       debugPrint('⚡ Sparked post');
     } catch (e) {
       debugPrint('❌ Error sparking post: $e');
+      
+      // Queue for retry on failure
+      await OfflineActionQueue.instance.enqueue(OfflineAction(
+        id: 'spark_${postId}_${DateTime.now().millisecondsSinceEpoch}',
+        type: OfflineActionType.sparkPost,
+        payload: {'postId': postId},
+        createdAt: DateTime.now(),
+      ));
+      
       rethrow;
     }
   }
 
-  /// Idempotent spark: only creates a spark if not already reacted by user
-  /// Returns true if a new spark was created, false if already existed
+  /// Idempotent spark with optimistic update
+  /// Returns true if action was taken (new spark or queued)
   Future<bool> toggleSparkOnce(String postId) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Not authenticated');
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
 
+    // If offline, just queue it (dedup will happen on sync)
+    if (!ConnectivityService.instance.isOnline) {
+      await OfflineActionQueue.instance.enqueue(OfflineAction(
+        id: 'spark_${postId}_${DateTime.now().millisecondsSinceEpoch}',
+        type: OfflineActionType.sparkPost,
+        payload: {'postId': postId},
+        createdAt: DateTime.now(),
+      ));
+      return true;
+    }
+
+    try {
       final existing = await _supabase
           .from('spark_reactions')
           .select('id')
