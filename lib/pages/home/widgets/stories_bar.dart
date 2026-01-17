@@ -100,6 +100,8 @@ class _StoryItem extends StatelessWidget {
         return Colors.purple;
       case StoryType.onlineConnection:
         return Colors.green;
+      case StoryType.discoverPeople:
+        return Colors.orange;
     }
   }
 
@@ -113,6 +115,8 @@ class _StoryItem extends StatelessWidget {
         return Icons.gamepad;
       case StoryType.onlineConnection:
         return Icons.person;
+      case StoryType.discoverPeople:
+        return Icons.favorite;
     }
   }
 
@@ -126,6 +130,8 @@ class _StoryItem extends StatelessWidget {
         return 'Game';
       case StoryType.onlineConnection:
         return story.title.split(' ').first;
+      case StoryType.discoverPeople:
+        return 'For You';
     }
   }
 

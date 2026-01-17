@@ -8,6 +8,7 @@ enum NotificationType {
   NEW_BADGE,
   LEVEL_UP,
   MUTUAL_CONNECTION,
+  HIGH_MATCH_ONLINE,
 }
 
 @immutable

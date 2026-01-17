@@ -1197,6 +1197,36 @@ export type Database = {
           },
         ]
       }
+      daily_discovers: {
+        Row: {
+          created_at: string | null
+          date: string
+          discovered_user_id: string
+          id: string
+          match_score: number
+          user_id: string
+          viewed: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          discovered_user_id: string
+          id?: string
+          match_score?: number
+          user_id: string
+          viewed?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          discovered_user_id?: string
+          id?: string
+          match_score?: number
+          user_id?: string
+          viewed?: boolean | null
+        }
+        Relationships: []
+      }
       event_page_views: {
         Row: {
           created_at: string
@@ -2762,27 +2792,46 @@ export type Database = {
       }
       spark_comments: {
         Row: {
+          author_avatar: string | null
+          author_name: string | null
           content: string
           created_at: string
           id: string
+          like_count: number | null
+          parent_id: string | null
           post_id: string
           user_id: string
         }
         Insert: {
+          author_avatar?: string | null
+          author_name?: string | null
           content: string
           created_at?: string
           id?: string
+          like_count?: number | null
+          parent_id?: string | null
           post_id: string
           user_id: string
         }
         Update: {
+          author_avatar?: string | null
+          author_name?: string | null
           content?: string
           created_at?: string
           id?: string
+          like_count?: number | null
+          parent_id?: string | null
           post_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "spark_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "spark_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "spark_comments_post_id_fkey"
             columns: ["post_id"]
