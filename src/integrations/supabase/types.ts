@@ -2495,6 +2495,44 @@ export type Database = {
           },
         ]
       }
+      saved_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          reminder_enabled: boolean | null
+          reminder_time: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          reminder_enabled?: boolean | null
+          reminder_time?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          reminder_enabled?: boolean | null
+          reminder_time?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_profiles: {
         Row: {
           created_at: string
@@ -3736,6 +3774,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          cover_image_url: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -3756,6 +3795,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          cover_image_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -3776,6 +3816,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          cover_image_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null

@@ -20,6 +20,8 @@ import 'package:thittam1hub/pages/profile/qr_code_page.dart';
 import 'package:thittam1hub/pages/profile/settings_page.dart';
 import 'package:thittam1hub/pages/profile/tickets_page.dart';
 import 'package:thittam1hub/pages/profile/ticket_detail_page.dart';
+import 'package:thittam1hub/pages/profile/connections_page.dart';
+import 'package:thittam1hub/pages/profile/saved_events_page.dart';
 import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
@@ -244,7 +246,14 @@ class AppRouter {
             GoRoute(
               path: '/profile/saved',
               pageBuilder: (context, state) => _buildPageTransition(
-                const _PlaceholderPage(title: 'Saved Events'),
+                const SavedEventsPage(),
+                state,
+              ),
+            ),
+            GoRoute(
+              path: '/profile/connections',
+              pageBuilder: (context, state) => _buildPageTransition(
+                const ConnectionsPage(),
                 state,
               ),
             ),

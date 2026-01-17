@@ -115,8 +115,11 @@ class ProfileService {
   /// Get count of saved (favorited) events
   Future<int> getSavedEventsCount(String userId) async {
     try {
-      // TODO: Implement once saved_events table is added
-      return 0;
+      final response = await SupabaseConfig.client
+          .from('saved_events')
+          .select('id')
+          .eq('user_id', userId);
+      return (response as List).length;
     } catch (e) {
       debugPrint('❌ Get saved events count error: $e');
       return 0;
