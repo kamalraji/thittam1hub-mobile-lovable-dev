@@ -463,7 +463,7 @@ class _SignUpPageState extends State<SignUpPage> with TickerProviderStateMixin {
       if (mounted) setState(() => _appleLoading = false);
     }
   }
-  }
+  
 
   Widget _buildPasswordStrengthIndicator(ColorScheme cs) {
     return Column(

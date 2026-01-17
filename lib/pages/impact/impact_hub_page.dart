@@ -243,6 +243,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
         return Icons.trending_up;
       case NotificationType.MUTUAL_CONNECTION:
         return Icons.people;
+      case NotificationType.HIGH_MATCH_ONLINE:
+        return Icons.favorite; // high match is online now
     }
   }
 
@@ -261,6 +263,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
         return Colors.orange;
       case NotificationType.MUTUAL_CONNECTION:
         return Colors.blue;
+      case NotificationType.HIGH_MATCH_ONLINE:
+        return Colors.pink;
     }
   }
 

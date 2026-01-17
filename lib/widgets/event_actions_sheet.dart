@@ -69,25 +69,24 @@ void showEventDetailsSheet(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Event banner
-        if (event.bannerUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              event.bannerUrl!,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            event.branding.bannerUrl,
+            height: 160,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
               height: 160,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 160,
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                child: Icon(
-                  Icons.event,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              child: Icon(
+                Icons.event,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
+        ),
         const SizedBox(height: 16),
         
         // Event name
@@ -104,13 +103,13 @@ void showEventDetailsSheet(
           children: [
             CircleAvatar(
               radius: 12,
-              backgroundImage: event.organization.logoUrl != null
-                  ? NetworkImage(event.organization.logoUrl!)
+              backgroundImage: event.organization.logoUrl.isNotEmpty
+                  ? NetworkImage(event.organization.logoUrl)
                   : null,
               backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              child: event.organization.logoUrl == null
+              child: event.organization.logoUrl.isEmpty
                   ? Text(
-                      event.organization.name[0],
+                      event.organization.name.isNotEmpty ? event.organization.name[0] : '?',
                       style: TextStyle(fontSize: 10),
                     )
                   : null,

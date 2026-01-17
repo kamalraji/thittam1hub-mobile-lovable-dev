@@ -35,6 +35,7 @@ class StoryItem {
   final String? avatarUrl;
   final bool isLive;
   final int? participantCount;
+  final int? matchScore; // optional match score for discover people
 
   StoryItem({
     required this.id,
@@ -43,6 +44,7 @@ class StoryItem {
     this.avatarUrl,
     this.isLive = false,
     this.participantCount,
+    this.matchScore,
   });
 }
 
@@ -191,9 +193,11 @@ class HomeService {
   /// Get active polls (quick polls)
   Future<List<VibeGameItem>> getActivePolls() async {
     try {
-      return await _gamificationService.getActiveQuickMatch() != null
-          ? [await _gamificationService.getActiveQuickMatch()!]
-          : [];
+      final quick = await _gamificationService.getActiveQuickMatch();
+      if (quick != null) {
+        return [quick];
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching active polls: $e');
       return [];

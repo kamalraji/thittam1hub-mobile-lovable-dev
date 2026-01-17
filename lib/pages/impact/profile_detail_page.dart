@@ -62,7 +62,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
         _impactService.getProfileById(widget.profileId),
         _impactService.getMutualConnections(widget.profileId),
         _impactService.getConnectionStatus(widget.profileId),
-        _professionalService.getWorkExperiences(widget.profileId),
+        _professionalService.getWorkExperience(widget.profileId),
         _professionalService.getPortfolioProjects(widget.profileId),
         _professionalService.getEndorsements(widget.profileId),
       ]);
@@ -453,8 +453,6 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                     SkillEndorsements(
                       skills: p.skills,
                       endorsements: _endorsements,
-                      isEditable: false,
-                      profileUserId: widget.profileId,
                     ),
                     const SizedBox(height: 24),
                   ],

@@ -140,7 +140,7 @@ class _BrandedRefreshIndicatorState extends State<BrandedRefreshIndicator>
       onNotification: (notification) {
         if (notification is ScrollUpdateNotification) {
           if (notification.metrics.pixels < 0) {
-            _onDragUpdate(-notification.scrollDelta ?? 0);
+            _onDragUpdate(-(notification.scrollDelta ?? 0));
           }
         } else if (notification is ScrollEndNotification) {
           if (notification.metrics.pixels <= 0 && _dragOffset > 0) {

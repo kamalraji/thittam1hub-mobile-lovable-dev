@@ -436,7 +436,7 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
       if (mounted) setState(() => _appleLoading = false);
     }
   }
-  }
+  
 
   Widget _buildTextField({
     required TextEditingController controller,

@@ -1747,7 +1747,7 @@ class _DiscoveryModeToggle extends StatelessWidget {
 class _MixedDiscoveryItem {
   final String type; // 'profile' or 'circle'
   final ImpactProfile? profile;
-  final GroupMatchResult? circleResult;
+  final CircleDiscoveryResult? circleResult;
   final int score;
 
   _MixedDiscoveryItem({
@@ -1865,4 +1865,98 @@ class CircleDiscoveryResult {
     required this.matchScore,
     required this.insights,
   });
+}
+
+// ==================== Circle Discovery Card ====================
+
+class CircleDiscoveryCard extends StatelessWidget {
+  final Circle circle;
+  final int matchScore;
+  final List<String> insights;
+  final VoidCallback? onJoin;
+  final VoidCallback? onTap;
+
+  const CircleDiscoveryCard({
+    super.key,
+    required this.circle,
+    required this.matchScore,
+    required this.insights,
+    this.onJoin,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(circle.icon, style: const TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(circle.name, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        if (circle.description != null && circle.description!.isNotEmpty)
+                          Text(circle.description!, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text('$matchScore%', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ],
+              ),
+              if (circle.tags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: circle.tags.take(4).map((t) => Chip(label: Text(t))).toList(),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.people_outline, size: 16, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text('${circle.memberCount}${circle.maxMembers != null ? '/${circle.maxMembers}' : ''} members', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  const Spacer(),
+                  if (onJoin != null)
+                    FilledButton.icon(onPressed: onJoin, icon: const Icon(Icons.add, size: 18), label: const Text('Join')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -203,7 +203,7 @@ class _TrendingTagChipState extends State<_TrendingTagChip> {
               ),
               const SizedBox(width: 2),
               Text(
-                tag,
+                widget.tag,
                 style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: cs.onSurface,

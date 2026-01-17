@@ -27,6 +27,9 @@ class ProfessionalService {
     }
   }
 
+  // Backwards-compatible alias
+  Future<List<WorkExperience>> getWorkExperiences(String userId) => getWorkExperience(userId);
+
   Future<WorkExperience?> addWorkExperience({
     required String title,
     required String company,
