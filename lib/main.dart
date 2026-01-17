@@ -7,16 +7,10 @@ import 'services/theme_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/background_sync_service.dart';
+import 'services/offline_action_queue.dart';
 import 'supabase/supabase_config.dart';
 
 /// Main entry point for the application
-///
-/// This sets up:
-/// - Supabase initialization
-/// - Cache service for offline data
-/// - Theme service for dynamic theme switching
-/// - go_router navigation
-/// - Material 3 theming with light/dark modes
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -41,6 +35,14 @@ void main() async {
     debugPrint('✅ ConnectivityService initialized successfully');
   } catch (e) {
     debugPrint('❌ Failed to initialize ConnectivityService: $e');
+  }
+
+  // Initialize offline action queue
+  try {
+    await OfflineActionQueue.instance.init();
+    debugPrint('✅ OfflineActionQueue initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize OfflineActionQueue: $e');
   }
 
   // Initialize background sync
