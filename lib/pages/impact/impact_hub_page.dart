@@ -7,7 +7,6 @@ import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/services/notification_service.dart';
 import 'pulse_page.dart';
 import 'circles_page.dart';
-import 'spark_page.dart';
 import 'vibe_page.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
@@ -36,7 +35,6 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   final List<Widget> _pages = [
     PulsePage(),
     CirclesPage(),
-    SparkPage(),
     VibePage(),
   ];
 

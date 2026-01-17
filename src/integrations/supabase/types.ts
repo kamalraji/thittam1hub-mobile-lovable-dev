@@ -1521,12 +1521,15 @@ export type Database = {
           interests: string[]
           is_online: boolean
           last_seen: string
+          last_streak_date: string | null
           level: number
           looking_for: string[]
           major: string | null
           organization: string | null
           relationship_status: string
           skills: string[]
+          streak_actions_today: number | null
+          streak_count: number | null
           updated_at: string
           user_id: string
           vibe_emoji: string
@@ -1548,12 +1551,15 @@ export type Database = {
           interests?: string[]
           is_online?: boolean
           last_seen?: string
+          last_streak_date?: string | null
           level?: number
           looking_for?: string[]
           major?: string | null
           organization?: string | null
           relationship_status?: string
           skills?: string[]
+          streak_actions_today?: number | null
+          streak_count?: number | null
           updated_at?: string
           user_id: string
           vibe_emoji?: string
@@ -1575,12 +1581,15 @@ export type Database = {
           interests?: string[]
           is_online?: boolean
           last_seen?: string
+          last_streak_date?: string | null
           level?: number
           looking_for?: string[]
           major?: string | null
           organization?: string | null
           relationship_status?: string
           skills?: string[]
+          streak_actions_today?: number | null
+          streak_count?: number | null
           updated_at?: string
           user_id?: string
           vibe_emoji?: string
@@ -8921,6 +8930,7 @@ export type Database = {
         Args: { _event_type: string; _product_ids: string[] }
         Returns: undefined
       }
+      update_user_streak: { Args: { user_uuid: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "organizer" | "participant"
