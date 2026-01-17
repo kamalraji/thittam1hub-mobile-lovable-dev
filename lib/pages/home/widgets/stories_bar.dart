@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/pages/home/home_service.dart';
+import 'package:thittam1hub/widgets/shimmer_loading.dart';
 
 class StoriesBar extends StatelessWidget {
   final List<StoryItem> stories;
@@ -15,10 +17,8 @@ class StoriesBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    
     return Container(
-      height: 100,
+      height: 110,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -49,29 +49,53 @@ class _AddStoryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: GestureDetector(
         onTap: onTap,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64,
-              height: 64,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: cs.surfaceContainerHighest,
-                border: Border.all(color: cs.outline.withValues(alpha: 0.3), width: 2),
+                gradient: LinearGradient(
+                  colors: [
+                    cs.primary.withValues(alpha: 0.1),
+                    cs.tertiary.withValues(alpha: 0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: cs.outline.withValues(alpha: 0.2),
+                  width: 2,
+                  strokeAlign: BorderSide.strokeAlignOutside,
+                ),
               ),
-              child: Icon(Icons.add, color: cs.primary, size: 28),
+              child: Container(
+                margin: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? cs.surfaceContainerHigh : cs.surfaceContainerLowest,
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: cs.primary,
+                  size: 32,
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               'Create',
               style: textTheme.labelSmall?.copyWith(
                 color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -83,15 +107,42 @@ class _AddStoryButton extends StatelessWidget {
   }
 }
 
-class _StoryItem extends StatelessWidget {
+class _StoryItem extends StatefulWidget {
   final StoryItem story;
   final VoidCallback onTap;
 
   const _StoryItem({required this.story, required this.onTap});
 
+  @override
+  State<_StoryItem> createState() => _StoryItemState();
+}
+
+class _StoryItemState extends State<_StoryItem> with SingleTickerProviderStateMixin {
+  late AnimationController _ringAnimController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ringAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    
+    // Animate ring for live or active content
+    if (widget.story.isLive || widget.story.type == StoryType.discoverPeople) {
+      _ringAnimController.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ringAnimController.dispose();
+    super.dispose();
+  }
+
   Color _getRingColor(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    switch (story.type) {
+    switch (widget.story.type) {
       case StoryType.dailyMission:
         return cs.primary;
       case StoryType.liveSpace:
@@ -105,23 +156,39 @@ class _StoryItem extends StatelessWidget {
     }
   }
 
-  IconData _getDefaultIcon() {
-    switch (story.type) {
+  List<Color> _getGradientColors(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    switch (widget.story.type) {
       case StoryType.dailyMission:
-        return Icons.flag;
+        return [cs.primary, cs.tertiary];
       case StoryType.liveSpace:
-        return Icons.mic;
+        return [Colors.red, Colors.pink];
       case StoryType.activeGame:
-        return Icons.gamepad;
+        return [Colors.purple, Colors.deepPurple];
       case StoryType.onlineConnection:
-        return Icons.person;
+        return [Colors.green, Colors.teal];
       case StoryType.discoverPeople:
-        return Icons.favorite;
+        return [Colors.orange, Colors.pink, Colors.purple];
+    }
+  }
+
+  IconData _getDefaultIcon() {
+    switch (widget.story.type) {
+      case StoryType.dailyMission:
+        return Icons.flag_rounded;
+      case StoryType.liveSpace:
+        return Icons.mic_rounded;
+      case StoryType.activeGame:
+        return Icons.gamepad_rounded;
+      case StoryType.onlineConnection:
+        return Icons.person_rounded;
+      case StoryType.discoverPeople:
+        return Icons.favorite_rounded;
     }
   }
 
   String _getLabel() {
-    switch (story.type) {
+    switch (widget.story.type) {
       case StoryType.dailyMission:
         return 'Mission';
       case StoryType.liveSpace:
@@ -129,7 +196,7 @@ class _StoryItem extends StatelessWidget {
       case StoryType.activeGame:
         return 'Game';
       case StoryType.onlineConnection:
-        return story.title.split(' ').first;
+        return widget.story.title.split(' ').first;
       case StoryType.discoverPeople:
         return 'For You';
     }
@@ -140,78 +207,104 @@ class _StoryItem extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final ringColor = _getRingColor(context);
+    final gradientColors = _getGradientColors(context);
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
+              alignment: Alignment.center,
               children: [
+                // Animated rotating gradient ring
+                AnimatedBuilder(
+                  animation: _ringAnimController,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: _ringAnimController.value * 2 * math.pi,
+                      child: Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: SweepGradient(
+                            colors: [
+                              ...gradientColors,
+                              gradientColors.first,
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Inner white/surface ring
                 Container(
-                  width: 68,
-                  height: 68,
-                  padding: const EdgeInsets.all(3),
+                  width: 70,
+                  height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [ringColor, ringColor.withValues(alpha: 0.6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: cs.surface,
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: cs.surfaceContainerHighest,
-                      backgroundImage: story.avatarUrl != null 
-                          ? NetworkImage(story.avatarUrl!)
-                          : null,
-                      child: story.avatarUrl == null 
-                          ? Icon(_getDefaultIcon(), color: ringColor, size: 24)
-                          : null,
-                    ),
+                    color: cs.surface,
                   ),
                 ),
-                if (story.isLive)
+                // Avatar
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: cs.surfaceContainerHighest,
+                  backgroundImage: widget.story.avatarUrl != null 
+                      ? NetworkImage(widget.story.avatarUrl!)
+                      : null,
+                  child: widget.story.avatarUrl == null 
+                      ? Icon(_getDefaultIcon(), color: ringColor, size: 28)
+                      : null,
+                ),
+                // Live indicator
+                if (widget.story.isLive)
                   Positioned(
                     bottom: 0,
-                    left: 0,
+                    child: _LiveIndicator(color: ringColor),
+                  ),
+                // Match score badge for discover people
+                if (widget.story.type == StoryType.discoverPeople && widget.story.matchScore != null)
+                  Positioned(
+                    top: 0,
                     right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: ringColor,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          story.type == StoryType.liveSpace ? 'LIVE' : '•',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
+                        ],
+                      ),
+                      child: Text(
+                        '${widget.story.matchScore}%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             SizedBox(
-              width: 68,
+              width: 72,
               child: Text(
                 _getLabel(),
                 style: textTheme.labelSmall?.copyWith(
                   color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -225,15 +318,81 @@ class _StoryItem extends StatelessWidget {
   }
 }
 
+/// Animated pulsing live indicator
+class _LiveIndicator extends StatefulWidget {
+  final Color color;
+  const _LiveIndicator({required this.color});
+
+  @override
+  State<_LiveIndicator> createState() => _LiveIndicatorState();
+}
+
+class _LiveIndicatorState extends State<_LiveIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pulseAnimation.value,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: widget.color,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withValues(alpha: 0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Text(
+              'LIVE',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class StoriesBarSkeleton extends StatelessWidget {
   const StoriesBarSkeleton({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    
     return Container(
-      height: 100,
+      height: 110,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -241,26 +400,20 @@ class StoriesBarSkeleton extends StatelessWidget {
         itemCount: 6,
         itemBuilder: (context, index) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: cs.surfaceContainerHighest,
-                  ),
+                ShimmerPlaceholder(
+                  width: 72,
+                  height: 72,
+                  isCircle: true,
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 40,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                const SizedBox(height: 6),
+                ShimmerPlaceholder(
+                  width: 48,
+                  height: 12,
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ],
             ),
