@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -8,12 +9,15 @@ import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/profile_stats.dart';
 import 'package:thittam1hub/models/profile_post.dart';
 import 'package:thittam1hub/services/profile_service.dart';
+import 'package:thittam1hub/services/saved_events_service.dart';
+import 'package:thittam1hub/services/connections_service.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/widgets/animated_stat_counter.dart';
 import 'package:thittam1hub/widgets/cover_banner.dart';
+import 'package:thittam1hub/widgets/cover_image_picker.dart';
 import 'package:thittam1hub/widgets/profile_tab_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,6 +32,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
   final _profileService = ProfileService();
   final _gamificationService = GamificationService();
+  final _savedEventsService = SavedEventsService();
+  final _connectionsService = ConnectionsService();
   
   UserProfile? _profile;
   ProfileStats _stats = const ProfileStats();
@@ -38,6 +44,11 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   List<String> _myBadgeIds = [];
   bool _isLoading = true;
   int _selectedTabIndex = 0;
+  
+  // Quick action counts
+  int _savedEventsCount = 0;
+  int _connectionsCount = 0;
+  int _ticketsCount = 0;
   
   late AnimationController _headerController;
   late Animation<double> _headerAnimation;
@@ -79,12 +90,16 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         _profileService.getUpcomingEvents(userId),
         _gamificationService.getAllBadges(),
         _gamificationService.getMyBadgeIds(),
+        _savedEventsService.getSavedEventsCount(),
+        _connectionsService.getAcceptedConnections(),
+        _profileService.getTicketsCount(userId),
       ]);
 
       if (mounted) {
         final allBadges = results[5] as List<BadgeItem>;
         final myBadgeIds = results[6] as List<String>;
         final earnedBadges = allBadges.where((b) => myBadgeIds.contains(b.id)).toList();
+        final connections = results[8] as List;
         
         setState(() {
           _profile = results[0] as UserProfile?;
@@ -94,6 +109,9 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           _upcomingEvents = results[4] as List<Map<String, dynamic>>;
           _earnedBadges = earnedBadges;
           _myBadgeIds = myBadgeIds;
+          _savedEventsCount = results[7] as int;
+          _connectionsCount = connections.length;
+          _ticketsCount = results[9] as int;
           _isLoading = false;
         });
         _headerController.forward();
@@ -152,6 +170,18 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           Navigator.pop(context);
           context.push('/profile/edit').then((_) => _loadProfile());
         },
+        onSavedEvents: () {
+          Navigator.pop(context);
+          context.push('/profile/saved');
+        },
+        onConnections: () {
+          Navigator.pop(context);
+          context.push('/profile/connections');
+        },
+        onTickets: () {
+          Navigator.pop(context);
+          context.push('/profile/tickets');
+        },
         onSettings: () {
           Navigator.pop(context);
           context.push('/profile/settings');
@@ -162,6 +192,104 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
         },
       ),
     );
+  }
+
+  void _showCoverPicker() {
+    HapticFeedback.lightImpact();
+    showCoverImagePicker(
+      context: context,
+      currentImageUrl: _profile?.coverImageUrl,
+      currentGradientId: _profile?.coverGradientId,
+      onSelectGradient: _handleGradientSelect,
+      onSelectImage: _handleCoverUpload,
+      onRemove: _handleCoverRemove,
+    );
+  }
+
+  Future<void> _handleGradientSelect(String gradientId) async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      await _profileService.setCoverGradient(userId, gradientId);
+      setState(() {
+        _profile = _profile?.copyWith(
+          coverGradientId: gradientId,
+          coverImageUrl: null,
+        );
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cover updated'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update cover: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCoverUpload(Uint8List bytes, String fileName) async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Uploading cover...')),
+    );
+
+    try {
+      final coverUrl = await _profileService.uploadCoverImage(userId, bytes, fileName);
+      if (coverUrl != null) {
+        // Update profile with new cover URL
+        final updatedProfile = _profile!.copyWith(
+          coverImageUrl: coverUrl,
+          coverGradientId: null,
+        );
+        await _profileService.updateUserProfile(updatedProfile);
+        setState(() => _profile = updatedProfile);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cover uploaded'), backgroundColor: AppColors.success),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload cover: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCoverRemove() async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      // Delete from storage if custom image
+      if (_profile?.coverImageUrl != null) {
+        await _profileService.deleteCoverImage(userId, _profile!.coverImageUrl!);
+      }
+      // Clear both cover fields
+      await _profileService.setCoverGradient(userId, null);
+      setState(() {
+        _profile = _profile?.copyWith(
+          coverImageUrl: null,
+          coverGradientId: null,
+        );
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cover removed')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to remove cover: $e');
+    }
   }
 
   @override
@@ -195,6 +323,17 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                     const SizedBox(height: AppSpacing.md),
                     // Stats Row
                     _StatsRow(stats: _stats),
+                    const SizedBox(height: AppSpacing.md),
+                    // Quick Actions Row
+                    _QuickActionsRow(
+                      ticketsCount: _ticketsCount,
+                      savedCount: _savedEventsCount,
+                      connectionsCount: _connectionsCount,
+                      onTickets: () => context.push('/profile/tickets'),
+                      onSaved: () => context.push('/profile/saved'),
+                      onConnections: () => context.push('/profile/connections'),
+                      onQrCode: () => context.push('/profile/qr-code'),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     // Bio Section
                     if (_profile?.bio != null && _profile!.bio!.isNotEmpty)
@@ -234,14 +373,23 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     final cs = Theme.of(context).colorScheme;
     final avatarUrl = _profile?.avatarUrl;
     final fullName = _profile?.fullName ?? 'User';
+    
+    // Get gradient colors if gradient is set
+    List<Color>? gradientColors;
+    if (_profile?.coverGradientId != null) {
+      final theme = CoverGradientTheme.presets.where((t) => t.id == _profile!.coverGradientId).firstOrNull;
+      gradientColors = theme?.colors;
+    }
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         CoverBanner(
+          imageUrl: _profile?.coverImageUrl,
+          gradientColors: gradientColors,
           height: 120,
           showEditButton: true,
-          onEditTap: () => context.push('/profile/edit'),
+          onEditTap: _showCoverPicker,
         ),
         // Avatar positioned to overlap banner
         Positioned(
@@ -298,6 +446,134 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       default:
         return const SizedBox.shrink();
     }
+  }
+}
+
+// =============================================================================
+// QUICK ACTIONS ROW
+// =============================================================================
+
+class _QuickActionsRow extends StatelessWidget {
+  final int ticketsCount;
+  final int savedCount;
+  final int connectionsCount;
+  final VoidCallback onTickets;
+  final VoidCallback onSaved;
+  final VoidCallback onConnections;
+  final VoidCallback onQrCode;
+
+  const _QuickActionsRow({
+    required this.ticketsCount,
+    required this.savedCount,
+    required this.connectionsCount,
+    required this.onTickets,
+    required this.onSaved,
+    required this.onConnections,
+    required this.onQrCode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _QuickActionChip(
+              icon: Icons.confirmation_number_outlined,
+              label: 'Tickets',
+              count: ticketsCount,
+              onTap: onTickets,
+            ),
+            const SizedBox(width: 8),
+            _QuickActionChip(
+              icon: Icons.bookmark_outline,
+              label: 'Saved',
+              count: savedCount,
+              onTap: onSaved,
+            ),
+            const SizedBox(width: 8),
+            _QuickActionChip(
+              icon: Icons.people_outline,
+              label: 'Connections',
+              count: connectionsCount,
+              onTap: onConnections,
+            ),
+            const SizedBox(width: 8),
+            _QuickActionChip(
+              icon: Icons.qr_code,
+              label: 'QR Code',
+              onTap: onQrCode,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int? count;
+  final VoidCallback onTap;
+
+  const _QuickActionChip({
+    required this.icon,
+    required this.label,
+    this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Material(
+      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: cs.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: context.textStyles.labelMedium?.copyWith(
+                  color: cs.onSurface,
+                ),
+              ),
+              if (count != null && count! > 0) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -500,64 +776,40 @@ class _Divider extends StatelessWidget {
 // BIO SECTION
 // =============================================================================
 
-class _BioSection extends StatefulWidget {
+class _BioSection extends StatelessWidget {
   final UserProfile profile;
 
   const _BioSection({required this.profile});
 
   @override
-  State<_BioSection> createState() => _BioSectionState();
-}
-
-class _BioSectionState extends State<_BioSection> {
-  bool _expanded = false;
-
-  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final bio = widget.profile.bio ?? '';
-    final isLong = bio.length > 150;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AnimatedCrossFade(
-            firstChild: Text(
-              bio,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: context.textStyles.bodyMedium,
+          Text(
+            profile.bio!,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: cs.onSurface,
             ),
-            secondChild: Text(
-              bio,
-              style: context.textStyles.bodyMedium,
-            ),
-            crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 200),
           ),
-          if (isLong)
-            GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  _expanded ? 'Show less' : 'Read more',
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          // Social Links
-          const SizedBox(height: 12),
-          _SocialLinksRow(profile: widget.profile),
+          if (_hasSocialLinks()) ...[
+            const SizedBox(height: 12),
+            _SocialLinksRow(profile: profile),
+          ],
         ],
       ),
     );
   }
+
+  bool _hasSocialLinks() =>
+      (profile.website != null && profile.website!.isNotEmpty) ||
+      (profile.linkedinUrl != null && profile.linkedinUrl!.isNotEmpty) ||
+      (profile.twitterUrl != null && profile.twitterUrl!.isNotEmpty) ||
+      (profile.githubUrl != null && profile.githubUrl!.isNotEmpty);
 }
 
 class _SocialLinksRow extends StatelessWidget {
@@ -567,76 +819,83 @@ class _SocialLinksRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final links = <(IconData, String?, String, Color)>[
-      (Icons.language, profile.website, 'Website', AppColors.primary),
-      (Icons.business, profile.linkedinUrl, 'LinkedIn', const Color(0xFF0A66C2)),
-      (Icons.alternate_email, profile.twitterUrl, 'X', Colors.black87),
-      (Icons.code, profile.githubUrl, 'GitHub', const Color(0xFF6e5494)),
-    ].where((link) => link.$2 != null && link.$2!.isNotEmpty).toList();
+    final cs = Theme.of(context).colorScheme;
+    final links = <Widget>[];
 
-    if (links.isEmpty) return const SizedBox.shrink();
+    if (profile.website != null && profile.website!.isNotEmpty) {
+      links.add(_SocialLink(
+        icon: Icons.language,
+        label: 'Website',
+        url: profile.website!,
+      ));
+    }
+    if (profile.linkedinUrl != null && profile.linkedinUrl!.isNotEmpty) {
+      links.add(_SocialLink(
+        icon: Icons.work_outline,
+        label: 'LinkedIn',
+        url: profile.linkedinUrl!,
+      ));
+    }
+    if (profile.twitterUrl != null && profile.twitterUrl!.isNotEmpty) {
+      links.add(_SocialLink(
+        icon: Icons.alternate_email,
+        label: 'Twitter',
+        url: profile.twitterUrl!,
+      ));
+    }
+    if (profile.githubUrl != null && profile.githubUrl!.isNotEmpty) {
+      links.add(_SocialLink(
+        icon: Icons.code,
+        label: 'GitHub',
+        url: profile.githubUrl!,
+      ));
+    }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: links.map((link) => _SocialChip(
-        icon: link.$1,
-        url: link.$2!,
-        label: link.$3,
-        color: link.$4,
-      )).toList(),
-    );
+    return Wrap(spacing: 8, runSpacing: 8, children: links);
   }
 }
 
-class _SocialChip extends StatelessWidget {
+class _SocialLink extends StatelessWidget {
   final IconData icon;
-  final String url;
   final String label;
-  final Color color;
+  final String url;
 
-  const _SocialChip({
+  const _SocialLink({
     required this.icon,
-    required this.url,
     required this.label,
-    required this.color,
+    required this.url,
   });
-
-  Future<void> _launchUrl() async {
-    final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final displayColor = isDark ? color.withValues(alpha: 0.8) : color;
 
-    return Material(
-      color: displayColor.withValues(alpha: 0.1),
+    return InkWell(
+      onTap: () async {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
       borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: _launchUrl,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: displayColor),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: displayColor,
-                  fontWeight: FontWeight.w500,
-                ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: cs.primary),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: context.textStyles.labelSmall?.copyWith(
+                color: cs.primary,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -652,39 +911,34 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
 
-  _TabBarDelegate({
+  const _TabBarDelegate({
     required this.tabs,
     required this.selectedIndex,
     required this.onTabSelected,
   });
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      color: cs.surface,
-      child: ProfileTabBar(
-        tabs: tabs,
-        selectedIndex: selectedIndex,
-        onTabSelected: onTabSelected,
-      ),
-    );
-  }
+  double get minExtent => 48;
 
   @override
   double get maxExtent => 48;
 
   @override
-  double get minExtent => 48;
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return ProfileTabBar(
+      tabs: tabs,
+      selectedIndex: selectedIndex,
+      onTabSelected: onTabSelected,
+    );
+  }
 
   @override
-  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) {
-    return selectedIndex != oldDelegate.selectedIndex;
-  }
+  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) =>
+      oldDelegate.selectedIndex != selectedIndex;
 }
 
 // =============================================================================
-// POSTS TAB CONTENT
+// TAB CONTENT WIDGETS
 // =============================================================================
 
 class _PostsTabContent extends StatelessWidget {
@@ -697,152 +951,46 @@ class _PostsTabContent extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     if (posts.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(Icons.edit_note, size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-            const SizedBox(height: 12),
-            Text(
-              'No posts yet',
-              style: context.textStyles.titleMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Share your first spark!',
-              style: context.textStyles.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+      return _EmptyTabContent(
+        icon: Icons.grid_view_outlined,
+        title: 'No posts yet',
+        subtitle: 'Share your first spark to get started',
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return Padding(
       padding: const EdgeInsets.all(16),
-      itemCount: posts.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return _PostCard(post: post);
-      },
-    );
-  }
-}
-
-class _PostCard extends StatelessWidget {
-  final ProfilePost post;
-
-  const _PostCard({required this.post});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Type badge and date
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  post.type,
-                  style: context.textStyles.labelSmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _formatDate(post.createdAt),
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Title
-          Text(
-            post.title,
-            style: context.textStyles.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 4,
+          crossAxisSpacing: 4,
+        ),
+        itemCount: posts.length,
+        itemBuilder: (context, index) {
+          final post = posts[index];
+          return Container(
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          // Content preview
-          if (post.content.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              post.content,
-              style: context.textStyles.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
+            child: Center(
+              child: Text(
+                post.content.substring(0, post.content.length.clamp(0, 50)),
+                textAlign: TextAlign.center,
+                style: context.textStyles.labelSmall,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
-          // Stats
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.bolt, size: 14, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                '${post.likesCount}',
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Icon(Icons.chat_bubble_outline, size: 14, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                '${post.commentsCount}',
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inDays == 0) return 'Today';
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${date.day}/${date.month}/${date.year}';
-  }
 }
-
-// =============================================================================
-// EVENTS TAB CONTENT
-// =============================================================================
 
 class _EventsTabContent extends StatelessWidget {
   final List<Map<String, dynamic>> upcoming;
@@ -855,37 +1003,11 @@ class _EventsTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final hasContent = upcoming.isNotEmpty || history.isNotEmpty;
-
-    if (!hasContent) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(Icons.event_available, size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-            const SizedBox(height: 12),
-            Text(
-              'No events yet',
-              style: context.textStyles.titleMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Discover and register for events!',
-              style: context.textStyles.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => context.go('/events'),
-              icon: const Icon(Icons.explore, size: 18),
-              label: const Text('Explore Events'),
-            ),
-          ],
-        ),
+    if (upcoming.isEmpty && history.isEmpty) {
+      return _EmptyTabContent(
+        icon: Icons.event_outlined,
+        title: 'No events yet',
+        subtitle: 'Register for events to see them here',
       );
     }
 
@@ -894,54 +1016,38 @@ class _EventsTabContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Upcoming Events
           if (upcoming.isNotEmpty) ...[
             Text(
-              'Upcoming',
-              style: context.textStyles.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              'UPCOMING',
+              style: context.textStyles.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 8),
-            ...upcoming.take(3).map((event) => _EventCard(
-              event: event['events'] as Map<String, dynamic>,
+            ...upcoming.map((e) => _EventTile(
+              name: e['events']?['name'] ?? 'Event',
+              date: DateTime.tryParse(e['events']?['start_date'] ?? '') ?? DateTime.now(),
+              bannerUrl: e['events']?['branding']?['banner_url'],
               isUpcoming: true,
             )),
             const SizedBox(height: 16),
           ],
-          // Past Events
           if (history.isNotEmpty) ...[
             Text(
-              'Attended',
-              style: context.textStyles.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              'PAST EVENTS',
+              style: context.textStyles.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 1.2,
-              ),
-              itemCount: history.length > 6 ? 6 : history.length,
-              itemBuilder: (context, index) {
-                final event = history[index];
-                return _EventGridCard(event: event);
-              },
-            ),
-            if (history.length > 6) ...[
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: () => context.push('/profile/tickets'),
-                  child: Text('View All (${history.length})'),
-                ),
-              ),
-            ],
+            ...history.take(5).map((e) => _EventTile(
+              name: e.eventName,
+              date: e.startDate,
+              bannerUrl: e.bannerUrl,
+              isUpcoming: false,
+            )),
           ],
         ],
       ),
@@ -949,19 +1055,23 @@ class _EventsTabContent extends StatelessWidget {
   }
 }
 
-class _EventCard extends StatelessWidget {
-  final Map<String, dynamic> event;
+class _EventTile extends StatelessWidget {
+  final String name;
+  final DateTime date;
+  final String? bannerUrl;
   final bool isUpcoming;
 
-  const _EventCard({required this.event, this.isUpcoming = false});
+  const _EventTile({
+    required this.name,
+    required this.date,
+    this.bannerUrl,
+    required this.isUpcoming,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final name = event['name'] ?? 'Event';
-    final startDate = DateTime.tryParse(event['start_date'] ?? '') ?? DateTime.now();
-    final branding = event['branding'] as Map<String, dynamic>?;
-    final bannerUrl = branding?['banner_url'] as String?;
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -969,39 +1079,51 @@ class _EventCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
-          // Event thumbnail
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 48,
-              height: 48,
-              color: cs.primary.withValues(alpha: 0.1),
-              child: bannerUrl != null
-                  ? Image.network(bannerUrl, fit: BoxFit.cover)
-                  : Icon(Icons.event, color: cs.primary),
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: isUpcoming ? cs.primary.withValues(alpha: 0.1) : cs.outline.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  months[date.month - 1].toUpperCase(),
+                  style: context.textStyles.labelSmall?.copyWith(
+                    color: isUpcoming ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  date.day.toString(),
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: isUpcoming ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),
-          // Event info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
-                  style: context.textStyles.titleSmall?.copyWith(
+                  style: context.textStyles.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  _formatEventDate(startDate),
+                  '${months[date.month - 1]} ${date.day}, ${date.year}',
                   style: context.textStyles.labelSmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
@@ -1009,287 +1131,96 @@ class _EventCard extends StatelessWidget {
               ],
             ),
           ),
-          // Status indicator
-          if (isUpcoming)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'Registered',
-                style: context.textStyles.labelSmall?.copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  String _formatEventDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-}
-
-class _EventGridCard extends StatelessWidget {
-  final EventHistory event;
-
-  const _EventGridCard({required this.event});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Event banner
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Container(
-                width: double.infinity,
-                color: cs.primary.withValues(alpha: 0.1),
-                child: event.bannerUrl != null
-                    ? Image.network(event.bannerUrl!, fit: BoxFit.cover)
-                    : Center(child: Icon(Icons.event, size: 32, color: cs.primary)),
-              ),
-            ),
-          ),
-          // Event info
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.eventName,
-                  style: context.textStyles.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  _formatDate(event.startDate),
-                  style: context.textStyles.labelSmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+          Icon(
+            Icons.chevron_right,
+            color: cs.onSurfaceVariant,
           ),
         ],
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[date.month - 1]} ${date.day}';
-  }
 }
-
-// =============================================================================
-// BADGES TAB CONTENT
-// =============================================================================
 
 class _BadgesTabContent extends StatelessWidget {
   final List<BadgeItem> badges;
   final List<String> allBadgeIds;
 
-  const _BadgesTabContent({required this.badges, required this.allBadgeIds});
+  const _BadgesTabContent({
+    required this.badges,
+    required this.allBadgeIds,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     if (badges.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(Icons.emoji_events, size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-            const SizedBox(height: 12),
-            Text(
-              'No badges yet',
-              style: context.textStyles.titleMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Start earning badges by participating!',
-              style: context.textStyles.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+      return _EmptyTabContent(
+        icon: Icons.emoji_events_outlined,
+        title: 'No badges yet',
+        subtitle: 'Participate in events to earn badges',
       );
     }
 
-    // Group by rarity
-    final grouped = <String, List<BadgeItem>>{};
-    for (final badge in badges) {
-      grouped.putIfAbsent(badge.rarity, () => []).add(badge);
-    }
-
-    final rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'COMMON'];
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final rarity in rarityOrder)
-            if (grouped.containsKey(rarity)) ...[
-              _BadgeRaritySection(
-                rarity: rarity,
-                badges: grouped[rarity]!,
-              ),
-              const SizedBox(height: 16),
-            ],
-        ],
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: badges.length,
+        itemBuilder: (context, index) {
+          final badge = badges[index];
+          return _BadgeTile(badge: badge);
+        },
       ),
     );
   }
 }
 
-class _BadgeRaritySection extends StatelessWidget {
-  final String rarity;
-  final List<BadgeItem> badges;
+class _BadgeTile extends StatelessWidget {
+  final BadgeItem badge;
 
-  const _BadgeRaritySection({required this.rarity, required this.badges});
-
-  Color get _rarityColor {
-    switch (rarity.toUpperCase()) {
-      case 'LEGENDARY':
-        return const Color(0xFFFFD700);
-      case 'EPIC':
-        return const Color(0xFF9B59B6);
-      case 'RARE':
-        return const Color(0xFF3498DB);
-      default:
-        return const Color(0xFF95A5A6);
-    }
-  }
+  const _BadgeTile({required this.badge});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _rarityColor,
-                shape: BoxShape.circle,
-              ),
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              badge.icon,
+              style: const TextStyle(fontSize: 28),
             ),
-            const SizedBox(width: 8),
-            Text(
-              rarity.toUpperCase(),
-              style: context.textStyles.labelMedium?.copyWith(
-                color: _rarityColor,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '(${badges.length})',
-              style: context.textStyles.labelSmall?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 100,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: badges.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final badge = badges[index];
-              return _BadgeCard(badge: badge, rarityColor: _rarityColor);
-            },
+        Text(
+          badge.name,
+          style: context.textStyles.labelSmall?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 }
-
-class _BadgeCard extends StatelessWidget {
-  final BadgeItem badge;
-  final Color rarityColor;
-
-  const _BadgeCard({required this.badge, required this.rarityColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      width: 80,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: rarityColor.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: rarityColor.withValues(alpha: 0.1),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            badge.icon,
-            style: const TextStyle(fontSize: 28),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            badge.name,
-            style: context.textStyles.labelSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// ABOUT TAB CONTENT
-// =============================================================================
 
 class _AboutTabContent extends StatelessWidget {
   final UserProfile? profile;
@@ -1304,76 +1235,102 @@ class _AboutTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Quick Links Section
           _AboutSection(
             title: 'Quick Links',
             child: Column(
               children: [
                 _QuickLinkTile(
-                  icon: Icons.confirmation_number_outlined,
-                  label: 'My Tickets',
-                  subtitle: '${stats.upcomingEvents} upcoming',
-                  onTap: () => context.push('/profile/tickets'),
-                ),
-                _QuickLinkTile(
-                  icon: Icons.qr_code,
-                  label: 'My QR Code',
-                  subtitle: 'For event check-in',
-                  onTap: () => context.push('/profile/qr'),
+                  icon: Icons.edit_outlined,
+                  label: 'Edit Profile',
+                  onTap: () => context.push('/profile/edit'),
                 ),
                 _QuickLinkTile(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
                   onTap: () => context.push('/profile/settings'),
                 ),
+                _QuickLinkTile(
+                  icon: Icons.qr_code,
+                  label: 'My QR Code',
+                  onTap: () => context.push('/profile/qr-code'),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          // Stats Details
           _AboutSection(
-            title: 'Activity Stats',
+            title: 'Statistics',
             child: Column(
               children: [
-                _StatDetailRow(label: 'Total Events', value: '${stats.eventsAttended}'),
-                _StatDetailRow(label: 'Connections', value: '${stats.connectionsCount}'),
-                _StatDetailRow(label: 'Posts', value: '${stats.postsCount}'),
-                _StatDetailRow(label: 'Longest Streak', value: '${stats.longestStreak} days'),
+                _StatDetailRow(label: 'Events Attended', value: stats.eventsAttended.toString()),
+                _StatDetailRow(label: 'Upcoming Events', value: stats.upcomingEvents.toString()),
+                _StatDetailRow(label: 'Connections', value: stats.connectionsCount.toString()),
+                _StatDetailRow(label: 'Posts', value: stats.postsCount.toString()),
+                _StatDetailRow(label: 'Current Streak', value: '${stats.currentStreak} days'),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          // Logout Button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: onLogout,
-              icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Log Out'),
+              icon: Icon(Icons.logout, color: AppColors.error),
+              label: Text('Log Out', style: TextStyle(color: AppColors.error)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
                 side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // App Info
-          Center(
-            child: Text(
-              'Thittam1Hub v1.0.0',
-              style: context.textStyles.labelSmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyTabContent extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _EmptyTabContent({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: context.textStyles.titleMedium?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -1393,13 +1350,16 @@ class _AboutSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: context.textStyles.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            title.toUpperCase(),
+            style: context.textStyles.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              letterSpacing: 1.2,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -1574,11 +1534,17 @@ class _IconButton extends StatelessWidget {
 
 class _MoreOptionsSheet extends StatelessWidget {
   final VoidCallback onEditProfile;
+  final VoidCallback onSavedEvents;
+  final VoidCallback onConnections;
+  final VoidCallback onTickets;
   final VoidCallback onSettings;
   final VoidCallback onLogout;
 
   const _MoreOptionsSheet({
     required this.onEditProfile,
+    required this.onSavedEvents,
+    required this.onConnections,
+    required this.onTickets,
     required this.onSettings,
     required this.onLogout,
   });
@@ -1611,6 +1577,21 @@ class _MoreOptionsSheet extends StatelessWidget {
               icon: Icons.edit_outlined,
               label: 'Edit Profile',
               onTap: onEditProfile,
+            ),
+            _OptionTile(
+              icon: Icons.bookmark_outline,
+              label: 'Saved Events',
+              onTap: onSavedEvents,
+            ),
+            _OptionTile(
+              icon: Icons.people_outline,
+              label: 'Connections',
+              onTap: onConnections,
+            ),
+            _OptionTile(
+              icon: Icons.confirmation_number_outlined,
+              label: 'My Tickets',
+              onTap: onTickets,
             ),
             _OptionTile(
               icon: Icons.settings_outlined,

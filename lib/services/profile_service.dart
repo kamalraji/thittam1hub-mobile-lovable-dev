@@ -160,6 +160,71 @@ class ProfileService {
     }
   }
 
+  /// Upload cover image to Supabase storage
+  Future<String?> uploadCoverImage(String userId, Uint8List imageBytes, String fileName) async {
+    try {
+      final path = 'covers/$userId/$fileName';
+      
+      // Upload to avatars bucket (reusing for covers)
+      await SupabaseConfig.client.storage
+          .from('avatars')
+          .uploadBinary(path, imageBytes);
+      
+      // Get public URL
+      final url = SupabaseConfig.client.storage.from('avatars').getPublicUrl(path);
+      debugPrint('✅ Cover uploaded: $url');
+      return url;
+    } catch (e) {
+      debugPrint('❌ Upload cover error: $e');
+      return null;
+    }
+  }
+
+  /// Delete cover image from storage
+  Future<void> deleteCoverImage(String userId, String coverUrl) async {
+    try {
+      final uri = Uri.parse(coverUrl);
+      final path = uri.pathSegments.skip(uri.pathSegments.indexOf('avatars')).join('/');
+      
+      await SupabaseConfig.client.storage.from('avatars').remove([path]);
+      debugPrint('✅ Cover deleted');
+    } catch (e) {
+      debugPrint('❌ Delete cover error: $e');
+    }
+  }
+
+  /// Set cover gradient theme
+  Future<void> setCoverGradient(String userId, String? gradientId) async {
+    try {
+      await SupabaseConfig.client
+          .from('user_profiles')
+          .update({
+            'cover_gradient_id': gradientId,
+            'cover_image_url': null, // Clear custom image when setting gradient
+          })
+          .eq('id', userId);
+      debugPrint('✅ Cover gradient set');
+    } catch (e) {
+      debugPrint('❌ Set cover gradient error: $e');
+      rethrow;
+    }
+  }
+
+  /// Get tickets count for user
+  Future<int> getTicketsCount(String userId) async {
+    try {
+      final response = await SupabaseConfig.client
+          .from('registrations')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'CONFIRMED');
+      return response.length;
+    } catch (e) {
+      debugPrint('❌ Get tickets count error: $e');
+      return 0;
+    }
+  }
+
   /// Get event history (past events attended)
   Future<List<EventHistory>> getEventHistory(String userId) async {
     try {

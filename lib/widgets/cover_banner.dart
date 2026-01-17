@@ -5,6 +5,7 @@ import 'package:thittam1hub/theme.dart';
 /// Cover banner widget with gradient mesh or custom image
 class CoverBanner extends StatelessWidget {
   final String? imageUrl;
+  final List<Color>? gradientColors;
   final double height;
   final VoidCallback? onEditTap;
   final bool showEditButton;
@@ -13,6 +14,7 @@ class CoverBanner extends StatelessWidget {
   const CoverBanner({
     super.key,
     this.imageUrl,
+    this.gradientColors,
     this.height = 140,
     this.onEditTap,
     this.showEditButton = false,
@@ -30,13 +32,15 @@ class CoverBanner extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background - Image or Gradient
+          // Background - Image, Custom Gradient, or Default Mesh
           if (imageUrl != null && imageUrl!.isNotEmpty)
             Image.network(
               imageUrl!,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _buildGradientMesh(cs, isDark),
             )
+          else if (gradientColors != null && gradientColors!.length >= 2)
+            _buildCustomGradient(gradientColors!)
           else
             _buildGradientMesh(cs, isDark),
 
@@ -67,6 +71,18 @@ class CoverBanner extends StatelessWidget {
               child: _EditButton(onTap: onEditTap!),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCustomGradient(List<Color> colors) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
       ),
     );
   }

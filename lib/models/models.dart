@@ -482,6 +482,8 @@ class UserProfile {
   final String email;
   final String? fullName;
   final String? avatarUrl;
+  final String? coverImageUrl;
+  final String? coverGradientId;
   final String? bio;
   final String? organization;
   final String? phone;
@@ -502,6 +504,8 @@ class UserProfile {
     required this.email,
     this.fullName,
     this.avatarUrl,
+    this.coverImageUrl,
+    this.coverGradientId,
     this.bio,
     this.organization,
     this.phone,
@@ -535,6 +539,8 @@ class UserProfile {
     'email': email,
     'full_name': fullName,
     'avatar_url': avatarUrl,
+    'cover_image_url': coverImageUrl,
+    'cover_gradient_id': coverGradientId,
     'bio': bio,
     'organization': organization,
     'phone': phone,
@@ -556,6 +562,8 @@ class UserProfile {
     email: json['email'] as String,
     fullName: json['full_name'] as String?,
     avatarUrl: json['avatar_url'] as String?,
+    coverImageUrl: json['cover_image_url'] as String?,
+    coverGradientId: json['cover_gradient_id'] as String?,
     bio: json['bio'] as String?,
     organization: json['organization'] as String?,
     phone: json['phone'] as String?,
@@ -584,6 +592,8 @@ class UserProfile {
     String? email,
     String? fullName,
     String? avatarUrl,
+    String? coverImageUrl,
+    String? coverGradientId,
     String? bio,
     String? organization,
     String? phone,
@@ -603,6 +613,8 @@ class UserProfile {
     email: email ?? this.email,
     fullName: fullName ?? this.fullName,
     avatarUrl: avatarUrl ?? this.avatarUrl,
+    coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+    coverGradientId: coverGradientId ?? this.coverGradientId,
     bio: bio ?? this.bio,
     organization: organization ?? this.organization,
     phone: phone ?? this.phone,
