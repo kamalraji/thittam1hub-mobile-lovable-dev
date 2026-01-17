@@ -12,8 +12,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/intent_config.dart';
+import 'package:thittam1hub/widgets/circle_discovery_card.dart';
 
 enum DiscoveryMode { people, groups, all }
+
+class CircleDiscoveryResult {
+  final Circle circle;
+  final int matchScore;
+  final List<String> insights;
+
+  CircleDiscoveryResult({
+    required this.circle,
+    required this.matchScore,
+    required this.insights,
+  });
+}
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
@@ -1747,7 +1760,7 @@ class _DiscoveryModeToggle extends StatelessWidget {
 class _MixedDiscoveryItem {
   final String type; // 'profile' or 'circle'
   final ImpactProfile? profile;
-  final GroupMatchResult? circleResult;
+  final CircleDiscoveryResult? circleResult;
   final int score;
 
   _MixedDiscoveryItem({
