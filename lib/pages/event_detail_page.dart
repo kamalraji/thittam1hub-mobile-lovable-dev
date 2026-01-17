@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/services/event_service.dart';
+import 'package:thittam1hub/services/saved_events_service.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/result.dart';
 
@@ -22,10 +24,13 @@ class EventDetailPage extends StatefulWidget {
 
 class _EventDetailPageState extends State<EventDetailPage> {
   final EventService _eventService = EventService();
+  final SavedEventsService _savedEventsService = SavedEventsService();
   Event? _event;
   List<TicketTier> _tiers = [];
   bool _isLoading = true;
   bool _aboutExpanded = false;
+  bool _isSaved = false;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -36,6 +41,52 @@ class _EventDetailPageState extends State<EventDetailPage> {
       _isLoading = false;
     }
     _loadEvent();
+    _checkIfSaved();
+  }
+
+  Future<void> _checkIfSaved() async {
+    final saved = await _savedEventsService.isEventSaved(widget.eventId);
+    if (mounted) setState(() => _isSaved = saved);
+  }
+
+  Future<void> _toggleSave() async {
+    if (_isSaving) return;
+    
+    HapticFeedback.lightImpact();
+    setState(() => _isSaving = true);
+    
+    try {
+      if (_isSaved) {
+        await _savedEventsService.unsaveEvent(widget.eventId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event removed from saved')),
+          );
+        }
+      } else {
+        await _savedEventsService.saveEvent(widget.eventId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Event saved'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+      setState(() => _isSaved = !_isSaved);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to ${_isSaved ? 'unsave' : 'save'} event'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _loadEvent() async {
@@ -181,6 +232,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
             expandedHeight: 260,
             leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.pop()),
             actions: [
+              IconButton(
+                icon: Icon(
+                  _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  color: Colors.white,
+                ),
+                onPressed: _toggleSave,
+              ),
               IconButton(icon: const Icon(Icons.ios_share, color: Colors.white), onPressed: () {}),
               const SizedBox(width: 4),
             ],
