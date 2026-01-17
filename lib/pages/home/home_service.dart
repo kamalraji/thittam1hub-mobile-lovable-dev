@@ -51,6 +51,7 @@ enum StoryType {
   liveSpace,
   activeGame,
   onlineConnection,
+  discoverPeople,
 }
 
 class HomeService {

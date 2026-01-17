@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
+import 'package:thittam1hub/models/spark_comment.dart';
 
 enum SparkPostType { IDEA, SEEKING, OFFERING, QUESTION, ANNOUNCEMENT }
 
@@ -178,5 +180,106 @@ class SparkService {
       debugPrint('Error fetching trending posts: $e');
       return [];
     }
+  }
+
+  // =============================================
+  // COMMENT METHODS
+  // =============================================
+
+  /// Get comments for a post with nested replies
+  Future<List<SparkComment>> getComments(String postId) async {
+    try {
+      final response = await _supabase
+          .from('spark_comments')
+          .select('*')
+          .eq('post_id', postId)
+          .order('created_at', ascending: true);
+
+      final allComments = (response as List)
+          .map((data) => SparkComment.fromMap(data as Map<String, dynamic>))
+          .toList();
+
+      // Build tree structure
+      final Map<String, SparkComment> commentMap = {};
+      final List<SparkComment> topLevel = [];
+
+      for (final comment in allComments) {
+        commentMap[comment.id] = comment;
+      }
+
+      for (final comment in allComments) {
+        if (comment.parentId == null) {
+          topLevel.add(comment);
+        } else {
+          final parent = commentMap[comment.parentId];
+          if (parent != null) {
+            commentMap[parent.id] = parent.copyWith(
+              replies: [...parent.replies, comment],
+            );
+          }
+        }
+      }
+
+      // Rebuild top level with updated replies
+      return topLevel.map((c) => commentMap[c.id] ?? c).toList();
+    } catch (e) {
+      debugPrint('Error fetching comments: $e');
+      return [];
+    }
+  }
+
+  /// Add a comment to a post
+  Future<SparkComment?> addComment(
+    String postId,
+    String content, {
+    String? parentId,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Not authenticated');
+
+      // Get user profile for name and avatar
+      final profileResponse = await _supabase
+          .from('impact_profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final authorName = profileResponse?['full_name'] ?? 'Anonymous';
+      final authorAvatar = profileResponse?['avatar_url'];
+
+      final response = await _supabase.from('spark_comments').insert({
+        'post_id': postId,
+        'user_id': userId,
+        'parent_id': parentId,
+        'content': content,
+        'author_name': authorName,
+        'author_avatar': authorAvatar,
+      }).select().single();
+
+      debugPrint('💬 Comment added');
+      return SparkComment.fromMap(response);
+    } catch (e) {
+      debugPrint('❌ Error adding comment: $e');
+      rethrow;
+    }
+  }
+
+  /// Subscribe to real-time comment updates for a post
+  StreamSubscription subscribeToComments(
+    String postId,
+    Function(SparkComment) onNewComment,
+  ) {
+    return _supabase
+        .from('spark_comments')
+        .stream(primaryKey: ['id'])
+        .eq('post_id', postId)
+        .listen((data) {
+          if (data.isNotEmpty) {
+            // Find newly inserted comments
+            final latestComment = SparkComment.fromMap(data.last);
+            onNewComment(latestComment);
+          }
+        });
   }
 }

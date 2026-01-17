@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/pages/home/home_service.dart';
 import 'package:thittam1hub/pages/home/widgets/stories_bar.dart';
@@ -6,8 +7,11 @@ import 'package:thittam1hub/pages/home/widgets/quick_poll_card.dart';
 import 'package:thittam1hub/pages/home/widgets/spark_feed_card.dart';
 import 'package:thittam1hub/pages/home/widgets/trending_topics.dart';
 import 'package:thittam1hub/pages/home/widgets/create_post_fab.dart';
+import 'package:thittam1hub/pages/home/widgets/comment_sheet.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
+import 'package:thittam1hub/supabase/supabase_config.dart';
+import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/utils/animations.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,6 +32,8 @@ class _HomePageState extends State<HomePage> {
   List<String> _trendingTags = [];
   
   bool _isLoading = true;
+  int _unreadNotificationCount = 0;
+  StreamSubscription? _notificationSubscription;
   final Set<String> _sparked = {};
   final ScrollController _scrollController = ScrollController();
 
@@ -35,13 +41,44 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadAllData();
+    _subscribeToNotifications();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _notificationSubscription?.cancel();
     super.dispose();
   }
+
+  void _subscribeToNotifications() {
+    final userId = SupabaseConfig.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    _notificationSubscription = SupabaseConfig.client
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen((data) {
+          if (mounted) {
+            final unread = data.where((n) => n['read'] == false).length;
+            setState(() => _unreadNotificationCount = unread);
+          }
+        });
+  }
+
+  void _openCommentSheet(SparkPost post) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentSheet(
+        postId: post.id,
+        initialCommentCount: post.commentCount,
+      ),
+    );
+  }
+
 
   Future<void> _loadAllData() async {
     setState(() => _isLoading = true);
@@ -166,9 +203,7 @@ class _HomePageState extends State<HomePage> {
                 });
               }
             },
-            onCommentTap: () {
-              // TODO: Open comments sheet
-            },
+            onCommentTap: () => _openCommentSheet(post),
             onShareTap: () {
               // TODO: Share post
             },
@@ -205,6 +240,16 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 actions: [
+                  IconButton(
+                    icon: Badge(
+                      isLabelVisible: _unreadNotificationCount > 0,
+                      label: Text('$_unreadNotificationCount'),
+                      child: Icon(Icons.notifications_outlined, color: cs.onSurface),
+                    ),
+                    onPressed: () {
+                      // TODO: Open notifications page
+                    },
+                  ),
                   IconButton(
                     icon: Icon(Icons.search, color: cs.onSurface),
                     onPressed: () {
