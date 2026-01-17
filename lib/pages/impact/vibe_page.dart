@@ -176,17 +176,20 @@ class _VibePageState extends State<VibePage> {
                             builder: (context) => IcebreakerAnswersSheet(
                               question:
                                   "What's the most underrated skill in your field?",
-                              answers: const [
+                              answers: [
                                 IcebreakerAnswer(
+                                    id: '1',
                                     userName: 'Alex',
-                                    userAvatar: null,
+                                    avatarUrl: null,
                                     answer: 'Communication skills',
-                                    timestamp: 'Just now'),
+                                    createdAt: DateTime.now()),
                                 IcebreakerAnswer(
+                                    id: '2',
                                     userName: 'Sam',
-                                    userAvatar: null,
+                                    avatarUrl: null,
                                     answer: 'Time management',
-                                    timestamp: '5m ago'),
+                                    createdAt: DateTime.now()
+                                        .subtract(const Duration(minutes: 5))),
                               ],
                             ),
                           );

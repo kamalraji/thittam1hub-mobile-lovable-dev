@@ -16,17 +16,6 @@ import 'package:thittam1hub/widgets/circle_discovery_card.dart';
 
 enum DiscoveryMode { people, groups, all }
 
-class CircleDiscoveryResult {
-  final Circle circle;
-  final int matchScore;
-  final List<String> insights;
-
-  CircleDiscoveryResult({
-    required this.circle,
-    required this.matchScore,
-    required this.insights,
-  });
-}
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
