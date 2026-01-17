@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/profile_stats.dart';
 import 'package:thittam1hub/models/profile_post.dart';
+import 'package:thittam1hub/services/cache_service.dart';
 import 'package:thittam1hub/services/profile_service.dart';
 import 'package:thittam1hub/services/saved_events_service.dart';
 import 'package:thittam1hub/services/connections_service.dart';
@@ -15,6 +16,7 @@ import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/widgets/animated_stat_counter.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/cover_banner.dart';
 import 'package:thittam1hub/widgets/cover_image_picker.dart';
 import 'package:thittam1hub/widgets/profile_tab_bar.dart';
@@ -64,7 +66,24 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       parent: _headerController,
       curve: Curves.easeOutCubic,
     );
+    // Load cached profile instantly, then refresh from server
+    _loadCachedProfile();
     _loadProfile();
+  }
+
+  /// Load cached profile for instant display
+  Future<void> _loadCachedProfile() async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final cachedProfile = await CacheService.instance.getCachedUserProfileStale(userId);
+    if (cachedProfile != null && mounted) {
+      setState(() {
+        _profile = cachedProfile;
+        _isLoading = false; // Show cached data immediately
+      });
+      _headerController.forward();
+    }
   }
 
   @override
@@ -73,17 +92,18 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     super.dispose();
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadProfile({bool forceRefresh = false}) async {
     final userId = SupabaseConfig.auth.currentUser?.id;
     if (userId == null) return;
 
-    if (!_isLoading) {
+    // Only show loading if no cached data
+    if (_profile == null && !_isLoading) {
       setState(() => _isLoading = true);
     }
 
     try {
       final results = await Future.wait([
-        _profileService.getUserProfile(userId),
+        _profileService.getUserProfile(userId, forceRefresh: forceRefresh),
         _profileService.getProfileStats(userId),
         _profileService.getUserPosts(userId),
         _profileService.getEventHistory(userId),
@@ -120,6 +140,12 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
       debugPrint('Failed to load profile: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Pull-to-refresh handler with force refresh
+  Future<void> _onRefresh() async {
+    HapticFeedback.mediumImpact();
+    await _loadProfile(forceRefresh: true);
   }
 
   Future<void> _handleLogout() async {
@@ -308,8 +334,8 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     }
 
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _loadProfile,
+      body: BrandedRefreshIndicator(
+        onRefresh: _onRefresh,
         child: CustomScrollView(
           slivers: [
             // Cover Banner + Profile Header

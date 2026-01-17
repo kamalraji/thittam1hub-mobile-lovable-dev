@@ -5,6 +5,8 @@ import 'theme.dart';
 import 'nav.dart';
 import 'services/theme_service.dart';
 import 'services/cache_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/background_sync_service.dart';
 import 'supabase/supabase_config.dart';
 
 /// Main entry point for the application
@@ -31,6 +33,22 @@ void main() async {
     debugPrint('✅ CacheService initialized successfully');
   } catch (e) {
     debugPrint('❌ Failed to initialize CacheService: $e');
+  }
+
+  // Initialize connectivity monitoring
+  try {
+    await ConnectivityService.instance.init();
+    debugPrint('✅ ConnectivityService initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize ConnectivityService: $e');
+  }
+
+  // Initialize background sync
+  try {
+    BackgroundSyncService.instance.init();
+    debugPrint('✅ BackgroundSyncService initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize BackgroundSyncService: $e');
   }
 
   // Initialize theme service

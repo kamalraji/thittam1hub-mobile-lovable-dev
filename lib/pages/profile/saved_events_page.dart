@@ -5,6 +5,7 @@ import 'package:thittam1hub/models/saved_event.dart';
 import 'package:thittam1hub/services/saved_events_service.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 
 /// Saved Events page with filtering and reminders
 class SavedEventsPage extends StatefulWidget {
@@ -27,11 +28,11 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
     _loadSavedEvents();
   }
 
-  Future<void> _loadSavedEvents() async {
+  Future<void> _loadSavedEvents({bool forceRefresh = false}) async {
     setState(() => _isLoading = true);
     
     try {
-      final events = await _savedEventsService.getSavedEvents();
+      final events = await _savedEventsService.getSavedEvents(forceRefresh: forceRefresh);
       if (mounted) {
         setState(() {
           _savedEvents = events;
@@ -42,6 +43,11 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
       debugPrint('❌ Load saved events error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _onRefresh() async {
+    HapticFeedback.mediumImpact();
+    await _loadSavedEvents(forceRefresh: true);
   }
 
   List<SavedEvent> get _filteredEvents {
@@ -146,8 +152,8 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredEvents.isEmpty
                     ? _buildEmptyState()
-                    : RefreshIndicator(
-                        onRefresh: _loadSavedEvents,
+                    : BrandedRefreshIndicator(
+                        onRefresh: _onRefresh,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: _filteredEvents.length,

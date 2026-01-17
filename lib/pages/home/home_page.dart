@@ -147,6 +147,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
+    // Force refresh from server, bypassing cache
     await _loadAllData();
   }
 
