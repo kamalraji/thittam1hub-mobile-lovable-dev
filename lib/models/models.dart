@@ -496,6 +496,8 @@ class UserProfile {
   final PortfolioLayout portfolioLayout;
   final String? portfolioAccentColor;
   final List<String> portfolioSections;
+  final Map<String, dynamic>? socialLinks;
+  final List<String>? skills;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -518,6 +520,8 @@ class UserProfile {
     this.portfolioLayout = PortfolioLayout.STACKED,
     this.portfolioAccentColor,
     this.portfolioSections = const [],
+    this.socialLinks,
+    this.skills,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -553,6 +557,8 @@ class UserProfile {
     'portfolio_layout': portfolioLayout.name,
     'portfolio_accent_color': portfolioAccentColor,
     'portfolio_sections': portfolioSections,
+    'social_links': socialLinks,
+    'skills': skills,
     'created_at': createdAt.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
   };
@@ -583,6 +589,10 @@ class UserProfile {
     portfolioSections: json['portfolio_sections'] != null
         ? List<String>.from(json['portfolio_sections'] as List)
         : [],
+    socialLinks: json['social_links'] as Map<String, dynamic>?,
+    skills: json['skills'] != null
+        ? List<String>.from(json['skills'] as List)
+        : null,
     createdAt: DateTime.parse(json['created_at'] as String),
     updatedAt: DateTime.parse(json['updated_at'] as String),
   );
@@ -606,6 +616,8 @@ class UserProfile {
     PortfolioLayout? portfolioLayout,
     String? portfolioAccentColor,
     List<String>? portfolioSections,
+    Map<String, dynamic>? socialLinks,
+    List<String>? skills,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => UserProfile(
@@ -627,6 +639,8 @@ class UserProfile {
     portfolioLayout: portfolioLayout ?? this.portfolioLayout,
     portfolioAccentColor: portfolioAccentColor ?? this.portfolioAccentColor,
     portfolioSections: portfolioSections ?? this.portfolioSections,
+    socialLinks: socialLinks ?? this.socialLinks,
+    skills: skills ?? this.skills,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
