@@ -4,12 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/models/match_insight.dart';
+import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
+import 'package:thittam1hub/supabase/circle_service.dart';
 import 'package:thittam1hub/widgets/match_insights_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/intent_config.dart';
+
+enum DiscoveryMode { people, groups, all }
 
 class PulsePage extends StatefulWidget {
   const PulsePage({Key? key}) : super(key: key);
@@ -20,6 +24,7 @@ class PulsePage extends StatefulWidget {
 
 class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   final ImpactService _impactService = ImpactService();
+  final CircleService _circleService = CircleService();
   List<ImpactProfile> _allProfiles = [];
   List<ImpactProfile> _filteredProfiles = [];
   int _currentIndex = 0;
@@ -38,6 +43,10 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   // Intent selector
   String? _selectedIntent;
   late AnimationController _intentAnimController;
+
+  // Discovery mode and circles
+  DiscoveryMode _discoveryMode = DiscoveryMode.people;
+  List<CircleDiscoveryResult> _matchedCircles = [];
 
   @override
   void initState() {
@@ -133,6 +142,29 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
       }
     });
     _loadProfiles();
+  }
+
+  Future<void> _loadCircles() async {
+    setState(() => _isLoading = true);
+    try {
+      final circles = await _circleService.getRecommendedCircles();
+      if (mounted) {
+        setState(() {
+          _matchedCircles = circles
+              .map((circle) => CircleDiscoveryResult(
+                    circle: circle,
+                    matchScore: 75,
+                    insights: [],
+                  ))
+              .toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _showFilterDialog() {
@@ -298,8 +330,8 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: _discoveryMode == DiscoveryMode.groups 
-                            ? 'Search groups...' 
+                        hintText: _discoveryMode == DiscoveryMode.groups
+                            ? 'Search groups...'
                             : 'Search by name, skill, etc...',
                         prefixIcon:
                             Icon(Icons.search, color: cs.onSurfaceVariant),
@@ -441,7 +473,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   Widget _buildMixedContent(ColorScheme cs, TextTheme textTheme) {
     // Combine profiles and circles, interleaved by score
     final combinedItems = <_MixedDiscoveryItem>[];
-    
+
     for (final profile in _filteredProfiles) {
       combinedItems.add(_MixedDiscoveryItem(
         type: 'profile',
@@ -449,7 +481,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         score: _matchScores[profile.userId] ?? 0,
       ));
     }
-    
+
     for (final circleResult in _matchedCircles) {
       combinedItems.add(_MixedDiscoveryItem(
         type: 'circle',
@@ -457,13 +489,13 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         score: circleResult.matchScore,
       ));
     }
-    
+
     combinedItems.sort((a, b) => b.score.compareTo(a.score));
-    
+
     if (combinedItems.isEmpty) {
       return _buildEmptyState(cs, textTheme, 'matches');
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: combinedItems.length,
@@ -478,12 +510,15 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
               await _circleService.joinCircle(item.circleResult!.circle.id);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Joined ${item.circleResult!.circle.name}')),
+                  SnackBar(
+                      content:
+                          Text('Joined ${item.circleResult!.circle.name}')),
                 );
                 _loadCircles();
               }
             },
-            onTap: () => context.push('/impact/circles/${item.circleResult!.circle.id}'),
+            onTap: () =>
+                context.push('/impact/circles/${item.circleResult!.circle.id}'),
           );
         } else {
           // Mini profile card for list view
@@ -511,7 +546,9 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            type == 'groups' ? Icons.groups_outlined : (config?.icon ?? Icons.people_outline),
+            type == 'groups'
+                ? Icons.groups_outlined
+                : (config?.icon ?? Icons.people_outline),
             size: 64,
             color: config?.color ?? cs.onSurfaceVariant,
           ),
@@ -1672,15 +1709,24 @@ class _DiscoveryModeToggle extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        mode == DiscoveryMode.people ? '👤' : mode == DiscoveryMode.groups ? '👥' : '🌐',
+                        mode == DiscoveryMode.people
+                            ? '👤'
+                            : mode == DiscoveryMode.groups
+                                ? '👥'
+                                : '🌐',
                         style: const TextStyle(fontSize: 14),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        mode == DiscoveryMode.people ? 'People' : mode == DiscoveryMode.groups ? 'Groups' : 'All',
+                        mode == DiscoveryMode.people
+                            ? 'People'
+                            : mode == DiscoveryMode.groups
+                                ? 'Groups'
+                                : 'All',
                         style: TextStyle(
                           color: isSelected ? cs.onPrimary : cs.onSurface,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                           fontSize: 13,
                         ),
                       ),
@@ -1746,8 +1792,12 @@ class _MiniProfileCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundImage: profile.avatarUrl != null ? NetworkImage(profile.avatarUrl!) : null,
-                    child: profile.avatarUrl == null ? Text(profile.fullName[0]) : null,
+                    backgroundImage: profile.avatarUrl != null
+                        ? NetworkImage(profile.avatarUrl!)
+                        : null,
+                    child: profile.avatarUrl == null
+                        ? Text(profile.fullName[0])
+                        : null,
                   ),
                   if (isOnline)
                     Positioned(
@@ -1770,19 +1820,30 @@ class _MiniProfileCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(profile.fullName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(profile.fullName,
+                        style: textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                     if (profile.headline.isNotEmpty)
-                      Text(profile.headline, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(profile.headline,
+                          style: textTheme.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: cs.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text('$matchScore%', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text('$matchScore%',
+                    style: TextStyle(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12)),
               ),
             ],
           ),
@@ -1790,4 +1851,18 @@ class _MiniProfileCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ==================== Circle Discovery Result ====================
+
+class CircleDiscoveryResult {
+  final Circle circle;
+  final int matchScore;
+  final List<String> insights;
+
+  CircleDiscoveryResult({
+    required this.circle,
+    required this.matchScore,
+    required this.insights,
+  });
 }

@@ -59,13 +59,14 @@ class _VibePageState extends State<VibePage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
-        title: Text('🎮 Vibe Check', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        title: Text('🎮 Vibe Check',
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: _showVibeHistorySheet,
@@ -77,13 +78,15 @@ class _VibePageState extends State<VibePage> {
       body: SafeArea(
         child: _loading
             ? ListView(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom + 16),
                 children: List.generate(2, (_) => const VibeGameSkeleton()),
               )
             : BrandedRefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom + 16),
                   children: [
                     _buildSectionTitle('🔥 Live Now'),
                     if (_quick != null)
@@ -93,19 +96,28 @@ class _VibePageState extends State<VibePage> {
                         onOption: (i) async {
                           setState(() => _selectedQuick = i);
                           try {
-                            await _svc.submitQuickMatch(gameId: _quick!.id, optionIndex: i);
+                            await _svc.submitQuickMatch(
+                                gameId: _quick!.id, optionIndex: i);
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Answer submitted. Finding matches...')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Answer submitted. Finding matches...')));
                           } catch (e) {
                             debugPrint('Quick match submit error: $e');
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
+                            if (mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Failed to submit')));
                           }
                         },
                       )
                     else
                       Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Text('No live quick match right now.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                        child: Text('No live quick match right now.',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: cs.onSurfaceVariant)),
                       ),
                     _buildSectionTitle('🏆 Trivia Challenge'),
                     if (_trivia != null)
@@ -115,44 +127,66 @@ class _VibePageState extends State<VibePage> {
                         onOption: (i) async {
                           setState(() => _selectedTrivia = i);
                           try {
-                            final correct = await _svc.submitTrivia(trivia: _trivia!, optionIndex: i);
+                            final correct = await _svc.submitTrivia(
+                                trivia: _trivia!, optionIndex: i);
                             if (correct) {
                               await _svc.addImpactPoints(50);
                               await _svc.awardBadgeIfMissing('quiz_whiz');
                             }
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(correct ? 'Correct! +50 pts 🧠' : 'Nice try!')));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(correct
+                                    ? 'Correct! +50 pts 🧠'
+                                    : 'Nice try!')));
                           } catch (e) {
                             debugPrint('Trivia submit error: $e');
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to submit')));
+                            if (mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Failed to submit')));
                           }
                         },
                       )
                     else
                       Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Text('No active trivia at the moment.', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                        child: Text('No active trivia at the moment.',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: cs.onSurfaceVariant)),
                       ),
                     _buildSectionTitle('🧊 Icebreaker of the Day'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: IcebreakerCard(
-                        question: "What's the most underrated skill in your field?",
-                        onAnswer: (answer) {
+                        id: 'icebreaker_1',
+                        question:
+                            "What's the most underrated skill in your field?",
+                        onSubmitAnswer: (answer) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Answer shared with the community!')),
+                            const SnackBar(
+                                content:
+                                    Text('Answer shared with the community!')),
                           );
                         },
-                        onViewAnswers: () {
+                        onSeeAnswers: () {
                           showModalBottomSheet(
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
                             builder: (context) => IcebreakerAnswersSheet(
-                              question: "What's the most underrated skill in your field?",
+                              question:
+                                  "What's the most underrated skill in your field?",
                               answers: const [
-                                IcebreakerAnswer(userName: 'Alex', userAvatar: null, answer: 'Communication skills', timestamp: 'Just now'),
-                                IcebreakerAnswer(userName: 'Sam', userAvatar: null, answer: 'Time management', timestamp: '5m ago'),
+                                IcebreakerAnswer(
+                                    userName: 'Alex',
+                                    userAvatar: null,
+                                    answer: 'Communication skills',
+                                    timestamp: 'Just now'),
+                                IcebreakerAnswer(
+                                    userName: 'Sam',
+                                    userAvatar: null,
+                                    answer: 'Time management',
+                                    timestamp: '5m ago'),
                               ],
                             ),
                           );
@@ -160,11 +194,11 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     _buildSectionTitle('💭 Would You Rather'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: WouldYouRatherCard(
+                        id: 'wyr_1',
                         optionA: 'Work remotely forever',
                         optionB: 'Work in office forever',
                         onVote: (choice) async {
@@ -175,7 +209,6 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     _buildSectionTitle('🧠 Personality Quiz'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -187,7 +220,9 @@ class _VibePageState extends State<VibePage> {
                                 onComplete: (type) {
                                   Navigator.of(context).pop();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('You are: ${type.title}!')),
+                                    SnackBar(
+                                        content:
+                                            Text('You are: ${type.title}!')),
                                   );
                                 },
                               ),
@@ -197,15 +232,16 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     _buildSectionTitle('💕 Compatibility Check'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: CompatibilityQuizCard(
                         partnerName: 'Find a partner',
-                        onStartQuiz: () {
+                        onStart: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Select a connection to take the quiz with!')),
+                            const SnackBar(
+                                content: Text(
+                                    'Select a connection to take the quiz with!')),
                           );
                         },
                       ),
@@ -222,7 +258,8 @@ class _VibePageState extends State<VibePage> {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Text(title, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      child: Text(title,
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
     );
   }
 }
@@ -232,13 +269,18 @@ class QuickMatchCard extends StatelessWidget {
   final int? selectedIndex;
   final ValueChanged<int> onOption;
 
-  const QuickMatchCard({Key? key, required this.game, required this.selectedIndex, required this.onOption}) : super(key: key);
+  const QuickMatchCard(
+      {Key? key,
+      required this.game,
+      required this.selectedIndex,
+      required this.onOption})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -246,13 +288,18 @@ class QuickMatchCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('⚡ QUICK MATCH', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+          Text('⚡ QUICK MATCH',
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(game.question, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Text(game.question,
+              style:
+                  textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          for (int i = 0; i < game.options.length; i++) _buildOption(context, i, game.options[i]),
+          for (int i = 0; i < game.options.length; i++)
+            _buildOption(context, i, game.options[i]),
           const SizedBox(height: 12),
-          Text('⏱️ ends soon • ${game.participantCount} playing', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          Text('⏱️ ends soon • ${game.participantCount} playing',
+              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
         ]),
       ),
     );
@@ -269,7 +316,8 @@ class QuickMatchCard extends StatelessWidget {
           backgroundColor: isSelected ? cs.primary : cs.surfaceContainerHighest,
           foregroundColor: isSelected ? cs.onPrimary : cs.onSurface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           minimumSize: const Size(double.infinity, 40),
         ),
         child: Text(text),
@@ -283,13 +331,18 @@ class TriviaCard extends StatelessWidget {
   final int? selectedIndex;
   final ValueChanged<int> onOption;
 
-  const TriviaCard({Key? key, required this.trivia, required this.selectedIndex, required this.onOption}) : super(key: key);
+  const TriviaCard(
+      {Key? key,
+      required this.trivia,
+      required this.selectedIndex,
+      required this.onOption})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -297,13 +350,19 @@ class TriviaCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('🏆 TRIVIA', style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+          Text('🏆 TRIVIA',
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(trivia.question, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Text(trivia.question,
+              style:
+                  textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          for (int i = 0; i < trivia.options.length; i++) _buildOption(context, i, trivia.options[i]),
+          for (int i = 0; i < trivia.options.length; i++)
+            _buildOption(context, i, trivia.options[i]),
           const SizedBox(height: 12),
-          Text('⏱️ ${(trivia.expiresAt.difference(DateTime.now()).inMinutes).clamp(0, 59)} min left • ${trivia.participantCount} playing', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          Text(
+              '⏱️ ${(trivia.expiresAt.difference(DateTime.now()).inMinutes).clamp(0, 59)} min left • ${trivia.participantCount} playing',
+              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
         ]),
       ),
     );
@@ -320,7 +379,8 @@ class TriviaCard extends StatelessWidget {
           backgroundColor: isSelected ? cs.primary : cs.surfaceContainerHighest,
           foregroundColor: isSelected ? cs.onPrimary : cs.onSurface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           minimumSize: const Size(double.infinity, 40),
         ),
         child: Text(text),
@@ -337,7 +397,7 @@ class VibeHistoryContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -347,8 +407,11 @@ class VibeHistoryContent extends StatelessWidget {
             itemCount: 3,
             itemBuilder: (context, index) => ListTile(
               leading: Icon(Icons.history, color: cs.primary),
-              title: Text('Vibe game #${index + 1}', style: textTheme.bodyMedium),
-              subtitle: Text('Played recently', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+              title:
+                  Text('Vibe game #${index + 1}', style: textTheme.bodyMedium),
+              subtitle: Text('Played recently',
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant)),
             ),
           ),
         ),
@@ -371,14 +434,24 @@ class VibeGameSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(height: 14, width: 100, color: cs.surfaceContainerHighest),
+            Container(
+                height: 14, width: 100, color: cs.surfaceContainerHighest),
             const SizedBox(height: 12),
-            Container(height: 18, width: double.infinity, color: cs.surfaceContainerHighest),
+            Container(
+                height: 18,
+                width: double.infinity,
+                color: cs.surfaceContainerHighest),
             const SizedBox(height: 16),
-            ...List.generate(3, (_) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Container(height: 40, decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(10))),
-            )),
+            ...List.generate(
+                3,
+                (_) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                              color: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(10))),
+                    )),
           ],
         ),
       ),
