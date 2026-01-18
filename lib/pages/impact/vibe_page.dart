@@ -10,7 +10,9 @@ import 'package:thittam1hub/widgets/personality_game.dart';
 import 'package:thittam1hub/widgets/icebreaker_card.dart';
 
 class VibePage extends StatefulWidget {
-  const VibePage({Key? key}) : super(key: key);
+  final String? searchQuery;
+
+  const VibePage({Key? key, this.searchQuery}) : super(key: key);
 
   @override
   State<VibePage> createState() => _VibePageState();
