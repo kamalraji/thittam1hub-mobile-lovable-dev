@@ -6,6 +6,7 @@ import 'package:thittam1hub/services/chat_service.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -71,8 +72,11 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final groups = _grouped(_filtered);
     return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _load,
+      child: BrandedRefreshIndicator(
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await _load();
+        },
         child: CustomScrollView(
           slivers: [
             SliverAppBar(

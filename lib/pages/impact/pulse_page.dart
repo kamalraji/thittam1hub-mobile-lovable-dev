@@ -12,6 +12,7 @@ import 'package:thittam1hub/widgets/match_insights_card.dart';
 import 'package:thittam1hub/widgets/swipe_card_stack.dart';
 import 'package:thittam1hub/widgets/confetti_overlay.dart';
 import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
@@ -297,6 +298,14 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _onRefresh() async {
+    HapticFeedback.mediumImpact();
+    await _loadProfiles();
+    if (_discoveryMode == DiscoveryMode.groups || _discoveryMode == DiscoveryMode.all) {
+      await _loadCircles();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -305,123 +314,137 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Intent Selector Section
-            _IntentSelectorSection(
-              selectedIntent: _selectedIntent,
-              onIntentSelected: _onIntentSelected,
-              animationController: _intentAnimController,
-            ),
-
-            // Discovery Mode Toggle (People/Groups/All)
-            _DiscoveryModeToggle(
-              currentMode: _discoveryMode,
-              onModeChanged: (mode) {
-                HapticFeedback.lightImpact();
-                setState(() => _discoveryMode = mode);
-                if (mode == DiscoveryMode.groups || mode == DiscoveryMode.all) {
-                  _loadCircles();
-                }
-              },
-            ),
-
-            // Search and Filter Row
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: _discoveryMode == DiscoveryMode.groups
-                            ? 'Search groups...'
-                            : 'Search by name, skill, etc...',
-                        prefixIcon:
-                            Icon(Icons.search, color: cs.onSurfaceVariant),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: cs.surfaceContainerHighest,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Stack(
-                      children: [
-                        Icon(Icons.filter_list, color: cs.onSurfaceVariant),
-                        if (_selectedSkills.isNotEmpty ||
-                            _selectedInterests.isNotEmpty)
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: cs.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    onPressed: _showFilterDialog,
-                  ),
-                ],
-              ),
-            ),
-
-            // Active Intent Badge
-            if (_selectedIntent != null)
-              _ActiveIntentBadge(
-                intentKey: _selectedIntent!,
-                profileCount: _filteredProfiles.length,
-                onClear: () => _onIntentSelected(null),
-              ),
-
-            // Filter chips (skills, interests - not lookingFor since we have intent selector)
-            if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
-              Container(
-                height: 50,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    ..._selectedSkills.map((s) => _buildFilterChip(s, () {
-                          setState(() => _selectedSkills.remove(s));
-                          _loadProfiles();
-                        })),
-                    ..._selectedInterests.map((i) => _buildFilterChip(i, () {
-                          setState(() => _selectedInterests.remove(i));
-                          _loadProfiles();
-                        })),
-                  ],
+        child: BrandedRefreshIndicator(
+          onRefresh: _onRefresh,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Intent Selector Section
+              SliverToBoxAdapter(
+                child: _IntentSelectorSection(
+                  selectedIntent: _selectedIntent,
+                  onIntentSelected: _onIntentSelected,
+                  animationController: _intentAnimController,
                 ),
               ),
 
-            // Content Area - switches based on discovery mode
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: FadeSlideTransition(
-                          child: const ProfileCardSkeleton(),
+              // Discovery Mode Toggle (People/Groups/All)
+              SliverToBoxAdapter(
+                child: _DiscoveryModeToggle(
+                  currentMode: _discoveryMode,
+                  onModeChanged: (mode) {
+                    HapticFeedback.lightImpact();
+                    setState(() => _discoveryMode = mode);
+                    if (mode == DiscoveryMode.groups || mode == DiscoveryMode.all) {
+                      _loadCircles();
+                    }
+                  },
+                ),
+              ),
+
+              // Search and Filter Row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: _discoveryMode == DiscoveryMode.groups
+                                ? 'Search groups...'
+                                : 'Search by name, skill, etc...',
+                            prefixIcon:
+                                Icon(Icons.search, color: cs.onSurfaceVariant),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: cs.surfaceContainerHighest,
+                          ),
                         ),
                       ),
-                    )
-                  : _discoveryMode == DiscoveryMode.groups
-                      ? _buildGroupsContent(cs, textTheme)
-                      : _discoveryMode == DiscoveryMode.all
-                          ? _buildMixedContent(cs, textTheme)
-                          : _buildPeopleContent(cs, textTheme),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+                      IconButton(
+                        icon: Stack(
+                          children: [
+                            Icon(Icons.filter_list, color: cs.onSurfaceVariant),
+                            if (_selectedSkills.isNotEmpty ||
+                                _selectedInterests.isNotEmpty)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: cs.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        onPressed: _showFilterDialog,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Active Intent Badge
+              if (_selectedIntent != null)
+                SliverToBoxAdapter(
+                  child: _ActiveIntentBadge(
+                    intentKey: _selectedIntent!,
+                    profileCount: _filteredProfiles.length,
+                    onClear: () => _onIntentSelected(null),
+                  ),
+                ),
+
+              // Filter chips (skills, interests - not lookingFor since we have intent selector)
+              if (_selectedSkills.isNotEmpty || _selectedInterests.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        ..._selectedSkills.map((s) => _buildFilterChip(s, () {
+                              setState(() => _selectedSkills.remove(s));
+                              _loadProfiles();
+                            })),
+                        ..._selectedInterests.map((i) => _buildFilterChip(i, () {
+                              setState(() => _selectedInterests.remove(i));
+                              _loadProfiles();
+                            })),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Content Area - switches based on discovery mode
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _isLoading
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: FadeSlideTransition(
+                            child: const ProfileCardSkeleton(),
+                          ),
+                        ),
+                      )
+                    : _discoveryMode == DiscoveryMode.groups
+                        ? _buildGroupsContent(cs, textTheme)
+                        : _discoveryMode == DiscoveryMode.all
+                            ? _buildMixedContent(cs, textTheme)
+                            : _buildPeopleContent(cs, textTheme),
+              ),
+            ],
+          ),
         ),
       ),
     );

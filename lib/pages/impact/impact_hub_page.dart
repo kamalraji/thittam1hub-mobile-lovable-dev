@@ -16,6 +16,7 @@ import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/confetti_overlay.dart';
+import 'package:thittam1hub/widgets/score_detail_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
@@ -339,140 +340,11 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
 
   void _showScoreDetailSheet() {
     if (_myProfile == null) return;
-    final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    final score = _myProfile?.impactScore ?? 0;
-    final level = _myProfile?.level ?? 1;
-    final streak = _myProfile?.streakCount ?? 0;
-    final pointsToNextLevel = (level * 1000) - score;
-    final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
-
     showGlassBottomSheet(
       context: context,
       title: 'Impact Score',
-      maxHeight: MediaQuery.of(context).size.height * 0.6,
-      child: Column(
-        children: [
-          // Large score display
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  cs.primary.withValues(alpha: 0.9),
-                  cs.tertiary.withValues(alpha: 0.85),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.bolt_rounded, size: 32, color: Colors.amber),
-                    SizedBox(width: 8),
-                    Text(
-                      '$score',
-                      style: textTheme.displaySmall?.copyWith(
-                        color: cs.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Level $level',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: cs.onPrimary.withValues(alpha: 0.9),
-                  ),
-                ),
-                SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                    valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
-                    minHeight: 10,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '$pointsToNextLevel pts to Level ${level + 1}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: cs.onPrimary.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 16),
-          // Stats row
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.local_fire_department_rounded,
-                  iconColor: Colors.orange,
-                  label: 'Streak',
-                  value: '$streak days',
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.emoji_events_rounded,
-                  iconColor: Colors.amber,
-                  label: 'Badges',
-                  value: '${_myProfile?.badges.length ?? 0}',
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          // Action buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showGlassBottomSheet(
-                      context: context,
-                      title: 'Your Badges',
-                      maxHeight: MediaQuery.of(context).size.height * 0.8,
-                      child: const BadgesContent(),
-                    );
-                  },
-                  icon: Icon(Icons.emoji_events_outlined),
-                  label: Text('Badges'),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showGlassBottomSheet(
-                      context: context,
-                      title: 'Leaderboard',
-                      maxHeight: MediaQuery.of(context).size.height * 0.8,
-                      child: const LeaderboardContent(),
-                    );
-                  },
-                  icon: Icon(Icons.leaderboard_outlined),
-                  label: Text('Rank'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      maxHeight: MediaQuery.of(context).size.height * 0.85,
+      child: ScoreDetailSheetContent(profile: _myProfile!),
     );
   }
 
