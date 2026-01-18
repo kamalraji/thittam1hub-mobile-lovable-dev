@@ -1999,7 +1999,7 @@ class CircleDiscoveryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: Text(circle.icon, style: const TextStyle(fontSize: 22)),
+                    child: Icon(IconMappings.getCircleIcon(circle.category), size: 22, color: IconMappings.getCircleCategoryColor(circle.category)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

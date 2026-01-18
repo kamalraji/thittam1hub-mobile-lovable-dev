@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/supabase/circle_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 
@@ -351,7 +352,7 @@ class AutoMatchedCircleCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Text(circle.icon, style: TextStyle(fontSize: 24)),
+              Icon(IconMappings.getCircleIcon(circle.category), size: 24, color: IconMappings.getCircleCategoryColor(circle.category)),
               SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -412,7 +413,7 @@ class PopularCircleCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(circle.icon, style: TextStyle(fontSize: 24)),
+              Icon(IconMappings.getCircleIcon(circle.category), size: 24, color: IconMappings.getCircleCategoryColor(circle.category)),
               SizedBox(height: 8),
               Text(circle.name, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
               SizedBox(height: 4),
@@ -482,7 +483,7 @@ class CircleGridCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(circle.icon, style: TextStyle(fontSize: 28)),
+                  Icon(IconMappings.getCircleIcon(circle.category), size: 28, color: IconMappings.getCircleCategoryColor(circle.category)),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(

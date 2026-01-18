@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 enum PersonalityType {
-  builder('The Builder', '🔧', 'Practical, hands-on problem solver', Colors.orange),
-  innovator('The Innovator', '💡', 'Creative, ideas-focused visionary', Colors.purple),
-  connector('The Connector', '🤝', 'People-focused networker', Colors.blue),
-  analyst('The Analyst', '📊', 'Data-driven, logical thinker', Colors.green);
+  builder('The Builder', Icons.build_rounded, 'Practical, hands-on problem solver', Colors.orange),
+  innovator('The Innovator', Icons.lightbulb_rounded, 'Creative, ideas-focused visionary', Colors.purple),
+  connector('The Connector', Icons.handshake_rounded, 'People-focused networker', Colors.blue),
+  analyst('The Analyst', Icons.analytics_rounded, 'Data-driven, logical thinker', Colors.green);
 
   final String title;
-  final String emoji;
+  final IconData icon;
   final String description;
   final Color color;
 
-  const PersonalityType(this.title, this.emoji, this.description, this.color);
+  const PersonalityType(this.title, this.icon, this.description, this.color);
 }
 
 class PersonalityGameCard extends StatelessWidget {
@@ -72,8 +72,10 @@ class PersonalityGameCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
+                      Icon(Icons.psychology_rounded, size: 16, color: hasResult ? result!.color : cs.primary),
+                      const SizedBox(width: 6),
                       Text(
-                        '🧠 PERSONALITY TYPE',
+                        'PERSONALITY TYPE',
                         style: TextStyle(
                           color: hasResult ? result!.color : cs.primary,
                           fontWeight: FontWeight.bold,
@@ -87,9 +89,14 @@ class PersonalityGameCard extends StatelessWidget {
                   if (hasResult) ...[
                     Row(
                       children: [
-                        Text(
-                          result!.emoji,
-                          style: const TextStyle(fontSize: 40),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: result!.color.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(result!.icon, size: 32, color: result!.color),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

@@ -1120,7 +1120,7 @@ class _BadgesContentState extends State<BadgesContent> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(b.icon, style: const TextStyle(fontSize: 28)),
+                    Icon(_getBadgeIcon(b.category), size: 28, color: _getBadgeColor(b.rarity)),
                     const SizedBox(height: 8),
                     Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
@@ -1133,6 +1133,39 @@ class _BadgesContentState extends State<BadgesContent> {
         ),
       ],
     );
+  }
+
+  IconData _getBadgeIcon(String category) {
+    switch (category.toUpperCase()) {
+      case 'NETWORKING':
+        return Icons.hub_rounded;
+      case 'COMMUNITY':
+        return Icons.groups_rounded;
+      case 'CONTRIBUTION':
+        return Icons.volunteer_activism_rounded;
+      case 'SPECIAL':
+        return Icons.auto_awesome_rounded;
+      case 'EVENT':
+        return Icons.event_rounded;
+      case 'STREAK':
+        return Icons.local_fire_department_rounded;
+      default:
+        return Icons.emoji_events_rounded;
+    }
+  }
+
+  Color _getBadgeColor(String rarity) {
+    switch (rarity.toUpperCase()) {
+      case 'LEGENDARY':
+        return Colors.amber;
+      case 'EPIC':
+        return Colors.purple;
+      case 'RARE':
+        return Colors.blue;
+      case 'COMMON':
+      default:
+        return Colors.grey;
+    }
   }
 }
 
