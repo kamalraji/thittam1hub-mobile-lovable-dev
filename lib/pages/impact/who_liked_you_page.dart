@@ -59,7 +59,7 @@ class _WhoLikedYouPageState extends State<WhoLikedYouPage> {
           if (success && mounted) {
             _loadData();
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Welcome to Premium! 🎉')),
+              const SnackBar(content: Text('Welcome to Premium!')),
             );
           }
         },
@@ -76,7 +76,7 @@ class _WhoLikedYouPageState extends State<WhoLikedYouPage> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connected with ${request.requesterName}! 🎉')),
+          SnackBar(content: Text('Connected with ${request.requesterName}!')),
         );
         _loadData();
       }

@@ -582,12 +582,18 @@ class _ScoreCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '🎯 Impact Score',
-                        style: textTheme.labelMedium?.copyWith(
-                          color: cs.onPrimary.withValues(alpha: 0.8),
-                          letterSpacing: 0.5,
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.gps_fixed_rounded, size: 14, color: cs.onPrimary.withValues(alpha: 0.8)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Impact Score',
+                            style: textTheme.labelMedium?.copyWith(
+                              color: cs.onPrimary.withValues(alpha: 0.8),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 4),
                       Text(
@@ -675,7 +681,7 @@ class _ScoreCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('🔥', style: TextStyle(fontSize: 14)),
+                              Icon(Icons.local_fire_department_rounded, size: 16, color: Colors.orange),
                               SizedBox(width: 4),
                               Text(
                                 '$streak day${streak > 1 ? 's' : ''}',

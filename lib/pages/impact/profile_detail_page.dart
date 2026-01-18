@@ -313,7 +313,7 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(p.vibeEmoji, style: const TextStyle(fontSize: 16)),
+                              Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.amber),
                               const SizedBox(width: 8),
                               Text(
                                 'Level ${p.level}',
