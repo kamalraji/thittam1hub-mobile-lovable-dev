@@ -352,4 +352,99 @@ class ChatService {
     }
     return result;
   }
+
+  // ==========================
+  // UNREAD COUNTS
+  // ==========================
+
+  /// Get unread count for a single channel
+  static Future<int> getUnreadCount(String channelId) async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return 0;
+
+    try {
+      // Get last read timestamp for this user in this channel
+      final membership = await _client
+          .from('channel_members')
+          .select('last_read_at')
+          .eq('channel_id', channelId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final lastReadAt = membership?['last_read_at'] as String?;
+      
+      // Count messages after last read
+      var query = _client
+          .from(messagesTable)
+          .select()
+          .eq('channel_id', channelId)
+          .neq('sender_id', userId);
+      
+      if (lastReadAt != null) {
+        query = query.gt('sent_at', lastReadAt);
+      }
+      
+      final rows = await query;
+      return (rows as List).length;
+    } catch (e) {
+      debugPrint('ChatService.getUnreadCount error: $e');
+      return 0;
+    }
+  }
+
+  /// Get unread counts for multiple channels
+  static Future<Map<String, int>> getUnreadCounts(List<String> channelIds) async {
+    final Map<String, int> result = {for (final id in channelIds) id: 0};
+    if (channelIds.isEmpty) return result;
+
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return result;
+
+    try {
+      // Batch fetch - simplified approach
+      for (final channelId in channelIds) {
+        result[channelId] = await getUnreadCount(channelId);
+      }
+    } catch (e) {
+      debugPrint('ChatService.getUnreadCounts error: $e');
+    }
+    return result;
+  }
+
+  /// Update last read timestamp for a channel
+  static Future<void> updateLastRead(String channelId) async {
+    final userId = SupabaseConfig.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      await _client.from('channel_members').upsert({
+        'channel_id': channelId,
+        'user_id': userId,
+        'last_read_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('ChatService.updateLastRead error: $e');
+    }
+  }
+
+  /// Get reactions grouped by message
+  static Future<Map<String, List<Map<String, dynamic>>>> getReactionsForMessages(List<String> messageIds) async {
+    final Map<String, List<Map<String, dynamic>>> result = {};
+    if (messageIds.isEmpty) return result;
+
+    try {
+      final rows = await _client
+          .from('message_reactions')
+          .select('message_id, user_id, emoji')
+          .inFilter('message_id', messageIds);
+
+      for (final row in rows) {
+        final msgId = row['message_id'] as String;
+        result.putIfAbsent(msgId, () => []).add(Map<String, dynamic>.from(row as Map));
+      }
+    } catch (e) {
+      debugPrint('ChatService.getReactionsForMessages error: $e');
+    }
+    return result;
+  }
 }
