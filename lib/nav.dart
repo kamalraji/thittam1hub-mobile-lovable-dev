@@ -135,11 +135,20 @@ class AppRouter {
           routes: [
             GoRoute(
               path: AppRoutes.home,
-              pageBuilder: (context, state) => const NoTransitionPage(child: HomePage()),
+              pageBuilder: (context, state) {
+                // Handle filter query parameter for deep linking
+                final filter = state.uri.queryParameters['filter'];
+                return NoTransitionPage(child: HomePage(initialFilter: filter));
+              },
             ),
             GoRoute(
               path: AppRoutes.discover,
-              pageBuilder: (context, state) => const NoTransitionPage(child: DiscoverPage()),
+              pageBuilder: (context, state) {
+                // Handle category and mode query parameters for deep linking
+                final category = state.uri.queryParameters['category'];
+                final mode = state.uri.queryParameters['mode'];
+                return NoTransitionPage(child: DiscoverPage(initialCategory: category, initialMode: mode));
+              },
             ),
             GoRoute(
               path: AppRoutes.impact,
@@ -316,6 +325,16 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String signIn = '/signin';
   static const String signUp = '/signup';
+  
+  // Deep link URL helpers
+  static String homeWithFilter(String filter) => '/?filter=$filter';
+  static String impactWithTab(String tab) => '/impact?tab=$tab';
+  static String discoverWithFilters({String? category, String? mode}) {
+    final params = <String>[];
+    if (category != null) params.add('category=$category');
+    if (mode != null) params.add('mode=$mode');
+    return params.isEmpty ? '/discover' : '/discover?${params.join('&')}';
+  }
 }
 
 class _RootShell extends StatefulWidget {

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:thittam1hub/pages/home/home_service.dart';
+import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
 
 class StoriesBar extends StatelessWidget {
@@ -18,7 +19,7 @@ class StoriesBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 110,
+      height: AppLayout.storiesBarHeight,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -392,7 +393,7 @@ class StoriesBarSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 110,
+      height: AppLayout.storiesBarHeight,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
