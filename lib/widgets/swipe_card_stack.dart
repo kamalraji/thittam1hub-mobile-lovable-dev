@@ -5,25 +5,42 @@ import 'package:flutter/physics.dart';
 
 enum SwipeDirection { left, right, up }
 
-/// Tinder/Hinge-style swipe card stack with physics-based animations
+/// Data class for storing swipe history
+class _SwipeHistoryItem {
+  final Widget card;
+  final SwipeDirection direction;
+  final int index;
+
+  _SwipeHistoryItem({
+    required this.card,
+    required this.direction,
+    required this.index,
+  });
+}
+
+/// Tinder/Hinge-style swipe card stack with physics-based animations and undo support
 class SwipeCardStack extends StatefulWidget {
   final List<Widget> cards;
   final Function(int index, SwipeDirection direction)? onSwipe;
   final VoidCallback? onUndo;
+  final Function(bool canUndo)? onUndoAvailableChanged;
   final double swipeThreshold;
   final double rotationAngle;
   final bool enableVerticalSwipe;
   final Widget Function(SwipeDirection direction, double progress)? overlayBuilder;
+  final int maxUndoHistory;
 
   const SwipeCardStack({
     Key? key,
     required this.cards,
     this.onSwipe,
     this.onUndo,
+    this.onUndoAvailableChanged,
     this.swipeThreshold = 100,
     this.rotationAngle = 0.4,
     this.enableVerticalSwipe = true,
     this.overlayBuilder,
+    this.maxUndoHistory = 3,
   }) : super(key: key);
 
   @override
@@ -35,12 +52,19 @@ class _SwipeCardStackState extends State<SwipeCardStack>
   Offset _dragOffset = Offset.zero;
   late AnimationController _resetController;
   late AnimationController _flyAwayController;
+  late AnimationController _undoController;
   late Animation<Offset> _resetAnimation;
   late Animation<Offset> _flyAwayAnimation;
   SwipeDirection? _flyDirection;
   bool _isDragging = false;
   bool _isAnimating = false;
   bool _crossedThreshold = false;
+  bool _isUndoing = false;
+  
+  // Undo history
+  final List<_SwipeHistoryItem> _swipeHistory = [];
+  Widget? _undoingCard;
+  Offset _undoStartOffset = Offset.zero;
 
   @override
   void initState() {
@@ -53,6 +77,10 @@ class _SwipeCardStackState extends State<SwipeCardStack>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _undoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     _resetAnimation = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
         .animate(_resetController);
     _flyAwayAnimation = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
@@ -63,7 +91,51 @@ class _SwipeCardStackState extends State<SwipeCardStack>
   void dispose() {
     _resetController.dispose();
     _flyAwayController.dispose();
+    _undoController.dispose();
     super.dispose();
+  }
+  
+  bool get canUndo => _swipeHistory.isNotEmpty && !_isAnimating && !_isUndoing;
+  
+  /// Undo the last swipe with reverse animation
+  void undo() {
+    if (!canUndo) return;
+    
+    HapticFeedback.mediumImpact();
+    
+    final lastSwipe = _swipeHistory.removeLast();
+    setState(() {
+      _isUndoing = true;
+      _undoingCard = lastSwipe.card;
+    });
+    
+    final screenSize = MediaQuery.of(context).size;
+    
+    // Determine start position based on swipe direction
+    switch (lastSwipe.direction) {
+      case SwipeDirection.left:
+        _undoStartOffset = Offset(-screenSize.width * 1.5, 0);
+        break;
+      case SwipeDirection.right:
+        _undoStartOffset = Offset(screenSize.width * 1.5, 0);
+        break;
+      case SwipeDirection.up:
+        _undoStartOffset = Offset(0, -screenSize.height * 1.5);
+        break;
+    }
+    
+    _undoController.forward(from: 0).then((_) {
+      widget.onUndo?.call();
+      setState(() {
+        _isUndoing = false;
+        _undoingCard = null;
+      });
+      _notifyUndoAvailability();
+    });
+  }
+  
+  void _notifyUndoAvailability() {
+    widget.onUndoAvailableChanged?.call(canUndo);
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -160,6 +232,19 @@ class _SwipeCardStackState extends State<SwipeCardStack>
     ));
 
     _flyAwayController.forward(from: 0).then((_) {
+      // Store in undo history before callback
+      if (widget.cards.isNotEmpty) {
+        _swipeHistory.add(_SwipeHistoryItem(
+          card: widget.cards[0],
+          direction: direction,
+          index: 0,
+        ));
+        if (_swipeHistory.length > widget.maxUndoHistory) {
+          _swipeHistory.removeAt(0);
+        }
+        _notifyUndoAvailability();
+      }
+      
       widget.onSwipe?.call(0, direction);
       setState(() {
         _dragOffset = Offset.zero;
