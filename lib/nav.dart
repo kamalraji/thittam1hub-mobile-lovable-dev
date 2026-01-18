@@ -23,9 +23,11 @@ import 'package:thittam1hub/pages/profile/ticket_detail_page.dart';
 import 'package:thittam1hub/pages/profile/connections_page.dart';
 import 'package:thittam1hub/pages/profile/saved_events_page.dart';
 import 'package:thittam1hub/pages/profile/public_profile_page.dart';
+import 'package:thittam1hub/pages/profile/verification_page.dart';
 import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
+import 'package:thittam1hub/pages/impact/who_liked_you_page.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/user_ticket.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
@@ -255,6 +257,20 @@ class AppRouter {
               path: '/profile/connections',
               pageBuilder: (context, state) => _buildPageTransition(
                 const ConnectionsPage(),
+                state,
+              ),
+            ),
+            GoRoute(
+              path: '/profile/verification',
+              pageBuilder: (context, state) => _buildPageTransition(
+                const VerificationPage(),
+                state,
+              ),
+            ),
+            GoRoute(
+              path: '/impact/who-liked-you',
+              pageBuilder: (context, state) => _buildPageTransition(
+                const WhoLikedYouPage(),
                 state,
               ),
             ),

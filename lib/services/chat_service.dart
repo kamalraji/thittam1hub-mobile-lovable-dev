@@ -258,4 +258,98 @@ class ChatService {
       debugPrint('ChatService.sendTyping error: $e');
     }
   }
+
+  // ==========================
+  // MESSAGE REACTIONS
+  // ==========================
+
+  /// Add a reaction to a message
+  static Future<void> addReaction(String messageId, String emoji) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from('message_reactions').upsert({
+        'message_id': messageId,
+        'user_id': userId,
+        'emoji': emoji,
+      });
+      debugPrint('✅ Reaction added');
+    } catch (e) {
+      debugPrint('ChatService.addReaction error: $e');
+    }
+  }
+
+  /// Remove a reaction from a message
+  static Future<void> removeReaction(String messageId, String emoji) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client
+          .from('message_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', userId)
+          .eq('emoji', emoji);
+      debugPrint('❌ Reaction removed');
+    } catch (e) {
+      debugPrint('ChatService.removeReaction error: $e');
+    }
+  }
+
+  /// Stream reactions for a channel's messages
+  static Stream<List<Map<String, dynamic>>> streamReactions(String channelId) {
+    try {
+      return _client
+          .from('message_reactions')
+          .stream(primaryKey: ['id'])
+          .map((rows) => rows.map((e) => Map<String, dynamic>.from(e)).toList());
+    } catch (e) {
+      debugPrint('ChatService.streamReactions error: $e');
+      return const Stream.empty();
+    }
+  }
+
+  // ==========================
+  // READ RECEIPTS
+  // ==========================
+
+  /// Mark a message as read
+  static Future<void> markAsRead(String messageId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from('message_read_receipts').upsert({
+        'message_id': messageId,
+        'user_id': userId,
+        'read_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('ChatService.markAsRead error: $e');
+    }
+  }
+
+  /// Get read receipts for messages
+  static Future<Map<String, List<String>>> getReadReceipts(List<String> messageIds) async {
+    final Map<String, List<String>> result = {};
+    if (messageIds.isEmpty) return result;
+    
+    try {
+      final rows = await _client
+          .from('message_read_receipts')
+          .select('message_id, user_id')
+          .inFilter('message_id', messageIds);
+
+      for (final row in rows) {
+        final msgId = row['message_id'] as String;
+        final userId = row['user_id'] as String;
+        result.putIfAbsent(msgId, () => []).add(userId);
+      }
+    } catch (e) {
+      debugPrint('ChatService.getReadReceipts error: $e');
+    }
+    return result;
+  }
 }
