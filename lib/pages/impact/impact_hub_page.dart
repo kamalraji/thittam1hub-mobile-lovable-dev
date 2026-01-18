@@ -14,6 +14,7 @@ import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/widgets/confetti_overlay.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
@@ -36,6 +37,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   bool _notificationsLoading = true;
   bool _profileLoading = true;
   bool _profileError = false;
+  bool _showConfetti = false;
+  String? _celebrationMessage;
 
   final List<Widget> _pages = [
     PulsePage(),
@@ -441,27 +444,43 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                 actions: [
                   _notificationsLoading
                       ? const _NotificationBadgeSkeleton()
-                      : Stack(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.notifications_outlined, color: cs.onSurface),
-                              onPressed: _showNotificationsSheet,
-                            ),
-                            if (_unreadCount > 0)
-                              Positioned(
-                                right: 6,
-                                top: 6,
-                                child: Container(
-                                  padding: EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: cs.error,
-                                    shape: BoxShape.circle,
+                      : PulsingWidget(
+                          isPulsing: _unreadCount > 0,
+                          glowColor: Theme.of(context).colorScheme.error,
+                          child: Stack(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.notifications_outlined, color: cs.onSurface),
+                                onPressed: _showNotificationsSheet,
+                              ),
+                              if (_unreadCount > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: cs.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      _unreadCount > 9 ? '9+' : '$_unreadCount',
+                                      style: TextStyle(
+                                        color: cs.onError,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
+                                ),
+                            ],
+                          ),
+                        ),
                                     _unreadCount > 9 ? '9+' : '$_unreadCount',
                                     style: TextStyle(color: cs.onError, fontSize: 9, fontWeight: FontWeight.bold),
                                     textAlign: TextAlign.center,

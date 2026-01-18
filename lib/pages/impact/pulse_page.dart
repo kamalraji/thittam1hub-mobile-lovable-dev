@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,8 @@ import 'package:thittam1hub/models/circle.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/supabase/circle_service.dart';
 import 'package:thittam1hub/widgets/match_insights_card.dart';
+import 'package:thittam1hub/widgets/swipe_card_stack.dart';
+import 'package:thittam1hub/widgets/confetti_overlay.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
@@ -1117,27 +1120,64 @@ class ProfileCard extends StatefulWidget {
 }
 
 class _ProfileCardState extends State<ProfileCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final ImpactService _impactService = ImpactService();
+  final GlobalKey<SwipeableProfileCardState> _swipeKey = GlobalKey();
   List<ImpactProfile> _mutualConnections = [];
   bool _loadingMutuals = false;
   bool _showInsights = false;
-  double _dragPosition = 0;
-  late AnimationController _resetController;
-  late Animation<double> _resetAnimation;
+  
+  // Entrance animation
+  late AnimationController _entranceController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  
+  // Match score animation
+  late AnimationController _scoreController;
+  late Animation<int> _scoreAnimation;
 
   @override
   void initState() {
     super.initState();
     _loadMutualConnections();
-    _resetController = AnimationController(
+    
+    // Setup entrance animation
+    _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 400),
     );
-    _resetAnimation = Tween<double>(begin: 0, end: 0).animate(_resetController)
-      ..addListener(() {
-        setState(() => _dragPosition = _resetAnimation.value);
-      });
+    
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutBack),
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOut),
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.15, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic));
+    
+    // Setup score animation
+    _scoreController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    _scoreAnimation = IntTween(begin: 0, end: widget.matchScore).animate(
+      CurvedAnimation(parent: _scoreController, curve: Curves.easeOutCubic),
+    );
+    
+    // Start animations
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _entranceController.forward();
+        _scoreController.forward();
+      }
+    });
   }
 
   Future<void> _loadMutualConnections() async {
@@ -1152,39 +1192,25 @@ class _ProfileCardState extends State<ProfileCard>
     }
   }
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragPosition += details.delta.dx;
-      _dragPosition = _dragPosition.clamp(-150.0, 150.0);
-    });
+  void _onSwipeLeft() {
+    HapticFeedback.mediumImpact();
+    widget.onSkip();
   }
 
-  void _onPanEnd(DragEndDetails details) {
-    if (_dragPosition > 80) {
-      widget.onSave();
-      _resetPosition();
-    } else if (_dragPosition < -80) {
-      widget.onSkip();
-      _resetPosition();
-    } else {
-      _resetPosition();
-    }
+  void _onSwipeRight() {
+    HapticFeedback.mediumImpact();
+    widget.onConnect();
   }
 
-  void _resetPosition() {
-    _resetAnimation = Tween<double>(
-      begin: _dragPosition,
-      end: 0,
-    ).animate(CurvedAnimation(
-      parent: _resetController,
-      curve: Curves.easeOut,
-    ));
-    _resetController.forward(from: 0);
+  void _onSwipeUp() {
+    HapticFeedback.mediumImpact();
+    widget.onSave();
   }
 
   @override
   void dispose() {
-    _resetController.dispose();
+    _entranceController.dispose();
+    _scoreController.dispose();
     super.dispose();
   }
 
@@ -1192,8 +1218,6 @@ class _ProfileCardState extends State<ProfileCard>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final swipeProgress = (_dragPosition.abs() / 80).clamp(0.0, 1.0);
-    final isSwipingRight = _dragPosition > 0;
     final avatarHeroTag = HeroConfig.profileAvatarTag(widget.profile.userId);
     final nameHeroTag = HeroConfig.profileNameTag(widget.profile.userId);
 
@@ -1202,277 +1226,320 @@ class _ProfileCardState extends State<ProfileCard>
         ? IntentConfig.getByKey(widget.selectedIntent!)
         : null;
 
-    return GestureDetector(
-      onPanUpdate: _onPanUpdate,
-      onPanEnd: _onPanEnd,
-      onTap: widget.onTap,
-      child: Transform.translate(
-        offset: Offset(_dragPosition, 0),
-        child: Transform.rotate(
-          angle: _dragPosition * 0.005,
-          child: Opacity(
-            opacity: (1 - (swipeProgress * 0.3)).toDouble(),
-            child: Stack(
-              children: [
-                Card(
-                  margin: const EdgeInsets.all(16.0),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+    return AnimatedBuilder(
+      animation: _entranceController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: SwipeableProfileCard(
+                key: _swipeKey,
+                onSwipeLeft: _onSwipeLeft,
+                onSwipeRight: _onSwipeRight,
+                onSwipeUp: _onSwipeUp,
+                child: GestureDetector(
+                  onTap: widget.onTap,
+                  child: Card(
+                    margin: const EdgeInsets.all(16.0),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    elevation: 8,
+                    shadowColor: cs.primary.withOpacity(0.2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            cs.surface,
+                            cs.surfaceContainerHighest.withOpacity(0.5),
+                          ],
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Stack(
+                            Row(
                               children: [
-                                AnimatedHero(
-                                  tag: avatarHeroTag,
-                                  enabled: widget.enableHero,
-                                  child: CircleAvatar(
-                                    radius: 30,
-                                    backgroundImage:
-                                        widget.profile.avatarUrl != null
-                                            ? NetworkImage(
-                                                widget.profile.avatarUrl!)
-                                            : null,
-                                    child: widget.profile.avatarUrl == null
-                                        ? Text(
-                                            widget.profile.fullName
-                                                .substring(0, 1),
-                                            style: TextStyle(fontSize: 24))
-                                        : null,
+                                Stack(
+                                  children: [
+                                    AnimatedHero(
+                                      tag: avatarHeroTag,
+                                      enabled: widget.enableHero,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: cs.primary.withOpacity(0.3),
+                                              blurRadius: 12,
+                                              spreadRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 32,
+                                          backgroundImage:
+                                              widget.profile.avatarUrl != null
+                                                  ? NetworkImage(
+                                                      widget.profile.avatarUrl!)
+                                                  : null,
+                                          child: widget.profile.avatarUrl == null
+                                              ? Text(
+                                                  widget.profile.fullName
+                                                      .substring(0, 1),
+                                                  style: TextStyle(fontSize: 26))
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    if (widget.isOnline)
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: OnlineIndicatorPulse(
+                                          isOnline: widget.isOnline,
+                                          size: 16,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      TextHero(
+                                        tag: nameHeroTag,
+                                        enabled: widget.enableHero,
+                                        child: Text(widget.profile.fullName,
+                                            style: textTheme.titleLarge?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(widget.profile.headline,
+                                          style: textTheme.bodyMedium?.copyWith(
+                                              color: cs.onSurfaceVariant),
+                                          overflow: TextOverflow.ellipsis),
+                                    ],
                                   ),
                                 ),
-                                if (widget.isOnline)
-                                  Positioned(
-                                    right: 0,
-                                    bottom: 0,
-                                    child: Container(
-                                      width: 16,
-                                      height: 16,
-                                      decoration: BoxDecoration(
-                                        color: Colors.green,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: cs.surface, width: 2),
+                                SizedBox(width: 8),
+                                // Animated Match Score Badge
+                                if (widget.matchResult != null)
+                                  GestureDetector(
+                                    onTap: () => setState(
+                                        () => _showInsights = !_showInsights),
+                                    child: MatchInsightsCard(
+                                      matchResult: widget.matchResult!,
+                                      compact: true,
+                                    ),
+                                  )
+                                else
+                                  AnimatedBuilder(
+                                    animation: _scoreAnimation,
+                                    builder: (context, child) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              (intentConfig?.color ?? cs.primary),
+                                              (intentConfig?.color ?? cs.primary)
+                                                  .withOpacity(0.7),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: (intentConfig?.color ?? cs.primary)
+                                                  .withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.favorite,
+                                                color: Colors.white,
+                                                size: 16),
+                                            SizedBox(width: 6),
+                                            Text('${_scoreAnimation.value}%',
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                              ],
+                            ),
+                            // Expandable Match Insights
+                            if (_showInsights && widget.matchResult != null) ...[
+                              SizedBox(height: 16),
+                              MatchInsightsCard(
+                                matchResult: widget.matchResult!,
+                                initiallyExpanded: true,
+                                onTap: () => setState(() => _showInsights = false),
+                              ),
+                            ],
+                            SizedBox(height: 24),
+                            _buildLookingForSection(textTheme),
+                            SizedBox(height: 12),
+                            if (_mutualConnections.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(Icons.people, size: 16, color: cs.primary),
+                                  SizedBox(width: 4),
+                                  Text(
+                                      '${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}',
+                                      style: TextStyle(
+                                          color: cs.primary,
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              SizedBox(
+                                height: 36,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _mutualConnections.length.clamp(0, 5),
+                                  itemBuilder: (context, i) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: Tooltip(
+                                      message: _mutualConnections[i].fullName,
+                                      child: CircleAvatar(
+                                        radius: 18,
+                                        backgroundImage: _mutualConnections[i]
+                                                    .avatarUrl !=
+                                                null
+                                            ? NetworkImage(
+                                                _mutualConnections[i].avatarUrl!)
+                                            : null,
+                                        child: _mutualConnections[i].avatarUrl ==
+                                                null
+                                            ? Text(
+                                                _mutualConnections[i].fullName[0])
+                                            : null,
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                            SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  TextHero(
-                                    tag: nameHeroTag,
-                                    enabled: widget.enableHero,
-                                    child: Text(widget.profile.fullName,
-                                        style: textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.bold)),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(widget.profile.headline,
-                                      style: textTheme.bodyMedium?.copyWith(
-                                          color: cs.onSurfaceVariant),
-                                      overflow: TextOverflow.ellipsis),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            // Match Insights Badge (tappable to expand)
-                            if (widget.matchResult != null)
-                              GestureDetector(
-                                onTap: () => setState(
-                                    () => _showInsights = !_showInsights),
-                                child: MatchInsightsCard(
-                                  matchResult: widget.matchResult!,
-                                  compact: true,
-                                ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: (intentConfig?.color ?? cs.primary)
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.favorite,
-                                        color:
-                                            intentConfig?.color ?? cs.primary,
-                                        size: 16),
-                                    SizedBox(width: 6),
-                                    Text('${widget.matchScore}%',
-                                        style: TextStyle(
-                                            color: intentConfig?.color ??
-                                                cs.primary,
-                                            fontWeight: FontWeight.bold)),
-                                  ],
                                 ),
                               ),
-                          ],
-                        ),
-                        // Expandable Match Insights
-                        if (_showInsights && widget.matchResult != null) ...[
-                          SizedBox(height: 16),
-                          MatchInsightsCard(
-                            matchResult: widget.matchResult!,
-                            initiallyExpanded: true,
-                            onTap: () => setState(() => _showInsights = false),
-                          ),
-                        ],
-                        SizedBox(height: 24),
-                        _buildLookingForSection(textTheme),
-                        SizedBox(height: 12),
-                        if (_mutualConnections.isNotEmpty) ...[
-                          Row(
-                            children: [
-                              Icon(Icons.people, size: 16, color: cs.primary),
-                              SizedBox(width: 4),
-                              Text(
-                                  '${_mutualConnections.length} mutual connection${_mutualConnections.length > 1 ? 's' : ''}',
-                                  style: TextStyle(
-                                      color: cs.primary,
-                                      fontWeight: FontWeight.bold)),
+                              SizedBox(height: 12),
                             ],
-                          ),
-                          SizedBox(height: 8),
-                          SizedBox(
-                            height: 36,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _mutualConnections.length.clamp(0, 5),
-                              itemBuilder: (context, i) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Tooltip(
-                                  message: _mutualConnections[i].fullName,
-                                  child: CircleAvatar(
-                                    radius: 18,
-                                    backgroundImage: _mutualConnections[i]
-                                                .avatarUrl !=
-                                            null
-                                        ? NetworkImage(
-                                            _mutualConnections[i].avatarUrl!)
-                                        : null,
-                                    child: _mutualConnections[i].avatarUrl ==
-                                            null
-                                        ? Text(
-                                            _mutualConnections[i].fullName[0])
-                                        : null,
-                                  ),
-                                ),
-                              ),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: widget.profile.interests
+                                  .take(3)
+                                  .map((interest) => Chip(
+                                        label: Text(interest),
+                                        backgroundColor:
+                                            cs.surfaceContainerHighest,
+                                      ))
+                                  .toList(),
                             ),
-                          ),
-                          SizedBox(height: 12),
-                        ],
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: widget.profile.interests
-                              .take(3)
-                              .map((interest) => Chip(label: Text(interest)))
-                              .toList(),
-                        ),
-                        SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Vibe: ${widget.profile.vibeEmoji}',
-                                style: textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold)),
-                            Text('🔥 Level ${widget.profile.level}',
-                                style: TextStyle(
-                                    color: cs.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
-                          ],
-                        ),
-                        Spacer(),
-                        Text(
-                          'Swipe left to skip, right to save, or use buttons below',
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 12),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isNarrow = constraints.maxWidth < 340;
-                            if (isNarrow) {
-                              return Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _buildSkipButton(cs),
-                                      _buildSaveButton(),
-                                    ],
+                            SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Vibe: ${widget.profile.vibeEmoji}',
+                                    style: textTheme.titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.orange, Colors.red],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  SizedBox(height: 12),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: _buildConnectButton(cs),
+                                  child: Text('🔥 Level ${widget.profile.level}',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14)),
+                                ),
+                              ],
+                            ),
+                            Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: cs.surfaceContainerHighest.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.swipe, size: 16, color: cs.onSurfaceVariant),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Swipe to connect • Up to save',
+                                    style: textTheme.bodySmall
+                                        ?.copyWith(color: cs.onSurfaceVariant),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
-                              );
-                            }
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildSkipButton(cs),
-                                _buildConnectButton(cs),
-                                _buildSaveButton(),
-                              ],
-                            );
-                          },
-                        ),
-                        SizedBox(height: 10),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_dragPosition.abs() > 20)
-                  Positioned.fill(
-                    child: Align(
-                      alignment: isSwipingRight
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isSwipingRight
-                                ? Colors.amber[600]!
-                                    .withValues(alpha: swipeProgress)
-                                : cs.error.withValues(alpha: swipeProgress),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isSwipingRight ? Icons.star : Icons.close,
-                            color:
-                                Colors.white.withValues(alpha: swipeProgress),
-                            size: 48,
-                          ),
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isNarrow = constraints.maxWidth < 340;
+                                if (isNarrow) {
+                                  return Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          _buildSkipButton(cs),
+                                          _buildSaveButton(),
+                                        ],
+                                      ),
+                                      SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: _buildConnectButton(cs),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _buildSkipButton(cs),
+                                    _buildConnectButton(cs),
+                                    _buildSaveButton(),
+                                  ],
+                                );
+                              },
+                            ),
+                            SizedBox(height: 10),
+                          ],
                         ),
                       ),
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
