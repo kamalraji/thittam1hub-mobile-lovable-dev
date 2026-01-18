@@ -298,57 +298,151 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-/// Theme mode selection row
-class _ThemeModeRow extends StatelessWidget {
+/// Theme mode selection row with animated toggle
+class _ThemeModeRow extends StatefulWidget {
   const _ThemeModeRow();
+
+  @override
+  State<_ThemeModeRow> createState() => _ThemeModeRowState();
+}
+
+class _ThemeModeRowState extends State<_ThemeModeRow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onThemeChanged(ThemeService themeService, ThemeMode mode) {
+    _animationController.forward().then((_) {
+      themeService.setThemeMode(mode);
+      _animationController.reverse();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final themeService = context.watch<ThemeService>();
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
+
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) => Transform.scale(
+        scale: _scaleAnimation.value,
+        child: child,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Theme', style: context.textStyles.bodyMedium),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: ThemeMode.values.map((mode) {
-              final isSelected = themeService.themeMode == mode;
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: mode != ThemeMode.values.last ? AppSpacing.sm : 0,
-                  ),
-                  child: _ThemeOptionButton(
-                    icon: themeService.getThemeModeIcon(mode),
-                    label: themeService.getThemeModeDisplayName(mode),
-                    isSelected: isSelected,
-                    onTap: () => themeService.setThemeMode(mode),
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('Theme', style: context.textStyles.bodyMedium),
+                const Spacer(),
+                // Animated sun/moon indicator
+                _AnimatedThemeIndicator(
+                  isDarkMode: themeService.themeMode == ThemeMode.dark ||
+                      (themeService.themeMode == ThemeMode.system &&
+                          MediaQuery.platformBrightnessOf(context) ==
+                              Brightness.dark),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: ThemeMode.values.map((mode) {
+                final isSelected = themeService.themeMode == mode;
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: mode != ThemeMode.values.last ? AppSpacing.sm : 0,
+                    ),
+                    child: _AnimatedThemeOptionButton(
+                      icon: themeService.getThemeModeIcon(mode),
+                      label: themeService.getThemeModeDisplayName(mode),
+                      isSelected: isSelected,
+                      onTap: () => _onThemeChanged(themeService, mode),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Individual theme option button
-class _ThemeOptionButton extends StatelessWidget {
+/// Animated sun/moon indicator for visual feedback
+class _AnimatedThemeIndicator extends StatelessWidget {
+  final bool isDarkMode;
+
+  const _AnimatedThemeIndicator({required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? cs.primary.withValues(alpha: 0.15)
+            : Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        transitionBuilder: (child, animation) {
+          return RotationTransition(
+            turns: Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+            ),
+            child: ScaleTransition(scale: animation, child: child),
+          );
+        },
+        child: Icon(
+          isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+          key: ValueKey(isDarkMode),
+          color: isDarkMode ? cs.primary : Colors.amber.shade700,
+          size: 22,
+        ),
+      ),
+    );
+  }
+}
+
+/// Individual theme option button with animations
+class _AnimatedThemeOptionButton extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _ThemeOptionButton({
+  const _AnimatedThemeOptionButton({
     required this.icon,
     required this.label,
     required this.isSelected,
@@ -356,39 +450,108 @@ class _ThemeOptionButton extends StatelessWidget {
   });
 
   @override
+  State<_AnimatedThemeOptionButton> createState() =>
+      _AnimatedThemeOptionButtonState();
+}
+
+class _AnimatedThemeOptionButtonState extends State<_AnimatedThemeOptionButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: isSelected ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: isSelected ? cs.primary : cs.outline,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
-              size: 20,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: context.textStyles.labelSmall?.copyWith(
-                color: isSelected ? cs.onPrimary : cs.onSurface,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm + 2),
+              decoration: BoxDecoration(
+                color: widget.isSelected ? cs.primary : cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: widget.isSelected ? cs.primary : cs.outline,
+                  width: widget.isSelected ? 2 : 1,
+                ),
+                boxShadow: widget.isSelected
+                    ? [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          spreadRadius: 0,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      );
+                    },
+                    child: Icon(
+                      widget.icon,
+                      key: ValueKey('${widget.icon}_${widget.isSelected}'),
+                      color: widget.isSelected ? cs.onPrimary : cs.onSurfaceVariant,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: context.textStyles.labelSmall?.copyWith(
+                          color: widget.isSelected ? cs.onPrimary : cs.onSurface,
+                          fontWeight:
+                              widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                        ) ??
+                        const TextStyle(),
+                    child: Text(widget.label),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
