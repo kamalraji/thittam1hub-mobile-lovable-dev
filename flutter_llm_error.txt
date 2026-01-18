@@ -1,7 +1,4 @@
-Error: Couldn't resolve the package 'cached_network_image' in 'package:cached_network_image/cached_network_image.dart'.
 Error: Expected a declaration, but got '}'.
-Error: Not found: 'package:cached_network_image/cached_network_image.dart'
-Error: Not found: 'package:cached_network_image/cached_network_image.dart'
 Error: Type 'GamificationService' not found.
 Error: Type 'GamificationService' not found.
 Error: Type 'LeaderboardEntry' not found.
@@ -90,7 +87,6 @@ Error: Undefined name '_uploadProgress'.
 Error: Undefined name '_clearMedia'.
 Error: Undefined name '_selectedGifUrl'.
 Error: Undefined name '_selectedGifUrl'.
-Error: Method not found: 'CachedNetworkImage'.
 Error: Undefined name '_clearMedia'.
 Error: Undefined name 'context'.
 Error: Undefined name 'context'.
@@ -116,10 +112,8 @@ Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
-Error: Method not found: 'CachedNetworkImage'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
-Error: Method not found: 'CachedNetworkImage'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
@@ -127,6 +121,5 @@ Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
 Error: Undefined name '_linkPreview'.
 Error: The argument type 'FileOptions/*1*/' can't be assigned to the parameter type 'FileOptions/*2*/'.
-Error: The method 'CachedNetworkImage' isn't defined for the type '_GifTile'.
 Error: Compilation failed.
 Error: Failed to compile application for the Web.

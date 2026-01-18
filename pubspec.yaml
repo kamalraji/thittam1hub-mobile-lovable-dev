@@ -23,6 +23,7 @@ dependencies:
   share_plus: ^10.0.0
   url_launcher: ^6.3.0
   intl: ^0.20.2
+  cached_network_image: ^3.3.1
   # Offline caching
   shared_preferences: ^2.2.2
   hive: ^2.2.3
