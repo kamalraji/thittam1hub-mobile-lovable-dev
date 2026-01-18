@@ -7,6 +7,7 @@ import 'package:thittam1hub/auth/supabase_auth_manager.dart';
 import 'package:thittam1hub/nav.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/social_login_button.dart';
+import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -242,61 +243,25 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
     return Center(
       child: ScaleTransition(
         scale: _logoScale,
-        child: Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [cs.primary, cs.primary.withBlue(220)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.primary.withOpacity(0.4),
-                blurRadius: 24,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(4),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/icons/dreamflow_icon.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.event_available,
-                size: 40,
-                color: cs.onPrimary,
-              ),
-            ),
-          ),
+        child: const Thittam1hubLogo(
+          size: 88,
+          showText: false,
+          animated: true,
+          showGlow: true,
         ),
       ),
     );
   }
 
   Widget _buildGreeting(ColorScheme cs) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Welcome back',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
-              ),
-        ),
-        const SizedBox(width: 8),
-        AnimatedBuilder(
-          animation: _waveRotation,
-          builder: (context, child) => Transform.rotate(
-            angle: _waveRotation.value,
-            child: const Text('👋', style: TextStyle(fontSize: 28)),
-          ),
-        ),
-      ],
+    return Center(
+      child: Text(
+        'Welcome back',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+            ),
+      ),
     );
   }
 

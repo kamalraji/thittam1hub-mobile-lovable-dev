@@ -12,6 +12,7 @@ import 'package:thittam1hub/pages/impact/circle_chat_page.dart';
 import 'package:thittam1hub/pages/impact/space_room_page.dart';
 import 'package:thittam1hub/pages/impact/profile_detail_page.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
+import 'package:thittam1hub/pages/splash_screen.dart';
 import 'package:thittam1hub/pages/auth/sign_in_page.dart';
 import 'package:thittam1hub/pages/auth/sign_up_page.dart';
 import 'package:thittam1hub/pages/profile/profile_page.dart';
@@ -94,9 +95,14 @@ CustomTransitionPage<T> _buildHeroPageTransition<T>(Widget child, GoRouterState 
 class AppRouter {
   static GoRouter createRouter() {
     return GoRouter(
-      initialLocation: AppRoutes.discover,
+      initialLocation: AppRoutes.splash,
       refreshListenable: GoRouterRefreshStream(SupabaseConfig.auth.onAuthStateChange),
       redirect: (context, state) {
+        // Allow splash screen without redirect
+        if (state.matchedLocation == AppRoutes.splash) {
+          return null;
+        }
+
         final loggedIn = SupabaseConfig.auth.currentUser != null;
         final loggingIn = state.matchedLocation == AppRoutes.signIn ||
             state.matchedLocation == AppRoutes.signUp;
@@ -112,6 +118,10 @@ class AppRouter {
         return null;
       },
       routes: [
+        GoRoute(
+          path: AppRoutes.splash,
+          pageBuilder: (context, state) => _buildPageTransition(const SplashScreen(), state),
+        ),
         GoRoute(
           path: AppRoutes.signIn,
           pageBuilder: (context, state) => _buildPageTransition(const SignInPage(), state),
@@ -294,6 +304,7 @@ class AppRouter {
 
 /// Route path constants
 class AppRoutes {
+  static const String splash = '/splash';
   static const String home = '/';
   static const String discover = '/discover';
   static const String impact = '/impact';
