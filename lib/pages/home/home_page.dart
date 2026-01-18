@@ -14,6 +14,7 @@ import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/notification_item.dart';
+import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
 import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
@@ -234,8 +235,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     
     return Scaffold(
       backgroundColor: cs.surface,
@@ -245,29 +245,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-              // Enhanced App Bar with Gradient
+              // Compact App Bar - 56px height
               SliverAppBar(
                 floating: true,
-                backgroundColor: Colors.transparent,
+                snap: true,
+                backgroundColor: cs.surface,
+                surfaceTintColor: Colors.transparent,
                 elevation: 0,
-                expandedHeight: 70,
-                flexibleSpace: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                          ? [cs.surface, cs.surface.withValues(alpha: 0.95)]
-                          : [cs.surface, cs.surfaceContainerLowest],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: FlexibleSpaceBar(
-                    titlePadding: const EdgeInsets.only(left: 16, bottom: 14),
-                    title: const Thittam1hubLogoInline(
-                      iconSize: 22,
-                    ),
-                  ),
-                ),
+                expandedHeight: AppLayout.appBarHeight,
+                toolbarHeight: AppLayout.toolbarHeight,
+                title: const Thittam1hubLogoInline(iconSize: 20),
                 actions: [
                   // Compact Streak Badge
                   Padding(
@@ -379,12 +366,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
               
-              // Removed large streak card - now using compact badge in app bar
-              
               // Feed Items
               SliverPadding(
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom + 80,
+                  bottom: MediaQuery.of(context).padding.bottom + AppLayout.bottomContentPadding,
                 ),
                 sliver: _isLoading
                     ? SliverList(

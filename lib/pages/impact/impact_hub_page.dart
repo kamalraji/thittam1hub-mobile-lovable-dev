@@ -563,10 +563,11 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                 backgroundColor: cs.surface,
                 surfaceTintColor: Colors.transparent,
                 pinned: true,
-                floating: false,
-                expandedHeight: 60,
-                collapsedHeight: 60,
-                toolbarHeight: 60,
+                floating: true,
+                snap: true,
+                expandedHeight: 56,
+                collapsedHeight: 56,
+                toolbarHeight: 56,
                 automaticallyImplyLeading: false,
                 title: Row(
                   children: [

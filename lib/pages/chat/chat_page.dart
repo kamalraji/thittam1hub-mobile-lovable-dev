@@ -77,6 +77,10 @@ class _ChatPageState extends State<ChatPage> {
           slivers: [
             SliverAppBar(
               pinned: true,
+              floating: true,
+              snap: true,
+              expandedHeight: AppLayout.appBarHeight,
+              toolbarHeight: AppLayout.toolbarHeight,
               automaticallyImplyLeading: false,
               title: Text('Messages', style: context.textStyles.titleLarge),
               actions: [
@@ -87,6 +91,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
             ),
             SliverToBoxAdapter(
               child: Padding(

@@ -234,93 +234,112 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _searchBar(context),
-                const SizedBox(height: 8),
-                _categoryChips(),
-                const SizedBox(height: 6),
-                _modeToggles(),
-                const SizedBox(height: 8),
-                Container(
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    indicator: BoxDecoration(
-                      color: cs.primary,
-                      borderRadius: BorderRadius.circular(999),
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            // Compact App Bar - 56px height
+            SliverAppBar(
+              floating: true,
+              snap: true,
+              backgroundColor: cs.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              expandedHeight: AppLayout.appBarHeight,
+              toolbarHeight: AppLayout.toolbarHeight,
+              automaticallyImplyLeading: false,
+              title: Text('Discover', style: textTheme.titleLarge),
+            ),
+            // Filters Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _searchBar(context),
+                    const SizedBox(height: 8),
+                    _categoryChips(),
+                    const SizedBox(height: 6),
+                    _modeToggles(),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        indicator: BoxDecoration(
+                          color: cs.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelColor: cs.onPrimary,
+                        unselectedLabelColor: cs.onSurface,
+                        labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        dividerColor: Colors.transparent,
+                        tabs: const [
+                          Tab(text: 'All Events'),
+                          Tab(text: 'Past Events'),
+                        ],
+                        onTap: (_) => setState(() {}),
+                      ),
                     ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelColor: cs.onPrimary,
-                    unselectedLabelColor: cs.onSurface,
-                    labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                    dividerColor: Colors.transparent,
-                    tabs: const [
-                      Tab(text: 'All Events'),
-                      Tab(text: 'Past Events'),
-                    ],
-                    onTap: (_) => setState(() {}),
+                  ],
+                ),
+              ),
+            ),
+            // Events List
+            SliverFillRemaining(
+              child: TabBarView(
+                controller: _tabController,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _EventsTab(
+                    key: const ValueKey('tab_all'),
+                    isLoading: _isLoading,
+                    events: _filteredForTab(0),
+                    tiersByEvent: _tiersByEvent,
+                    savedEventIds: _savedEventIds,
+                    onRefresh: () => _loadEvents(forceRefresh: true),
+                    onToggleSave: (id) => setState(() {
+                      if (_savedEventIds.contains(id)) {
+                        _savedEventIds.remove(id);
+                      } else {
+                        _savedEventIds.add(id);
+                      }
+                    }),
+                    hasPastEvents: _events.any((e) => e.endDate.isBefore(DateTime.now())),
+                    onViewPastEvents: () => setState(() => _tabController.index = 1),
+                    errorMessage: _errorMessage,
                   ),
-                ),
-              ],
+                  _EventsTab(
+                    key: const ValueKey('tab_past'),
+                    isLoading: _isLoading,
+                    events: _filteredForTab(1),
+                    tiersByEvent: _tiersByEvent,
+                    savedEventIds: _savedEventIds,
+                    onRefresh: () => _loadEvents(forceRefresh: true),
+                    onToggleSave: (id) => setState(() {
+                      if (_savedEventIds.contains(id)) {
+                        _savedEventIds.remove(id);
+                      } else {
+                        _savedEventIds.add(id);
+                      }
+                    }),
+                    isPastTab: true,
+                    errorMessage: _errorMessage,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _EventsTab(
-                  key: const ValueKey('tab_all'),
-                  isLoading: _isLoading,
-                  events: _filteredForTab(0),
-                  tiersByEvent: _tiersByEvent,
-                  savedEventIds: _savedEventIds,
-                  onRefresh: () => _loadEvents(forceRefresh: true),
-                  onToggleSave: (id) => setState(() {
-                    if (_savedEventIds.contains(id)) {
-                      _savedEventIds.remove(id);
-                    } else {
-                      _savedEventIds.add(id);
-                    }
-                  }),
-                  hasPastEvents: _events.any((e) => e.endDate.isBefore(DateTime.now())),
-                  onViewPastEvents: () => setState(() => _tabController.index = 1),
-                  errorMessage: _errorMessage,
-                ),
-                _EventsTab(
-                  key: const ValueKey('tab_past'),
-                  isLoading: _isLoading,
-                  events: _filteredForTab(1),
-                  tiersByEvent: _tiersByEvent,
-                  savedEventIds: _savedEventIds,
-                  onRefresh: () => _loadEvents(forceRefresh: true),
-                  onToggleSave: (id) => setState(() {
-                    if (_savedEventIds.contains(id)) {
-                      _savedEventIds.remove(id);
-                    } else {
-                      _savedEventIds.add(id);
-                    }
-                  }),
-                  isPastTab: true,
-                  errorMessage: _errorMessage,
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

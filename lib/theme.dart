@@ -41,6 +41,19 @@ class AppRadius {
   static const double xl = 20.0;
 }
 
+/// Standard layout constants for consistent sizing across all tabs
+class AppLayout {
+  // Standard app bar heights - compact and consistent
+  static const double appBarHeight = 56.0;
+  static const double toolbarHeight = 56.0;
+  
+  // Bottom navigation
+  static const double bottomNavHeight = 56.0;
+  
+  // Content padding (accounts for bottom nav + FAB clearance)
+  static const double bottomContentPadding = 80.0;
+}
+
 // =============================================================================
 // TEXT STYLE EXTENSIONS
 // =============================================================================
