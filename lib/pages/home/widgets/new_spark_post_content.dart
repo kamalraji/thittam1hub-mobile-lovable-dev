@@ -340,7 +340,6 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
         );
       }
     }
-    }
   }
 
   String? _validatePoll() {
