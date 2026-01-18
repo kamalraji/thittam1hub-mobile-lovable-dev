@@ -114,7 +114,6 @@ class ImpactService {
         contribution: contribution,
         icon: Icons.code_rounded,
         color: Colors.blue,
-        emoji: '💻',
       ));
     }
     
@@ -130,7 +129,6 @@ class ImpactService {
         contribution: contribution,
         icon: Icons.favorite_rounded,
         color: Colors.pink,
-        emoji: '💕',
       ));
     }
     
@@ -157,7 +155,6 @@ class ImpactService {
         icon: Icons.handshake_rounded,
         color: Colors.teal,
         isComplementary: true,
-        emoji: '🎯',
       ));
     }
     
@@ -173,7 +170,6 @@ class ImpactService {
         contribution: 15,
         icon: Icons.event_rounded,
         color: Colors.purple,
-        emoji: '📍',
       ));
     }
     
@@ -189,7 +185,6 @@ class ImpactService {
         contribution: 12,
         icon: Icons.business_rounded,
         color: Colors.blueGrey,
-        emoji: '🏢',
       ));
     }
     
@@ -205,7 +200,6 @@ class ImpactService {
         contribution: 8,
         icon: Icons.school_rounded,
         color: Colors.green,
-        emoji: '🎓',
       ));
     }
     
@@ -218,27 +212,27 @@ class ImpactService {
     insights.sort((a, b) => b.contribution.compareTo(a.contribution));
     
     // Determine summary
-    final summaryEmoji = _getScoreEmoji(totalScore);
     final summaryText = _getSummaryText(insights);
+    final summaryIcon = _getScoreIcon(totalScore);
     final primaryCategory = insights.isNotEmpty ? insights.first.category : null;
     final matchStory = _generateMatchStory(me, other, insights, totalScore);
     
     return MatchResult(
       totalScore: totalScore,
       insights: insights,
-      summaryEmoji: summaryEmoji,
+      summaryIcon: summaryIcon,
       summaryText: summaryText,
       primaryCategory: primaryCategory,
       matchStory: matchStory,
     );
   }
   
-  String _getScoreEmoji(int score) {
-    if (score >= 85) return '🔥';
-    if (score >= 70) return '⭐';
-    if (score >= 50) return '✨';
-    if (score >= 30) return '👍';
-    return '👋';
+  IconData _getScoreIcon(int score) {
+    if (score >= 85) return Icons.local_fire_department_rounded;
+    if (score >= 70) return Icons.star_rounded;
+    if (score >= 50) return Icons.auto_awesome_rounded;
+    if (score >= 30) return Icons.thumbs_up_down_rounded;
+    return Icons.waving_hand_rounded;
   }
   
   String _getSummaryText(List<MatchInsight> insights) {

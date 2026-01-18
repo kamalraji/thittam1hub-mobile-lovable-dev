@@ -197,9 +197,10 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                   children: [
                     Row(
                       children: [
-                        Text(
-                          result.summaryEmoji,
-                          style: const TextStyle(fontSize: 18),
+                        Icon(
+                          result.summaryIcon,
+                          size: 18,
+                          color: result.summaryColor,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -482,7 +483,7 @@ class MatchSummaryBadge extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(
-            result.summaryBadge.replaceFirst(result.summaryEmoji, '').trim(),
+            result.summaryBadge,
             style: TextStyle(
               color: result.summaryColor,
               fontWeight: FontWeight.w500,
