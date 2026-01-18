@@ -101,6 +101,9 @@ class SparkPost {
 class SparkService {
   final _supabase = SupabaseConfig.client;
 
+  /// Default page size for pagination
+  static const int pageSize = 15;
+
   /// Get all spark posts, optionally filtered by type
   Future<List<SparkPost>> getSparkPosts({SparkPostType? type}) async {
     try {
@@ -112,6 +115,44 @@ class SparkService {
     } catch (e) {
       debugPrint('Error fetching spark posts: $e');
       return [];
+    }
+  }
+
+  /// Get spark posts with cursor-based pagination
+  /// Returns posts, hasMore flag, and nextCursor for continuation
+  Future<({List<SparkPost> posts, bool hasMore, String? nextCursor})> getSparkPostsPaginated({
+    SparkPostType? type,
+    String? cursor, // Last post's created_at timestamp
+    int limit = pageSize,
+  }) async {
+    try {
+      var query = _supabase.from('spark_posts').select('*');
+      
+      if (type != null) {
+        query = query.eq('type', type.name);
+      }
+      
+      if (cursor != null) {
+        query = query.lt('created_at', cursor);
+      }
+      
+      final response = await query
+          .order('created_at', ascending: false)
+          .limit(limit + 1); // Fetch one extra to check if more exist
+      
+      final data = response as List;
+      final hasMore = data.length > limit;
+      final posts = data
+          .take(limit)
+          .map((d) => SparkPost.fromMap(d as Map<String, dynamic>))
+          .toList();
+      
+      final nextCursor = posts.isNotEmpty ? posts.last.createdAt.toIso8601String() : null;
+      
+      return (posts: posts, hasMore: hasMore, nextCursor: nextCursor);
+    } catch (e) {
+      debugPrint('Error fetching paginated posts: $e');
+      return (posts: <SparkPost>[], hasMore: false, nextCursor: null);
     }
   }
 

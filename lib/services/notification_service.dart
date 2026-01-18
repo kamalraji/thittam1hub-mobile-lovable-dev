@@ -132,4 +132,127 @@ class NotificationService {
       debugPrint('❌ Error creating notification: $e');
     }
   }
+
+  /// Delete a single notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _supabase
+          .from('notifications')
+          .delete()
+          .eq('id', notificationId);
+      debugPrint('🗑️ Notification deleted');
+    } catch (e) {
+      debugPrint('❌ Error deleting notification: $e');
+    }
+  }
+
+  /// Clear all notifications for current user
+  Future<void> clearAllNotifications() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase
+          .from('notifications')
+          .delete()
+          .eq('user_id', userId);
+      debugPrint('🗑️ All notifications cleared');
+    } catch (e) {
+      debugPrint('❌ Error clearing notifications: $e');
+    }
+  }
+
+  /// Get notification preferences for current user
+  Future<NotificationPreferences> getPreferences() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return const NotificationPreferences();
+
+      final response = await _supabase
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response == null) return const NotificationPreferences();
+      return NotificationPreferences.fromMap(response);
+    } catch (e) {
+      debugPrint('Error fetching notification preferences: $e');
+      return const NotificationPreferences();
+    }
+  }
+
+  /// Update a specific notification preference
+  Future<void> updatePreference(String key, bool value) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase.from('notification_preferences').upsert({
+        'user_id': userId,
+        key: value,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      debugPrint('✅ Preference updated: $key = $value');
+    } catch (e) {
+      debugPrint('❌ Error updating preference: $e');
+    }
+  }
+}
+
+/// Model for notification preferences
+class NotificationPreferences {
+  final bool connectionRequests;
+  final bool connectionAccepted;
+  final bool circleInvites;
+  final bool sparkReactions;
+  final bool achievements;
+  final bool highMatchOnline;
+
+  const NotificationPreferences({
+    this.connectionRequests = true,
+    this.connectionAccepted = true,
+    this.circleInvites = true,
+    this.sparkReactions = true,
+    this.achievements = true,
+    this.highMatchOnline = true,
+  });
+
+  factory NotificationPreferences.fromMap(Map<String, dynamic> map) {
+    return NotificationPreferences(
+      connectionRequests: map['connection_requests'] ?? true,
+      connectionAccepted: map['connection_accepted'] ?? true,
+      circleInvites: map['circle_invites'] ?? true,
+      sparkReactions: map['spark_reactions'] ?? true,
+      achievements: map['achievements'] ?? true,
+      highMatchOnline: map['high_match_online'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'connection_requests': connectionRequests,
+    'connection_accepted': connectionAccepted,
+    'circle_invites': circleInvites,
+    'spark_reactions': sparkReactions,
+    'achievements': achievements,
+    'high_match_online': highMatchOnline,
+  };
+
+  NotificationPreferences copyWith({
+    bool? connectionRequests,
+    bool? connectionAccepted,
+    bool? circleInvites,
+    bool? sparkReactions,
+    bool? achievements,
+    bool? highMatchOnline,
+  }) {
+    return NotificationPreferences(
+      connectionRequests: connectionRequests ?? this.connectionRequests,
+      connectionAccepted: connectionAccepted ?? this.connectionAccepted,
+      circleInvites: circleInvites ?? this.circleInvites,
+      sparkReactions: sparkReactions ?? this.sparkReactions,
+      achievements: achievements ?? this.achievements,
+      highMatchOnline: highMatchOnline ?? this.highMatchOnline,
+    );
+  }
 }

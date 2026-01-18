@@ -48,12 +48,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   SparkPostType? _selectedFilter;
   
+  // Pagination state
+  bool _isLoadingMore = false;
+  bool _hasMorePosts = true;
+  String? _nextCursor;
+  static const double _loadMoreThreshold = 200.0;
+  
   @override
   void initState() {
     super.initState();
     _initializeFilter();
     _loadAllData();
     _subscribeToNotifications();
+    _scrollController.addListener(_onScroll);
   }
   
   void _initializeFilter() {
@@ -83,9 +90,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _notificationSubscription?.cancel();
     super.dispose();
+  }
+  
+  /// Scroll listener for infinite scroll pagination
+  void _onScroll() {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - _loadMoreThreshold) {
+      _loadMorePosts();
+    }
+  }
+  
+  /// Load more posts for infinite scroll
+  Future<void> _loadMorePosts() async {
+    if (_isLoadingMore || !_hasMorePosts || _nextCursor == null) return;
+    
+    setState(() => _isLoadingMore = true);
+    
+    final result = await _sparkService.getSparkPostsPaginated(
+      type: _selectedFilter,
+      cursor: _nextCursor,
+    );
+    
+    if (mounted) {
+      setState(() {
+        _posts.addAll(result.posts);
+        _hasMorePosts = result.hasMore;
+        _nextCursor = result.nextCursor;
+        _isLoadingMore = false;
+      });
+    }
   }
 
   void _subscribeToNotifications() {
@@ -118,22 +155,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
 
   Future<void> _loadAllData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _posts = [];
+      _hasMorePosts = true;
+      _nextCursor = null;
+    });
     
     final results = await Future.wait([
       _homeService.getStreakData(),
       _homeService.getStoriesData(),
       _homeService.getTrendingTags(),
-      _sparkService.getSparkPosts(type: _selectedFilter),
+      _sparkService.getSparkPostsPaginated(type: _selectedFilter),
       _homeService.getActivePolls(),
     ]);
     
     if (mounted) {
+      final postsResult = results[3] as ({List<SparkPost> posts, bool hasMore, String? nextCursor});
       setState(() {
         _streakData = results[0] as StreakData?;
         _stories = results[1] as List<StoryItem>;
         _trendingTags = results[2] as List<String>;
-        _posts = results[3] as List<SparkPost>;
+        _posts = postsResult.posts;
+        _hasMorePosts = postsResult.hasMore;
+        _nextCursor = postsResult.nextCursor;
         _polls = results[4] as List<VibeGameItem>;
         _isLoading = false;
       });
@@ -330,7 +375,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       icon: Icons.notifications_outlined,
                       badgeCount: _unreadNotificationCount,
                       onPressed: () {
-                        // TODO: Open notifications page
+                        context.push(AppRoutes.notifications);
                       },
                     ),
                   ),
@@ -450,8 +495,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           )
                         : SliverList(
-                            delegate: SliverChildListDelegate(
-                              _buildFeedItems(),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final feedItems = _buildFeedItems();
+                                
+                                // Show loading indicator at end
+                                if (index == feedItems.length) {
+                                  return _LoadMoreIndicator(
+                                    isLoading: _isLoadingMore,
+                                    hasMore: _hasMorePosts,
+                                  );
+                                }
+                                
+                                return feedItems[index];
+                              },
+                              childCount: _buildFeedItems().length + (_hasMorePosts ? 1 : 0),
                             ),
                           ),
               ),
@@ -530,6 +588,62 @@ class _GlassIconButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Loading indicator for infinite scroll pagination
+class _LoadMoreIndicator extends StatelessWidget {
+  final bool isLoading;
+  final bool hasMore;
+
+  const _LoadMoreIndicator({
+    required this.isLoading,
+    required this.hasMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    if (!hasMore) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.check_circle_outline_rounded, color: cs.outline, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                'You\'re all caught up!',
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    if (isLoading) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: AlwaysStoppedAnimation(cs.primary),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return const SizedBox(height: 24);
   }
 }
 
