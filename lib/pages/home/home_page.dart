@@ -18,9 +18,7 @@ import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/nav.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
-import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
-import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class HomePage extends StatefulWidget {
@@ -46,7 +44,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreamSubscription? _notificationSubscription;
   final Set<String> _sparked = {};
   final ScrollController _scrollController = ScrollController();
-  SparkPostType? _selectedFilter;
+  // Filter removed - show all posts
   
   // Pagination state
   bool _isLoadingMore = false;
@@ -57,36 +55,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _initializeFilter();
     _loadAllData();
     _subscribeToNotifications();
     _scrollController.addListener(_onScroll);
   }
   
-  void _initializeFilter() {
-    if (widget.initialFilter != null) {
-      _selectedFilter = _parseFilter(widget.initialFilter!);
-    }
-  }
-  
-  SparkPostType? _parseFilter(String filter) {
-    switch (filter.toLowerCase()) {
-      case 'ideas':
-        return SparkPostType.IDEA;
-      case 'seeking':
-        return SparkPostType.SEEKING;
-      case 'offering':
-        return SparkPostType.OFFERING;
-      case 'question':
-      case 'qa':
-        return SparkPostType.QUESTION;
-      case 'announcement':
-      case 'announcements':
-        return SparkPostType.ANNOUNCEMENT;
-      default:
-        return null;
-    }
-  }
 
   @override
   void dispose() {
@@ -110,10 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     
     setState(() => _isLoadingMore = true);
     
-    final result = await _sparkService.getSparkPostsPaginated(
-      type: _selectedFilter,
-      cursor: _nextCursor,
-    );
+    final result = await _sparkService.getSparkPostsPaginated();
     
     if (mounted) {
       setState(() {
@@ -166,7 +136,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _homeService.getStreakData(),
       _homeService.getStoriesData(),
       _homeService.getTrendingTags(),
-      _sparkService.getSparkPostsPaginated(type: _selectedFilter),
+      _sparkService.getSparkPostsPaginated(),
       _homeService.getActivePolls(),
     ]);
     
@@ -185,32 +155,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _setFilter(SparkPostType? type) {
-    if (_selectedFilter == type) return;
-    setState(() => _selectedFilter = type);
-    
-    // Update URL with filter parameter for deep linking
-    final filterName = _filterToString(type);
-    context.replace(filterName == 'all' ? '/' : '/?filter=$filterName');
-    
-    _loadAllData();
-  }
-  
-  String _filterToString(SparkPostType? type) {
-    if (type == null) return 'all';
-    switch (type) {
-      case SparkPostType.IDEA:
-        return 'ideas';
-      case SparkPostType.SEEKING:
-        return 'seeking';
-      case SparkPostType.OFFERING:
-        return 'offering';
-      case SparkPostType.QUESTION:
-        return 'qa';
-      case SparkPostType.ANNOUNCEMENT:
-        return 'announcements';
-    }
-  }
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
@@ -407,63 +351,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
               ),
               
-              // Filter Chips - Fixed height for consistency
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: AppLayout.filterChipsHeight,
-                  child: Padding(
-                    padding: AppLayout.contentPadding,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                      children: [
-                        _FilterChip(
-                          label: 'All',
-                          icon: Icons.auto_awesome_rounded,
-                          isSelected: _selectedFilter == null,
-                          onTap: () => _setFilter(null),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Ideas',
-                          icon: Icons.lightbulb_outline_rounded,
-                          isSelected: _selectedFilter == SparkPostType.IDEA,
-                          onTap: () => _setFilter(SparkPostType.IDEA),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Seeking',
-                          icon: Icons.search_rounded,
-                          isSelected: _selectedFilter == SparkPostType.SEEKING,
-                          onTap: () => _setFilter(SparkPostType.SEEKING),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Offering',
-                          icon: Icons.card_giftcard_rounded,
-                          isSelected: _selectedFilter == SparkPostType.OFFERING,
-                          onTap: () => _setFilter(SparkPostType.OFFERING),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Q&A',
-                          icon: Icons.help_outline_rounded,
-                          isSelected: _selectedFilter == SparkPostType.QUESTION,
-                          onTap: () => _setFilter(SparkPostType.QUESTION),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Announcements',
-                          icon: Icons.campaign_outlined,
-                          isSelected: _selectedFilter == SparkPostType.ANNOUNCEMENT,
-                          onTap: () => _setFilter(SparkPostType.ANNOUNCEMENT),
-                        ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // Small spacing after stories
               
               // Feed Items
               SliverPadding(
@@ -480,19 +368,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           childCount: 5,
                         ),
                       )
-                    : _posts.isEmpty
                         ? SliverFillRemaining(
                             hasScrollBody: false,
-                            child: EnhancedEmptyState(
-                              icon: IconMappings.emptyFeed,
-                              title: 'Your Feed is Empty',
-                              subtitle: 'Be the first to share something amazing\nwith the community!',
-                              primaryButtonLabel: 'Create First Post',
-                              primaryButtonIcon: Icons.add_rounded,
-                              onPrimaryAction: () {
-                                // TODO: Open create post
-                              },
-                            ),
+                            child: _CreativeFeedEmptyState(),
                           )
                         : SliverList(
                             delegate: SliverChildBuilderDelegate(
@@ -647,81 +525,242 @@ class _LoadMoreIndicator extends StatelessWidget {
   }
 }
 
+/// Creative animated empty state for the feed
+class _CreativeFeedEmptyState extends StatefulWidget {
+  const _CreativeFeedEmptyState();
 
-/// Glassmorphism filter chip for post type filtering
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
+  @override
+  State<_CreativeFeedEmptyState> createState() => _CreativeFeedEmptyStateState();
+}
 
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
+class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
+    with TickerProviderStateMixin {
+  late AnimationController _floatController;
+  late AnimationController _pulseController;
+  late Animation<double> _floatAnimation;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat(reverse: true);
+    
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    
+    _floatAnimation = Tween<double>(begin: -8, end: 8).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+    
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _floatController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textTheme = Theme.of(context).textTheme;
     
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [cs.primary, cs.tertiary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected 
-              ? null 
-              : isDark 
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected 
-                ? Colors.transparent
-                : isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : cs.outline.withValues(alpha: 0.2),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: cs.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : cs.onSurfaceVariant,
+            // Animated floating circles illustration
+            SizedBox(
+              height: 160,
+              width: 200,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Background glow
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) => Container(
+                      width: 120 * _pulseAnimation.value,
+                      height: 120 * _pulseAnimation.value,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            cs.primary.withValues(alpha: 0.15),
+                            cs.primary.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Floating circles
+                  AnimatedBuilder(
+                    animation: _floatAnimation,
+                    builder: (context, child) => Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Large center circle
+                        Transform.translate(
+                          offset: Offset(0, _floatAnimation.value),
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [cs.primary, cs.tertiary],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: cs.primary.withValues(alpha: 0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                        // Small floating circles
+                        Transform.translate(
+                          offset: Offset(-60, _floatAnimation.value * 0.6 - 20),
+                          child: _FloatingDot(
+                            size: 24,
+                            color: cs.secondary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        Transform.translate(
+                          offset: Offset(65, _floatAnimation.value * 0.8 + 10),
+                          child: _FloatingDot(
+                            size: 20,
+                            color: Colors.orange.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        Transform.translate(
+                          offset: Offset(-40, _floatAnimation.value * 0.4 + 40),
+                          child: _FloatingDot(
+                            size: 16,
+                            color: Colors.pink.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        Transform.translate(
+                          offset: Offset(50, _floatAnimation.value * 0.5 - 35),
+                          child: _FloatingDot(
+                            size: 12,
+                            color: Colors.green.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 6),
+            
+            const SizedBox(height: 24),
+            
+            // Gradient title
+            ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                colors: [cs.primary, cs.tertiary],
+              ).createShader(bounds),
+              child: Text(
+                'The spark starts with you',
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Subtitle hint
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : cs.onSurface,
+              'Tap + to share your first thought',
+              style: textTheme.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Animated arrow pointing to FAB
+            AnimatedBuilder(
+              animation: _floatAnimation,
+              builder: (context, child) => Transform.translate(
+                offset: Offset(_floatAnimation.value * 2, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: cs.primary.withValues(alpha: 0.6),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: cs.primary.withValues(alpha: 0.4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: cs.primary.withValues(alpha: 0.2),
+                      size: 12,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FloatingDot extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _FloatingDot({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
     );
   }

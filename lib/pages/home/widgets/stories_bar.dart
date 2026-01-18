@@ -60,8 +60,8 @@ class _AddStoryButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -74,12 +74,12 @@ class _AddStoryButton extends StatelessWidget {
                 ),
                 border: Border.all(
                   color: cs.outline.withValues(alpha: 0.2),
-                  width: 2,
+                  width: 1.5,
                   strokeAlign: BorderSide.strokeAlignOutside,
                 ),
               ),
               child: Container(
-                margin: const EdgeInsets.all(2),
+                margin: const EdgeInsets.all(1.5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isDark ? cs.surfaceContainerHigh : cs.surfaceContainerLowest,
@@ -87,11 +87,11 @@ class _AddStoryButton extends StatelessWidget {
                 child: Icon(
                   Icons.add_rounded,
                   color: cs.primary,
-                  size: 32,
+                  size: 24,
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               'Create',
               style: textTheme.labelSmall?.copyWith(
@@ -227,8 +227,8 @@ class _StoryItemState extends State<_StoryItem> with SingleTickerProviderStateMi
                     return Transform.rotate(
                       angle: _ringAnimController.value * 2 * math.pi,
                       child: Container(
-                        width: 76,
-                        height: 76,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: SweepGradient(
@@ -244,8 +244,8 @@ class _StoryItemState extends State<_StoryItem> with SingleTickerProviderStateMi
                 ),
                 // Inner white/surface ring
                 Container(
-                  width: 70,
-                  height: 70,
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: cs.surface,
@@ -253,13 +253,13 @@ class _StoryItemState extends State<_StoryItem> with SingleTickerProviderStateMi
                 ),
                 // Avatar
                 CircleAvatar(
-                  radius: 32,
+                  radius: 24,
                   backgroundColor: cs.surfaceContainerHighest,
                   backgroundImage: widget.story.avatarUrl != null 
                       ? NetworkImage(widget.story.avatarUrl!)
                       : null,
                   child: widget.story.avatarUrl == null 
-                      ? Icon(_getDefaultIcon(), color: ringColor, size: 28)
+                      ? Icon(_getDefaultIcon(), color: ringColor, size: 22)
                       : null,
                 ),
                 // Live indicator
@@ -298,14 +298,15 @@ class _StoryItemState extends State<_StoryItem> with SingleTickerProviderStateMi
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             SizedBox(
-              width: 72,
+              width: 56,
               child: Text(
                 _getLabel(),
                 style: textTheme.labelSmall?.copyWith(
                   color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
+                  fontSize: 9,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -406,15 +407,15 @@ class StoriesBarSkeleton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ShimmerPlaceholder(
-                  width: 72,
-                  height: 72,
+                  width: 56,
+                  height: 56,
                   isCircle: true,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 ShimmerPlaceholder(
-                  width: 48,
-                  height: 12,
-                  borderRadius: BorderRadius.circular(6),
+                  width: 40,
+                  height: 10,
+                  borderRadius: BorderRadius.circular(5),
                 ),
               ],
             ),

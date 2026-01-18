@@ -54,8 +54,8 @@ class AppLayout {
   static const double bottomContentPadding = 80.0;
   
   // Content component heights for consistent sizing
-  static const double storiesBarHeight = 110.0;
-  static const double filterChipsHeight = 48.0;
+  static const double storiesBarHeight = 90.0;
+  static const double filterChipsHeight = 44.0;
   
   // Standard content insets
   static const EdgeInsets horizontalPadding = EdgeInsets.symmetric(horizontal: 16.0);
