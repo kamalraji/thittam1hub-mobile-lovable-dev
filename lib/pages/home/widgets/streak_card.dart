@@ -118,10 +118,11 @@ class _StreakCardState extends State<StreakCard> with TickerProviderStateMixin {
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.15),
                             ),
-                            child: const Center(
-                              child: Text(
-                                '🔥',
-                                style: TextStyle(fontSize: 36),
+                            child: Center(
+                              child: Icon(
+                                Icons.local_fire_department_rounded,
+                                size: 36,
+                                color: Colors.orange,
                               ),
                             ),
                           ),

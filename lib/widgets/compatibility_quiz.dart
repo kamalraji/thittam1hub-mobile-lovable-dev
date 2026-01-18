@@ -255,19 +255,19 @@ class CompatibilityResultCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     Color scoreColor;
-    String scoreEmoji;
+    IconData scoreIcon;
     if (score >= 80) {
       scoreColor = Colors.green;
-      scoreEmoji = '🎉';
+      scoreIcon = Icons.celebration_rounded;
     } else if (score >= 60) {
       scoreColor = Colors.blue;
-      scoreEmoji = '😊';
+      scoreIcon = Icons.sentiment_satisfied_alt_rounded;
     } else if (score >= 40) {
       scoreColor = Colors.orange;
-      scoreEmoji = '🤔';
+      scoreIcon = Icons.sentiment_neutral_rounded;
     } else {
       scoreColor = Colors.red;
-      scoreEmoji = '😅';
+      scoreIcon = Icons.sentiment_dissatisfied_rounded;
     }
 
     return Card(
@@ -278,7 +278,7 @@ class CompatibilityResultCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(scoreEmoji, style: const TextStyle(fontSize: 48)),
+            Icon(scoreIcon, size: 56, color: scoreColor),
             const SizedBox(height: 8),
             Text(
               '$score%',

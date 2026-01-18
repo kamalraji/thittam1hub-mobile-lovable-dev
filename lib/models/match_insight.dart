@@ -22,7 +22,6 @@ class MatchInsight {
   final IconData icon;
   final Color color;
   final bool isComplementary;   // True if goal-based (you offer what they seek)
-  final String? emoji;
 
   const MatchInsight({
     required this.category,
@@ -33,72 +32,61 @@ class MatchInsight {
     required this.icon,
     required this.color,
     this.isComplementary = false,
-    this.emoji,
   });
   
   /// Get the category metadata
-  static Map<MatchCategory, _CategoryMeta> categoryMeta = {
-    MatchCategory.skills: _CategoryMeta(
+  static Map<MatchCategory, CategoryMeta> categoryMeta = {
+    MatchCategory.skills: CategoryMeta(
       icon: Icons.code_rounded,
       color: Colors.blue,
-      emoji: '💻',
       label: 'Professional',
     ),
-    MatchCategory.interests: _CategoryMeta(
+    MatchCategory.interests: CategoryMeta(
       icon: Icons.favorite_rounded,
       color: Colors.pink,
-      emoji: '💕',
       label: 'Shared Passions',
     ),
-    MatchCategory.goals: _CategoryMeta(
+    MatchCategory.goals: CategoryMeta(
       icon: Icons.handshake_rounded,
       color: Colors.teal,
-      emoji: '🎯',
       label: 'Goal Match',
     ),
-    MatchCategory.network: _CategoryMeta(
+    MatchCategory.network: CategoryMeta(
       icon: Icons.people_rounded,
       color: Colors.indigo,
-      emoji: '👥',
       label: 'Network',
     ),
-    MatchCategory.activity: _CategoryMeta(
+    MatchCategory.activity: CategoryMeta(
       icon: Icons.event_rounded,
       color: Colors.purple,
-      emoji: '📍',
       label: 'Same Event',
     ),
-    MatchCategory.community: _CategoryMeta(
+    MatchCategory.community: CategoryMeta(
       icon: Icons.groups_rounded,
       color: Colors.orange,
-      emoji: '🏠',
       label: 'Same Community',
     ),
-    MatchCategory.education: _CategoryMeta(
+    MatchCategory.education: CategoryMeta(
       icon: Icons.school_rounded,
       color: Colors.green,
-      emoji: '🎓',
       label: 'Academic',
     ),
-    MatchCategory.organization: _CategoryMeta(
+    MatchCategory.organization: CategoryMeta(
       icon: Icons.business_rounded,
       color: Colors.blueGrey,
-      emoji: '🏢',
       label: 'Same Org',
     ),
   };
 }
 
-class _CategoryMeta {
+class CategoryMeta {
   final IconData icon;
   final Color color;
-  final String emoji;
   final String label;
   
-  const _CategoryMeta({
+  const CategoryMeta({
     required this.icon,
     required this.color,
-    required this.emoji,
     required this.label,
   });
 }
@@ -107,7 +95,7 @@ class _CategoryMeta {
 class MatchResult {
   final int totalScore;
   final List<MatchInsight> insights;  // Ordered by contribution
-  final String summaryEmoji;          // "🔥" for high match
+  final IconData summaryIcon;          // Icon for high match (e.g., Icons.local_fire_department)
   final String summaryText;           // "Strong professional match"
   final MatchCategory? primaryCategory; // Dominant match type
   final String? matchStory;           // Human-readable narrative
@@ -115,7 +103,7 @@ class MatchResult {
   const MatchResult({
     required this.totalScore,
     required this.insights,
-    required this.summaryEmoji,
+    required this.summaryIcon,
     required this.summaryText,
     this.primaryCategory,
     this.matchStory,
@@ -125,13 +113,19 @@ class MatchResult {
   String get summaryBadge {
     if (primaryCategory == null) return 'New Connection';
     final meta = MatchInsight.categoryMeta[primaryCategory];
-    return '${meta?.emoji ?? ''} ${meta?.label ?? 'Match'}';
+    return meta?.label ?? 'Match';
   }
   
   /// Get color for summary badge
   Color get summaryColor {
     if (primaryCategory == null) return Colors.grey;
     return MatchInsight.categoryMeta[primaryCategory]?.color ?? Colors.grey;
+  }
+  
+  /// Get icon for summary badge
+  IconData get summaryBadgeIcon {
+    if (primaryCategory == null) return Icons.person_add_rounded;
+    return MatchInsight.categoryMeta[primaryCategory]?.icon ?? Icons.auto_awesome_rounded;
   }
   
   /// Check if this is a strong match (>70%)

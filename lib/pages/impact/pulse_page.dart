@@ -796,9 +796,10 @@ class _IntentCardState extends State<_IntentCard>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      widget.config.emoji,
-                      style: TextStyle(fontSize: 28),
+                    Icon(
+                      widget.config.icon,
+                      size: 28,
+                      color: widget.isSelected ? widget.config.color : cs.onSurfaceVariant,
                     ),
                     SizedBox(height: 6),
                     Text(
@@ -859,7 +860,7 @@ class _ActiveIntentBadge extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(config.emoji, style: TextStyle(fontSize: 14)),
+                Icon(config.icon, size: 16, color: config.color),
                 SizedBox(width: 6),
                 Text(
                   'Looking for ${config.label}',
@@ -1065,7 +1066,7 @@ class _FilterSheetState extends State<FilterSheet> {
           children: IntentConfig.all.map((config) {
             final isSelected = _lookingFor.contains(config.key);
             return FilterChip(
-              avatar: Text(config.emoji, style: TextStyle(fontSize: 14)),
+              avatar: Icon(config.icon, size: 18, color: isSelected ? Colors.white : config.color),
               label: Text(config.label),
               selected: isSelected,
               onSelected: (value) {
@@ -1453,9 +1454,15 @@ class _ProfileCardState extends State<ProfileCard>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Vibe: ${widget.profile.vibeEmoji}',
-                                    style: textTheme.titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.bold)),
+                                Row(
+                                  children: [
+                                    Icon(Icons.auto_awesome_rounded, size: 18, color: cs.primary),
+                                    SizedBox(width: 6),
+                                    Text('Vibe',
+                                        style: textTheme.titleSmall
+                                            ?.copyWith(fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 4),
@@ -1465,11 +1472,18 @@ class _ProfileCardState extends State<ProfileCard>
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text('🔥 Level ${widget.profile.level}',
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14)),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.local_fire_department_rounded, size: 16, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text('Level ${widget.profile.level}',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -1552,8 +1566,15 @@ class _ProfileCardState extends State<ProfileCard>
       spacing: 6,
       runSpacing: 6,
       children: [
-        Text('🎯 Looking for:',
-            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.gps_fixed_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+            SizedBox(width: 4),
+            Text('Looking for:',
+                style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          ],
+        ),
         ...lookingForItems.take(3).map((item) {
           final config = IntentConfig.getByKey(item);
           final isMatched = widget.selectedIntent == item ||
@@ -1576,7 +1597,7 @@ class _ProfileCardState extends State<ProfileCard>
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (config != null) ...[
-                  Text(config.emoji, style: TextStyle(fontSize: 12)),
+                  Icon(config.icon, size: 14, color: config.color),
                   SizedBox(width: 4),
                 ],
                 Text(

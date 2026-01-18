@@ -244,7 +244,7 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(meta?.emoji ?? '✨', style: const TextStyle(fontSize: 10)),
+                    Icon(meta?.icon ?? Icons.auto_awesome_rounded, size: 12, color: insight.color),
                     const SizedBox(width: 4),
                     Text(
                       '+${insight.contribution}%',
@@ -308,7 +308,7 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Text(meta?.emoji ?? '✨', style: const TextStyle(fontSize: 16)),
+              child: Icon(meta?.icon ?? Icons.auto_awesome_rounded, size: 20, color: insight.color),
             ),
           ),
           const SizedBox(width: 12),
@@ -332,9 +332,16 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                           color: Colors.teal.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          '🤝 Perfect Fit',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.handshake_rounded, size: 10, color: Colors.teal),
+                            SizedBox(width: 3),
+                            Text(
+                              'Perfect Fit',
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -419,7 +426,7 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('💡', style: TextStyle(fontSize: 18)),
+          Icon(Icons.lightbulb_outline_rounded, size: 20, color: cs.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

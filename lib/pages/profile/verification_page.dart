@@ -105,7 +105,7 @@ class _VerificationPageState extends State<VerificationPage> {
       Navigator.pop(context); // Close dialog
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('LinkedIn submitted for verification! 💼')),
+          const SnackBar(content: Text('LinkedIn submitted for verification!')),
         );
         _linkedInController.clear();
         _loadStatus();

@@ -418,11 +418,23 @@ class PopularCircleCard extends StatelessWidget {
               SizedBox(height: 4),
               Text(circle.description ?? '', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 2, overflow: TextOverflow.ellipsis),
               Spacer(),
-              Text('👥 ${circle.tags.join(', ')}', style: textTheme.bodySmall),
+              Row(
+                children: [
+                  Icon(Icons.group_rounded, size: 14, color: cs.onSurfaceVariant),
+                  SizedBox(width: 4),
+                  Expanded(child: Text(circle.tags.join(', '), style: textTheme.bodySmall, overflow: TextOverflow.ellipsis)),
+                ],
+              ),
               SizedBox(height: 8),
               ElevatedButton(
                 onPressed: onJoinToggle,
-                child: Text(isJoined ? 'Joined ✓' : 'Join Circle'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(isJoined ? 'Joined' : 'Join Circle'),
+                    if (isJoined) ...[SizedBox(width: 4), Icon(Icons.check_rounded, size: 16)],
+                  ],
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isJoined ? cs.surfaceContainerHighest : cs.primary,
                   foregroundColor: isJoined ? cs.onSurfaceVariant : cs.onPrimary,
