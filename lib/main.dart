@@ -71,17 +71,32 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeService>(
-      builder: (context, themeService, _) => MaterialApp.router(
-        title: 'Thittam1hub',
-        debugShowCheckedModeBanner: false,
+      builder: (context, themeService, _) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) => MaterialApp.router(
+          title: 'Thittam1hub',
+          debugShowCheckedModeBanner: false,
 
-        // Theme configuration
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        themeMode: themeService.themeMode,
+          // Theme configuration with smooth transition
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeService.themeMode,
+          
+          // Smooth theme transition animation
+          builder: (context, child) {
+            return AnimatedTheme(
+              data: Theme.of(context),
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
 
-        // Router configuration
-        routerConfig: AppRouter.createRouter(),
+          // Router configuration
+          routerConfig: AppRouter.createRouter(),
+        ),
       ),
     );
   }
