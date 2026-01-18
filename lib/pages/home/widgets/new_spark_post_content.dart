@@ -90,20 +90,28 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
             Wrap(
               spacing: 8,
               children: SparkPostType.values.map((type) {
-                final emoji = {
-                  SparkPostType.IDEA: '💡',
-                  SparkPostType.SEEKING: '🔍',
-                  SparkPostType.OFFERING: '🎁',
-                  SparkPostType.QUESTION: '❓',
-                  SparkPostType.ANNOUNCEMENT: '📢',
-                }[type];
+                final icon = {
+                  SparkPostType.IDEA: Icons.lightbulb_outline_rounded,
+                  SparkPostType.SEEKING: Icons.search_rounded,
+                  SparkPostType.OFFERING: Icons.card_giftcard_rounded,
+                  SparkPostType.QUESTION: Icons.help_outline_rounded,
+                  SparkPostType.ANNOUNCEMENT: Icons.campaign_outlined,
+                }[type]!;
                 return ChoiceChip(
-                  label: Text('$emoji ${type.name}'),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 16, color: _selectedType == type ? cs.onPrimary : cs.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(type.name),
+                    ],
+                  ),
                   selected: _selectedType == type,
                   onSelected: (selected) {
                     if (selected) setState(() => _selectedType = type);
                   },
-                  selectedColor: cs.primary.withValues(alpha: 0.2),
+                  selectedColor: cs.primary,
+                  labelStyle: TextStyle(color: _selectedType == type ? cs.onPrimary : cs.onSurface),
                 );
               }).toList(),
             ),

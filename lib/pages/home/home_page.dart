@@ -332,42 +332,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       children: [
                         _FilterChip(
                           label: 'All',
-                          emoji: '✨',
+                          icon: Icons.auto_awesome_rounded,
                           isSelected: _selectedFilter == null,
                           onTap: () => _setFilter(null),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           label: 'Ideas',
-                          emoji: '💡',
+                          icon: Icons.lightbulb_outline_rounded,
                           isSelected: _selectedFilter == SparkPostType.IDEA,
                           onTap: () => _setFilter(SparkPostType.IDEA),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           label: 'Seeking',
-                          emoji: '🔍',
+                          icon: Icons.search_rounded,
                           isSelected: _selectedFilter == SparkPostType.SEEKING,
                           onTap: () => _setFilter(SparkPostType.SEEKING),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           label: 'Offering',
-                          emoji: '🎁',
+                          icon: Icons.card_giftcard_rounded,
                           isSelected: _selectedFilter == SparkPostType.OFFERING,
                           onTap: () => _setFilter(SparkPostType.OFFERING),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           label: 'Q&A',
-                          emoji: '❓',
+                          icon: Icons.help_outline_rounded,
                           isSelected: _selectedFilter == SparkPostType.QUESTION,
                           onTap: () => _setFilter(SparkPostType.QUESTION),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           label: 'Announcements',
-                          emoji: '📢',
+                          icon: Icons.campaign_outlined,
                           isSelected: _selectedFilter == SparkPostType.ANNOUNCEMENT,
                           onTap: () => _setFilter(SparkPostType.ANNOUNCEMENT),
                         ),
@@ -559,13 +559,13 @@ class _EmptyFeedState extends StatelessWidget {
 /// Glassmorphism filter chip for post type filtering
 class _FilterChip extends StatelessWidget {
   final String label;
-  final String emoji;
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.isSelected,
     required this.onTap,
   });
@@ -614,7 +614,11 @@ class _FilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 14)),
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : cs.onSurfaceVariant,
+            ),
             const SizedBox(width: 6),
             Text(
               label,
