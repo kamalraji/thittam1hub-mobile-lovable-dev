@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:thittam1hub/pages/home/home_service.dart';
 import 'package:thittam1hub/pages/home/widgets/stories_bar.dart';
-import 'package:thittam1hub/pages/home/widgets/streak_card.dart';
+import 'package:thittam1hub/pages/home/widgets/streak_badge.dart';
 import 'package:thittam1hub/pages/home/widgets/quick_poll_card.dart';
 import 'package:thittam1hub/pages/home/widgets/spark_feed_card.dart';
 import 'package:thittam1hub/pages/home/widgets/trending_topics.dart';
@@ -323,6 +323,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
                 actions: [
+                  // Compact Streak Badge
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _isLoading
+                        ? const StreakBadgeSkeleton()
+                        : StreakBadge(
+                            streakData: _streakData,
+                            onTap: () async {
+                              if (_streakData != null && !_streakData!.completedToday) {
+                                HapticFeedback.mediumImpact();
+                                await _homeService.completeStreakAction();
+                                _loadAllData();
+                              }
+                            },
+                          ),
+                  ),
                   // Notification button with glassmorphism
                   Padding(
                     padding: const EdgeInsets.only(right: 4),
@@ -417,23 +433,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
               
-              // Streak Card (if streak is at risk)
-              if (_streakData != null && !_streakData!.completedToday)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: FadeSlideTransition(
-                      child: StreakCard(
-                        streakData: _streakData!,
-                        onActionTap: () async {
-                          HapticFeedback.mediumImpact();
-                          await _homeService.completeStreakAction();
-                          _loadAllData();
-                        },
-                      ),
-                    ),
-                  ),
-                ),
+              // Removed large streak card - now using compact badge in app bar
               
               // Feed Items
               SliverPadding(
