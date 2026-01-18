@@ -232,19 +232,19 @@ class _BrandedLoader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   gradient: LinearGradient(
                     colors: [
-                      cs.primary.withValues(alpha: isDark ? 0.3 : 0.15),
-                      cs.tertiary.withValues(alpha: isDark ? 0.2 : 0.1),
+                      cs.primary.withOpacity(isDark ? 0.3 : 0.15),
+                      cs.tertiary.withOpacity(isDark ? 0.2 : 0.1),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   border: Border.all(
-                    color: cs.primary.withValues(alpha: 0.3),
+                    color: cs.primary.withOpacity(0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.2),
+                      color: cs.primary.withOpacity(0.2),
                       blurRadius: 20,
                       spreadRadius: 2,
                     ),
@@ -279,7 +279,7 @@ class _BrandedLoader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: cs.primary.withValues(alpha: 0.3),
+                            color: cs.primary.withOpacity(0.3),
                             blurRadius: 8,
                           ),
                         ],
@@ -362,7 +362,7 @@ class _SpinnerPainter extends CustomPainter {
     final fadePaint = Paint()
       ..shader = SweepGradient(
         colors: [
-          color.withValues(alpha: 0.0),
+          color.withOpacity(0.0),
           color,
         ],
         startAngle: -math.pi / 2,
@@ -395,7 +395,7 @@ class _ProgressArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final backgroundPaint = Paint()
-      ..color = color.withValues(alpha: 0.2)
+      ..color = color.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;

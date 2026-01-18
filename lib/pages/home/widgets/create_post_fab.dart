@@ -23,7 +23,7 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
   late Animation<double> _expandAnimation;
   late AnimationController _rotationController;
   late Animation<double> _rotationAnimation;
-  
+
   // Staggered animations for each option
   late Animation<double> _option1Animation;
   late Animation<double> _option2Animation;
@@ -40,7 +40,7 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
       parent: _animationController,
       curve: Curves.easeOutBack,
     );
-    
+
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -48,7 +48,7 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
     _rotationAnimation = Tween<double>(begin: 0, end: 0.125).animate(
       CurvedAnimation(parent: _rotationController, curve: Curves.easeOut),
     );
-    
+
     // Staggered animations
     _option1Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -94,17 +94,21 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
   void _createPost() {
     _toggle();
     final sparkService = SparkService();
-    
+
     showGlassBottomSheet(
       context: context,
       title: 'New Post',
       child: NewSparkPostContent(
-        onSubmit: (type, title, content, tags) async {
+        onSubmit: (type, title, content, tags, {gifUrl, imageUrl, linkUrl, pollId}) async {
           await sparkService.createSparkPost(
             type: type,
             title: title,
             content: content,
             tags: tags,
+            gifUrl: gifUrl,
+            imageUrl: imageUrl,
+            linkUrl: linkUrl,
+            pollId: pollId,
           );
           widget.onPostCreated();
         },
@@ -210,14 +214,14 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
                       sigmaY: 5 * _expandAnimation.value,
                     ),
                     child: Container(
-                      color: Colors.black.withValues(alpha: 0.2 * _expandAnimation.value),
+                      color: Colors.black.withOpacity(0.2 * _expandAnimation.value),
                     ),
                   );
                 },
               ),
             ),
           ),
-        
+
         // FAB Column
         Column(
           mainAxisSize: MainAxisSize.min,
@@ -236,7 +240,10 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
               animation: _option2Animation,
               icon: Icons.poll_rounded,
               label: 'Poll',
-              gradientColors: [Colors.purple.shade500, Colors.deepPurple.shade400],
+              gradientColors: [
+                Colors.purple.shade500,
+                Colors.deepPurple.shade400
+              ],
               onTap: _createPoll,
             ),
             const SizedBox(height: 10),
@@ -248,7 +255,7 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
               onTap: _createPost,
             ),
             const SizedBox(height: 12),
-            
+
             // Main FAB with glassmorphism
             AnimatedBuilder(
               animation: _rotationAnimation,
@@ -263,7 +270,7 @@ class _CreatePostFabState extends State<CreatePostFab> with TickerProviderStateM
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: cs.primary.withValues(alpha: 0.4),
+                        color: cs.primary.withOpacity(0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -319,7 +326,7 @@ class _AnimatedFabOption extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
@@ -339,20 +346,21 @@ class _AnimatedFabOption extends StatelessWidget {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : cs.surface.withValues(alpha: 0.9),
+                              ? Colors.white.withOpacity(0.15)
+                              : cs.surface.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.1)
-                                : cs.outline.withValues(alpha: 0.1),
+                                ? Colors.white.withOpacity(0.1)
+                                : cs.outline.withOpacity(0.1),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -368,7 +376,7 @@ class _AnimatedFabOption extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  
+
                   // Icon button with gradient
                   Container(
                     decoration: BoxDecoration(
@@ -380,7 +388,7 @@ class _AnimatedFabOption extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: gradientColors[0].withValues(alpha: 0.4),
+                          color: gradientColors[0].withOpacity(0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),

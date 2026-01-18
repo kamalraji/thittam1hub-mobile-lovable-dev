@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/models/connection_request_item.dart';
+import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'pulse_page.dart';
 import 'circles_page.dart';
 import 'vibe_page.dart';
@@ -20,7 +21,7 @@ class ImpactHubPage extends StatefulWidget {
   final String? initialMode;
 
   const ImpactHubPage({
-    Key? key, 
+    Key? key,
     this.initialTab,
     this.initialIntent,
     this.initialMode,
@@ -47,14 +48,14 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   String _searchQuery = '';
 
   List<Widget> get _pages => [
-    PulsePage(
-      initialIntent: widget.initialIntent,
-      initialMode: widget.initialMode,
-      searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
-    ),
-    CirclesPage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
-    VibePage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
-  ];
+        PulsePage(
+          initialIntent: widget.initialIntent,
+          initialMode: widget.initialMode,
+          searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
+        ),
+        CirclesPage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
+        VibePage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
+      ];
 
   static const _tabNames = ['pulse', 'circles', 'vibe'];
   static const _tabLabels = ['Pulse', 'Circles', 'Vibe'];
@@ -161,7 +162,6 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     if (mounted) setState(() => _pendingRequests = items);
   }
 
-
   void _showRequestsSheet() async {
     await _loadPendingRequests();
     if (!mounted) return;
@@ -253,7 +253,6 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     );
   }
 
-
   void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
@@ -331,16 +330,20 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                   height: _isSearching ? 64 : 0,
                   child: _isSearching
                       ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8),
                           child: TextField(
                             controller: _searchController,
                             autofocus: true,
                             decoration: InputDecoration(
                               hintText: _getSearchHint(),
-                              prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                              prefixIcon: Icon(Icons.search,
+                                  color: cs.onSurfaceVariant),
                               suffixIcon: _searchQuery.isNotEmpty
                                   ? IconButton(
-                                      icon: Icon(Icons.clear, color: cs.onSurfaceVariant),
+                                      icon: Icon(Icons.clear,
+                                          color: cs.onSurfaceVariant),
                                       onPressed: () {
                                         _searchController.clear();
                                         _onSearchChanged('');
@@ -353,7 +356,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                               ),
                               filled: true,
                               fillColor: cs.surfaceContainerHighest,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                             onChanged: _onSearchChanged,
                           ),
@@ -455,9 +459,9 @@ class _TabDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: cs.primary.withValues(alpha: 0.1),
+          color: cs.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+          border: Border.all(color: cs.primary.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -564,12 +568,12 @@ class _ImpactScoreBadge extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                cs.primary.withValues(alpha: 0.15),
-                cs.tertiary.withValues(alpha: 0.1),
+                cs.primary.withOpacity(0.15),
+                cs.tertiary.withOpacity(0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+            border: Border.all(color: cs.primary.withOpacity(0.2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -589,7 +593,7 @@ class _ImpactScoreBadge extends StatelessWidget {
                 height: 3,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: cs.onSurfaceVariant.withOpacity(0.5),
                 ),
               ),
               Text(
@@ -869,7 +873,7 @@ class _BadgesContentState extends State<BadgesContent> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _getBadgeColor(rarity).withValues(alpha: 0.2),
+                color: _getBadgeColor(rarity).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(_getBadgeIcon(category),
@@ -883,7 +887,7 @@ class _BadgesContentState extends State<BadgesContent> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getBadgeColor(rarity).withValues(alpha: 0.2),
+                color: _getBadgeColor(rarity).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -1038,4 +1042,3 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
     );
   }
 }
-

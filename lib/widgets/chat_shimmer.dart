@@ -54,26 +54,26 @@ class _ChatTileShimmer extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: ShimmerPlaceholder(
                         width: 120,
                         height: 14,
-                        borderRadius: 4,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     const SizedBox(width: 8),
                     ShimmerPlaceholder(
                       width: 40,
                       height: 12,
-                      borderRadius: 4,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                const ShimmerPlaceholder(
+                ShimmerPlaceholder(
                   width: double.infinity,
                   height: 12,
-                  borderRadius: 4,
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ],
             ),
@@ -111,12 +111,12 @@ class MessageShimmer extends StatelessWidget {
             crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               if (!isMe)
-                const Padding(
-                  padding: EdgeInsets.only(left: 6, bottom: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 6, bottom: 4),
                   child: ShimmerPlaceholder(
                     width: 80,
                     height: 10,
-                    borderRadius: 4,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               
@@ -132,13 +132,13 @@ class MessageShimmer extends StatelessWidget {
                     ShimmerPlaceholder(
                       width: 180 + (isMe ? -30 : 0),
                       height: 12,
-                      borderRadius: 4,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     const SizedBox(height: 6),
                     ShimmerPlaceholder(
                       width: 120 + (isMe ? -20 : 0),
                       height: 12,
-                      borderRadius: 4,
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ],
                 ),

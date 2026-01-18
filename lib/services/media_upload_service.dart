@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
+import 'package:storage_client/storage_client.dart' as storage;
 
 class ImageValidationError implements Exception {
   final String message;
@@ -57,7 +58,7 @@ class MediaUploadService {
       // Upload to Supabase Storage
       await _supabase.storage
           .from(sparkPostsBucket)
-          .uploadBinary(path, bytes, fileOptions: FileOptions(
+          .uploadBinary(path, bytes, fileOptions: storage.FileOptions(
             contentType: 'image/$ext',
             upsert: true,
           ));
@@ -110,15 +111,4 @@ class MediaUploadService {
     final bytes = await validateAndProcessImage(image);
     return (bytes: bytes, name: image.name);
   }
-}
-
-/// File options for Supabase Storage
-class FileOptions {
-  final String contentType;
-  final bool upsert;
-  
-  const FileOptions({
-    required this.contentType,
-    this.upsert = false,
-  });
 }

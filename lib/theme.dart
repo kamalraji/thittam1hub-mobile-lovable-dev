@@ -124,7 +124,7 @@ extension ThemeContext on BuildContext {
   Color get textMuted => colors.onSurfaceVariant;
   
   /// Semantic divider color (adapts to theme)
-  Color get dividerColor => colors.outline.withValues(alpha: 0.5);
+  Color get dividerColor => colors.outline.withAlpha(128);
 }
 
 // =============================================================================
@@ -226,7 +226,7 @@ ThemeData get lightTheme => ThemeData(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
       side: BorderSide(
-        color: AppColors.border.withValues(alpha: 0.6),
+        color: AppColors.border.withAlpha(153),
         width: 1,
       ),
     ),
@@ -241,7 +241,7 @@ ThemeData get lightTheme => ThemeData(
       return Colors.grey[400];
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
-      if (states.contains(WidgetState.selected)) return AppColors.primary.withValues(alpha: 0.5);
+      if (states.contains(WidgetState.selected)) return AppColors.primary.withAlpha(128);
       return Colors.grey[300];
     }),
   ),
@@ -279,7 +279,7 @@ ThemeData get darkTheme => ThemeData(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
       side: BorderSide(
-        color: AppColors.borderDark.withValues(alpha: 0.6),
+        color: AppColors.borderDark.withAlpha(153),
         width: 1,
       ),
     ),
@@ -294,7 +294,7 @@ ThemeData get darkTheme => ThemeData(
       return Colors.grey[600];
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
-      if (states.contains(WidgetState.selected)) return AppColors.primary.withValues(alpha: 0.5);
+      if (states.contains(WidgetState.selected)) return AppColors.primary.withAlpha(128);
       return Colors.grey[800];
     }),
   ),

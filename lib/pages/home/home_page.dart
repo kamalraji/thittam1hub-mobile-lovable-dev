@@ -23,7 +23,7 @@ import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class HomePage extends StatefulWidget {
   final String? initialFilter;
-  
+
   const HomePage({Key? key, this.initialFilter}) : super(key: key);
 
   @override
@@ -33,7 +33,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final HomeService _homeService = HomeService();
   final SparkService _sparkService = SparkService();
-  
+
   List<SparkPost> _posts = [];
   List<VibeGameItem> _polls = [];
   StreakData? _streakData;
@@ -45,13 +45,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final Set<String> _sparked = {};
   final ScrollController _scrollController = ScrollController();
   // Filter removed - show all posts
-  
+
   // Pagination state
   bool _isLoadingMore = false;
   bool _hasMorePosts = true;
   String? _nextCursor;
   static const double _loadMoreThreshold = 200.0;
-  
+
   @override
   void initState() {
     super.initState();
@@ -59,7 +59,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _subscribeToNotifications();
     _scrollController.addListener(_onScroll);
   }
-  
 
   @override
   void dispose() {
@@ -68,23 +67,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _notificationSubscription?.cancel();
     super.dispose();
   }
-  
+
   /// Scroll listener for infinite scroll pagination
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - _loadMoreThreshold) {
       _loadMorePosts();
     }
   }
-  
+
   /// Load more posts for infinite scroll
   Future<void> _loadMorePosts() async {
     if (_isLoadingMore || !_hasMorePosts || _nextCursor == null) return;
-    
+
     setState(() => _isLoadingMore = true);
-    
+
     final result = await _sparkService.getSparkPostsPaginated();
-    
+
     if (mounted) {
       setState(() {
         _posts.addAll(result.posts);
@@ -104,11 +103,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
-          if (mounted) {
-            final unread = data.where((n) => n['read'] == false).length;
-            setState(() => _unreadNotificationCount = unread);
-          }
-        });
+      if (mounted) {
+        final unread = data.where((n) => n['read'] == false).length;
+        setState(() => _unreadNotificationCount = unread);
+      }
+    });
   }
 
   void _openCommentSheet(SparkPost post) {
@@ -123,7 +122,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-
   Future<void> _loadAllData() async {
     setState(() {
       _isLoading = true;
@@ -131,7 +129,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _hasMorePosts = true;
       _nextCursor = null;
     });
-    
+
     final results = await Future.wait([
       _homeService.getStreakData(),
       _homeService.getStoriesData(),
@@ -139,7 +137,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _sparkService.getSparkPostsPaginated(),
       _homeService.getActivePolls(),
     ]);
-    
+
     if (mounted) {
       final postsResult = results[3] as ({List<SparkPost> posts, bool hasMore, String? nextCursor});
       setState(() {
@@ -155,7 +153,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
     // Force refresh from server, bypassing cache
@@ -169,7 +166,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<Widget> _buildFeedItems() {
     final List<Widget> items = [];
     int pollIndex = 0;
-    
+
     for (int i = 0; i < _posts.length; i++) {
       // Insert poll every 5 posts
       if (i > 0 && i % 5 == 0 && pollIndex < _polls.length) {
@@ -179,7 +176,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: QuickPollCard(
               poll: _polls[pollIndex],
               onVote: (optionIndex) async {
-                await _homeService.submitPollVote(_polls[pollIndex].id, optionIndex);
+                await _homeService.submitPollVote(
+                    _polls[pollIndex].id, optionIndex);
                 _loadAllData();
               },
             ),
@@ -187,7 +185,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
         pollIndex++;
       }
-      
+
       // Insert trending topics every 10 posts
       if (i > 0 && i % 10 == 0 && _trendingTags.isNotEmpty) {
         items.add(
@@ -202,7 +200,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         );
       }
-      
+
       final post = _posts[i];
       items.add(
         FadeSlideTransition(
@@ -268,15 +266,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       );
     }
-    
+
     return items;
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
-    
+
     return Scaffold(
       backgroundColor: cs.surface,
       body: SafeArea(
@@ -304,7 +301,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         : StreakBadge(
                             streakData: _streakData,
                             onTap: () async {
-                              if (_streakData != null && !_streakData!.completedToday) {
+                              if (_streakData != null &&
+                                  !_streakData!.completedToday) {
                                 HapticFeedback.mediumImpact();
                                 await _homeService.completeStreakAction();
                                 _loadAllData();
@@ -335,7 +333,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ],
               ),
-              
+
               // Stories Bar
               SliverToBoxAdapter(
                 child: _isLoading
@@ -350,13 +348,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         },
                       ),
               ),
-              
+
               // Small spacing after stories
-              
+
               // Feed Items
               SliverPadding(
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom + AppLayout.bottomContentPadding,
+                  bottom: MediaQuery.of(context).padding.bottom +
+                      AppLayout.bottomContentPadding,
                 ),
                 sliver: _isLoading
                     ? SliverList(
@@ -368,6 +367,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           childCount: 5,
                         ),
                       )
+                    : _posts.isEmpty
                         ? SliverFillRemaining(
                             hasScrollBody: false,
                             child: _CreativeFeedEmptyState(),
@@ -376,7 +376,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 final feedItems = _buildFeedItems();
-                                
+
                                 // Show loading indicator at end
                                 if (index == feedItems.length) {
                                   return _LoadMoreIndicator(
@@ -384,10 +384,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     hasMore: _hasMorePosts,
                                   );
                                 }
-                                
+
                                 return feedItems[index];
                               },
-                              childCount: _buildFeedItems().length + (_hasMorePosts ? 1 : 0),
+                              childCount: _buildFeedItems().length +
+                                  (_hasMorePosts ? 1 : 0),
                             ),
                           ),
               ),
@@ -418,19 +419,19 @@ class _GlassIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isDark 
-              ? cs.surfaceContainerHighest.withValues(alpha: 0.8)
+          color: isDark
+              ? cs.surfaceContainerHighest.withOpacity(0.8)
               : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: cs.outline.withValues(alpha: 0.2),
+            color: cs.outline.withOpacity(0.2),
           ),
         ),
         child: Stack(
@@ -482,7 +483,7 @@ class _LoadMoreIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     if (!hasMore) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -504,7 +505,7 @@ class _LoadMoreIndicator extends StatelessWidget {
         ),
       );
     }
-    
+
     if (isLoading) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -520,7 +521,7 @@ class _LoadMoreIndicator extends StatelessWidget {
         ),
       );
     }
-    
+
     return const SizedBox(height: 24);
   }
 }
@@ -530,7 +531,8 @@ class _CreativeFeedEmptyState extends StatefulWidget {
   const _CreativeFeedEmptyState();
 
   @override
-  State<_CreativeFeedEmptyState> createState() => _CreativeFeedEmptyStateState();
+  State<_CreativeFeedEmptyState> createState() =>
+      _CreativeFeedEmptyStateState();
 }
 
 class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
@@ -547,16 +549,16 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     )..repeat(reverse: true);
-    
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
+
     _floatAnimation = Tween<double>(begin: -8, end: 8).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
-    
+
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -573,7 +575,7 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -597,8 +599,8 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            cs.primary.withValues(alpha: 0.15),
-                            cs.primary.withValues(alpha: 0.0),
+                            cs.primary.withOpacity(0.15),
+                            cs.primary.withOpacity(0.0),
                           ],
                         ),
                       ),
@@ -625,7 +627,7 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: cs.primary.withValues(alpha: 0.4),
+                                  color: cs.primary.withOpacity(0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -643,28 +645,28 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                           offset: Offset(-60, _floatAnimation.value * 0.6 - 20),
                           child: _FloatingDot(
                             size: 24,
-                            color: cs.secondary.withValues(alpha: 0.7),
+                            color: cs.secondary.withOpacity(0.7),
                           ),
                         ),
                         Transform.translate(
                           offset: Offset(65, _floatAnimation.value * 0.8 + 10),
                           child: _FloatingDot(
                             size: 20,
-                            color: Colors.orange.withValues(alpha: 0.7),
+                            color: Colors.orange.withOpacity(0.7),
                           ),
                         ),
                         Transform.translate(
                           offset: Offset(-40, _floatAnimation.value * 0.4 + 40),
                           child: _FloatingDot(
                             size: 16,
-                            color: Colors.pink.withValues(alpha: 0.6),
+                            color: Colors.pink.withOpacity(0.6),
                           ),
                         ),
                         Transform.translate(
                           offset: Offset(50, _floatAnimation.value * 0.5 - 35),
                           child: _FloatingDot(
                             size: 12,
-                            color: Colors.green.withValues(alpha: 0.6),
+                            color: Colors.green.withOpacity(0.6),
                           ),
                         ),
                       ],
@@ -673,9 +675,9 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Gradient title
             ShaderMask(
               shaderCallback: (bounds) => LinearGradient(
@@ -690,9 +692,9 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                 textAlign: TextAlign.center,
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Subtitle hint
             Text(
               'Tap + to share your first thought',
@@ -701,9 +703,9 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
               ),
               textAlign: TextAlign.center,
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Animated arrow pointing to FAB
             AnimatedBuilder(
               animation: _floatAnimation,
@@ -714,19 +716,19 @@ class _CreativeFeedEmptyStateState extends State<_CreativeFeedEmptyState>
                   children: [
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: cs.primary.withValues(alpha: 0.6),
+                      color: cs.primary.withOpacity(0.6),
                       size: 20,
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: cs.primary.withValues(alpha: 0.4),
+                      color: cs.primary.withOpacity(0.4),
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: cs.primary.withValues(alpha: 0.2),
+                      color: cs.primary.withOpacity(0.2),
                       size: 12,
                     ),
                   ],
@@ -756,7 +758,7 @@ class _FloatingDot extends StatelessWidget {
         color: color,
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.5),
+            color: color.withOpacity(0.5),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
