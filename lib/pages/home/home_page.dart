@@ -15,8 +15,8 @@ import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
-
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -261,24 +261,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   child: FlexibleSpaceBar(
                     titlePadding: const EdgeInsets.only(left: 16, bottom: 14),
-                    title: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.hub_outlined,
-                          color: cs.primary,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Thittam1hub',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: cs.onSurface,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                    title: const Thittam1hubLogoInline(
+                      iconSize: 22,
                     ),
                   ),
                 ),

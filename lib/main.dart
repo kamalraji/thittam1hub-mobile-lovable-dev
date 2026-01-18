@@ -72,7 +72,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeService>(
       builder: (context, themeService, _) => MaterialApp.router(
-        title: 'Dreamflow Starter',
+        title: 'Thittam1hub',
         debugShowCheckedModeBanner: false,
 
         // Theme configuration
