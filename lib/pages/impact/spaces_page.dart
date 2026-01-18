@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/space.dart';
 import 'package:thittam1hub/pages/impact/live_now_indicator.dart';
 import 'package:thittam1hub/supabase/space_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 
 class SpacesPage extends StatefulWidget {
   const SpacesPage({Key? key}) : super(key: key);
@@ -90,19 +93,16 @@ class _SpacesPageState extends State<SpacesPage> {
   }
 
   Widget _buildEmptyState() {
-    final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.mic_none, size: 48, color: cs.onSurfaceVariant),
-          const SizedBox(height: 16),
-          Text('No live spaces right now', style: textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text('Start one and invite others to join!', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-        ],
-      ),
+    return EnhancedEmptyState(
+      icon: EmptyStateConfig.spaces.icon,
+      title: EmptyStateConfig.spaces.title,
+      subtitle: EmptyStateConfig.spaces.subtitle,
+      primaryButtonLabel: EmptyStateConfig.spaces.buttonLabel,
+      primaryButtonIcon: EmptyStateConfig.spaces.buttonIcon,
+      onPrimaryAction: () {
+        HapticFeedback.lightImpact();
+        _showCreateSpaceDialog();
+      },
     );
   }
 

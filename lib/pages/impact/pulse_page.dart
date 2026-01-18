@@ -11,10 +11,12 @@ import 'package:thittam1hub/supabase/circle_service.dart';
 import 'package:thittam1hub/widgets/match_insights_card.dart';
 import 'package:thittam1hub/widgets/swipe_card_stack.dart';
 import 'package:thittam1hub/widgets/confetti_overlay.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/intent_config.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 
 enum DiscoveryMode { people, groups, all }
 
@@ -544,46 +546,44 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         ? IntentConfig.getByKey(_selectedIntent!)
         : null;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            type == 'groups'
-                ? Icons.groups_outlined
-                : (config?.icon ?? Icons.people_outline),
-            size: 64,
-            color: config?.color ?? cs.onSurfaceVariant,
-          ),
-          SizedBox(height: 16),
-          Text(
-            _selectedIntent != null
-                ? 'No ${config?.label ?? type} matches found.'
-                : 'No $type found.',
-            style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          SizedBox(height: 8),
-          if (_selectedIntent != null)
-            TextButton.icon(
-              onPressed: () => _onIntentSelected(null),
-              icon: Icon(Icons.close),
-              label: Text('Clear ${config?.label ?? 'intent'} filter'),
-            )
-          else
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedSkills.clear();
-                  _selectedInterests.clear();
-                  _selectedLookingFor.clear();
-                  _selectedIntent = null;
-                });
-                _loadProfiles();
-              },
-              child: Text('Clear All Filters'),
-            ),
-        ],
-      ),
+    final hasFilters = _selectedIntent != null ||
+        _selectedSkills.isNotEmpty ||
+        _selectedInterests.isNotEmpty;
+
+    EmptyStateConfig emptyConfig;
+    if (type == 'groups') {
+      emptyConfig = EmptyStateConfig.groups;
+    } else if (type == 'profiles') {
+      emptyConfig = EmptyStateConfig.profiles;
+    } else {
+      emptyConfig = EmptyStateConfig.searchResults;
+    }
+
+    return EnhancedEmptyState(
+      icon: type == 'groups'
+          ? IconMappings.emptyGroups
+          : (config?.icon ?? emptyConfig.icon),
+      title: _selectedIntent != null
+          ? 'No ${config?.label ?? type} matches found'
+          : emptyConfig.title,
+      subtitle: _selectedIntent != null
+          ? 'Try adjusting your intent or check back later'
+          : emptyConfig.subtitle,
+      iconColor: config?.color,
+      primaryButtonLabel: hasFilters ? 'Clear Filters' : null,
+      primaryButtonIcon: hasFilters ? Icons.filter_alt_off_rounded : null,
+      onPrimaryAction: hasFilters
+          ? () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _selectedSkills.clear();
+                _selectedInterests.clear();
+                _selectedLookingFor.clear();
+                _selectedIntent = null;
+              });
+              _loadProfiles();
+            }
+          : null,
     );
   }
 

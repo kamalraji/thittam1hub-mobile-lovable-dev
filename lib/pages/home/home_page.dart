@@ -15,7 +15,9 @@ import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
+import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class HomePage extends StatefulWidget {
@@ -397,7 +399,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     : _posts.isEmpty
                         ? SliverFillRemaining(
                             hasScrollBody: false,
-                            child: _EmptyFeedState(),
+                            child: EnhancedEmptyState(
+                              icon: IconMappings.emptyFeed,
+                              title: 'Your Feed is Empty',
+                              subtitle: 'Be the first to share something amazing\nwith the community!',
+                              primaryButtonLabel: 'Create First Post',
+                              primaryButtonIcon: Icons.add_rounded,
+                              onPrimaryAction: () {
+                                // TODO: Open create post
+                              },
+                            ),
                           )
                         : SliverList(
                             delegate: SliverChildListDelegate(
@@ -483,78 +494,6 @@ class _GlassIconButton extends StatelessWidget {
   }
 }
 
-/// Modern empty state with gradient and illustration
-class _EmptyFeedState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Animated icon container
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    cs.primary.withValues(alpha: 0.2),
-                    cs.tertiary.withValues(alpha: 0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Icon(
-                Icons.dynamic_feed_rounded,
-                size: 56,
-                color: cs.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ShaderMask(
-              shaderCallback: (bounds) => LinearGradient(
-                colors: [cs.primary, cs.tertiary],
-              ).createShader(bounds),
-              child: Text(
-                'Your Feed is Empty',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Be the first to share something amazing\nwith the community!',
-              style: textTheme.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                // TODO: Open create post
-              },
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Create First Post'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// Glassmorphism filter chip for post type filtering
 class _FilterChip extends StatelessWidget {
