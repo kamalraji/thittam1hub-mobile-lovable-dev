@@ -7441,6 +7441,99 @@ export type Database = {
           },
         ]
       }
+      workspace_network_zones: {
+        Row: {
+          bandwidth_alert_threshold: number | null
+          created_at: string | null
+          current_bandwidth_percent: number | null
+          current_devices: number | null
+          description: string | null
+          device_alert_threshold: number | null
+          event_id: string | null
+          id: string
+          ip_range: string | null
+          last_checked_at: string | null
+          last_checked_by: string | null
+          last_checked_by_name: string | null
+          location: string | null
+          max_bandwidth_mbps: number | null
+          max_devices: number | null
+          name: string
+          ssid: string | null
+          status: string | null
+          status_message: string | null
+          updated_at: string | null
+          vlan_id: number | null
+          workspace_id: string
+          zone_type: string | null
+        }
+        Insert: {
+          bandwidth_alert_threshold?: number | null
+          created_at?: string | null
+          current_bandwidth_percent?: number | null
+          current_devices?: number | null
+          description?: string | null
+          device_alert_threshold?: number | null
+          event_id?: string | null
+          id?: string
+          ip_range?: string | null
+          last_checked_at?: string | null
+          last_checked_by?: string | null
+          last_checked_by_name?: string | null
+          location?: string | null
+          max_bandwidth_mbps?: number | null
+          max_devices?: number | null
+          name: string
+          ssid?: string | null
+          status?: string | null
+          status_message?: string | null
+          updated_at?: string | null
+          vlan_id?: number | null
+          workspace_id: string
+          zone_type?: string | null
+        }
+        Update: {
+          bandwidth_alert_threshold?: number | null
+          created_at?: string | null
+          current_bandwidth_percent?: number | null
+          current_devices?: number | null
+          description?: string | null
+          device_alert_threshold?: number | null
+          event_id?: string | null
+          id?: string
+          ip_range?: string | null
+          last_checked_at?: string | null
+          last_checked_by?: string | null
+          last_checked_by_name?: string | null
+          location?: string | null
+          max_bandwidth_mbps?: number | null
+          max_devices?: number | null
+          name?: string
+          ssid?: string | null
+          status?: string | null
+          status_message?: string | null
+          updated_at?: string | null
+          vlan_id?: number | null
+          workspace_id?: string
+          zone_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_network_zones_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_network_zones_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_page_responsibilities: {
         Row: {
           assigned_at: string | null

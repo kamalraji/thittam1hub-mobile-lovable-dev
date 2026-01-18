@@ -21,8 +21,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
   final String? initialTab;
+  final String? initialIntent;
+  final String? initialMode;
 
-  const ImpactHubPage({Key? key, this.initialTab}) : super(key: key);
+  const ImpactHubPage({
+    Key? key, 
+    this.initialTab,
+    this.initialIntent,
+    this.initialMode,
+  }) : super(key: key);
 
   @override
   _ImpactHubPageState createState() => _ImpactHubPageState();
@@ -44,11 +51,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   bool _showConfetti = false;
   String? _celebrationMessage;
 
-  final List<Widget> _pages = [
-    PulsePage(),
-    CirclesPage(),
-    VibePage(),
-  ];
+  late List<Widget> _pages;
 
   static const _tabNames = ['pulse', 'circles', 'vibe'];
   static const _tabLabels = ['Pulse', 'Circles', 'Vibe'];
@@ -63,6 +66,14 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     super.initState();
     _selectedIndex = _getInitialTabIndex();
     _pageController = PageController(initialPage: _selectedIndex);
+    _pages = [
+      PulsePage(
+        initialIntent: widget.initialIntent,
+        initialMode: widget.initialMode,
+      ),
+      CirclesPage(),
+      VibePage(),
+    ];
     _loadMyProfile();
     _loadNotifications();
     _subscribeToNotifications();

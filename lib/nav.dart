@@ -153,9 +153,17 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.impact,
               pageBuilder: (context, state) {
-                // Handle tab query parameter for deep linking
+                // Handle tab, intent, and mode query parameters for deep linking
                 final tab = state.uri.queryParameters['tab'];
-                return NoTransitionPage(child: ImpactHubPage(initialTab: tab));
+                final intent = state.uri.queryParameters['intent'];
+                final mode = state.uri.queryParameters['mode'];
+                return NoTransitionPage(
+                  child: ImpactHubPage(
+                    initialTab: tab,
+                    initialIntent: intent,
+                    initialMode: mode,
+                  ),
+                );
               },
             ),
             GoRoute(
@@ -329,6 +337,12 @@ class AppRoutes {
   // Deep link URL helpers
   static String homeWithFilter(String filter) => '/?filter=$filter';
   static String impactWithTab(String tab) => '/impact?tab=$tab';
+  static String pulseWithFilters({String? intent, String? mode}) {
+    final params = <String>['tab=pulse'];
+    if (intent != null) params.add('intent=$intent');
+    if (mode != null) params.add('mode=$mode');
+    return '/impact?${params.join('&')}';
+  }
   static String discoverWithFilters({String? category, String? mode}) {
     final params = <String>[];
     if (category != null) params.add('category=$category');

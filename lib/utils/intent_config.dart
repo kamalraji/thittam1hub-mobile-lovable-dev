@@ -19,15 +19,8 @@ class IntentConfig {
     this.complementaryKey,
   });
 
-  /// All available intent configurations
+  /// All available intent configurations (DATING moved to last)
   static const List<IntentConfig> all = [
-    IntentConfig(
-      key: 'DATING',
-      label: 'Dating',
-      icon: Icons.favorite_rounded,
-      color: Color(0xFFE91E63), // Pink
-      description: 'Find a romantic connection',
-    ),
     IntentConfig(
       key: 'FRIENDS',
       label: 'Friends',
@@ -101,6 +94,13 @@ class IntentConfig {
       icon: Icons.hub_rounded,
       color: Color(0xFF9C27B0), // Purple
       description: 'Expand your network',
+    ),
+    IntentConfig(
+      key: 'DATING',
+      label: 'Dating',
+      icon: Icons.favorite_rounded,
+      color: Color(0xFFE91E63), // Pink
+      description: 'Find a romantic connection',
     ),
   ];
 

@@ -22,7 +22,10 @@ import 'package:thittam1hub/utils/icon_mappings.dart';
 enum DiscoveryMode { people, groups, all }
 
 class PulsePage extends StatefulWidget {
-  const PulsePage({Key? key}) : super(key: key);
+  final String? initialIntent;
+  final String? initialMode;
+
+  const PulsePage({Key? key, this.initialIntent, this.initialMode}) : super(key: key);
 
   @override
   State<PulsePage> createState() => _PulsePageState();
@@ -57,6 +60,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _initializeFromDeepLink();
     _intentAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -69,6 +73,27 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) _intentAnimController.forward();
     });
+  }
+
+  void _initializeFromDeepLink() {
+    // Initialize intent from URL parameter
+    if (widget.initialIntent != null) {
+      final config = IntentConfig.getByKey(widget.initialIntent!.toUpperCase());
+      if (config != null) {
+        _selectedIntent = config.key;
+        _selectedLookingFor = [config.key];
+      }
+    }
+    
+    // Initialize discovery mode from URL parameter
+    if (widget.initialMode != null) {
+      final modeStr = widget.initialMode!.toLowerCase();
+      if (modeStr == 'groups') {
+        _discoveryMode = DiscoveryMode.groups;
+      } else if (modeStr == 'all') {
+        _discoveryMode = DiscoveryMode.all;
+      }
+    }
   }
 
   void _subscribeToOnlineStatus() {
@@ -147,7 +172,19 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
         _selectedLookingFor = intentKey != null ? [intentKey] : [];
       }
     });
+    _updateUrl();
     _loadProfiles();
+  }
+
+  void _updateUrl() {
+    final params = <String>['tab=pulse'];
+    if (_selectedIntent != null) {
+      params.add('intent=${_selectedIntent!.toLowerCase()}');
+    }
+    if (_discoveryMode != DiscoveryMode.people) {
+      params.add('mode=${_discoveryMode.name}');
+    }
+    context.replace('/impact?${params.join('&')}');
   }
 
   Future<void> _loadCircles() async {
@@ -335,6 +372,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                   onModeChanged: (mode) {
                     HapticFeedback.lightImpact();
                     setState(() => _discoveryMode = mode);
+                    _updateUrl();
                     if (mode == DiscoveryMode.groups || mode == DiscoveryMode.all) {
                       _loadCircles();
                     }
@@ -625,7 +663,7 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
   }
 }
 
-// ==================== Intent Selector Section ====================
+// ==================== Compact Intent Selector Section ====================
 
 class _IntentSelectorSection extends StatelessWidget {
   final String? selectedIntent;
@@ -647,30 +685,33 @@ class _IntentSelectorSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
           child: Row(
             children: [
               Text(
-                'What are you looking for today?',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                'Looking for',
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               if (selectedIntent != null)
-                TextButton(
-                  onPressed: () => onIntentSelected(null),
-                  child: Text('View All'),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    visualDensity: VisualDensity.compact,
+                GestureDetector(
+                  onTap: () => onIntentSelected(null),
+                  child: Text(
+                    'Clear',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
             ],
           ),
         ),
         SizedBox(
-          height: 100,
+          height: 40,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -682,21 +723,20 @@ class _IntentSelectorSection extends StatelessWidget {
               return AnimatedBuilder(
                 animation: animationController,
                 builder: (context, child) {
-                  // Staggered animation
-                  final delay = index * 0.1;
+                  final delay = index * 0.05;
                   final animValue =
                       ((animationController.value - delay) / (1 - delay))
                           .clamp(0.0, 1.0);
 
                   return Transform.translate(
-                    offset: Offset(0, 20 * (1 - animValue)),
+                    offset: Offset(0, 10 * (1 - animValue)),
                     child: Opacity(
                       opacity: animValue,
                       child: child,
                     ),
                   );
                 },
-                child: _IntentCard(
+                child: _CompactIntentChip(
                   config: config,
                   isSelected: isSelected,
                   onTap: () => onIntentSelected(config.key),
@@ -710,141 +750,55 @@ class _IntentSelectorSection extends StatelessWidget {
   }
 }
 
-class _IntentCard extends StatefulWidget {
+class _CompactIntentChip extends StatelessWidget {
   final IntentConfig config;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _IntentCard({
+  const _CompactIntentChip({
     required this.config,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
-  State<_IntentCard> createState() => _IntentCardState();
-}
-
-class _IntentCardState extends State<_IntentCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    super.dispose();
-  }
-
-  void _onTapDown(TapDownDetails _) {
-    _scaleController.forward();
-  }
-
-  void _onTapUp(TapUpDetails _) {
-    _scaleController.reverse();
-    widget.onTap();
-  }
-
-  void _onTapCancel() {
-    _scaleController.reverse();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 85,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: widget.isSelected
-                  ? widget.config.color
-                  : cs.outlineVariant.withValues(alpha: 0.3),
-              width: widget.isSelected ? 2 : 1,
-            ),
-            boxShadow: widget.isSelected
-                ? [
-                    BoxShadow(
-                      color: widget.config.color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : null,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? config.color.withOpacity(0.15)
+              : cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? config.color : cs.outline.withOpacity(0.2),
+            width: isSelected ? 1.5 : 1,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: widget.isSelected
-                        ? [
-                            widget.config.color.withValues(alpha: 0.25),
-                            widget.config.color.withValues(alpha: 0.1),
-                          ]
-                        : [
-                            (isDark ? Colors.white : Colors.black)
-                                .withValues(alpha: 0.05),
-                            (isDark ? Colors.white : Colors.black)
-                                .withValues(alpha: 0.02),
-                          ],
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      widget.config.icon,
-                      size: 28,
-                      color: widget.isSelected ? widget.config.color : cs.onSurfaceVariant,
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      widget.config.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: widget.isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        color: widget.isSelected
-                            ? widget.config.color
-                            : cs.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              config.icon,
+              size: 16,
+              color: isSelected ? config.color : cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              config.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? config.color : cs.onSurface,
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -1792,6 +1746,19 @@ class _DiscoveryModeToggle extends StatelessWidget {
     required this.onModeChanged,
   });
 
+  // Icon mapping - replacing emojis with Material icons
+  static const Map<DiscoveryMode, IconData> _modeIcons = {
+    DiscoveryMode.people: Icons.person_rounded,
+    DiscoveryMode.groups: Icons.groups_rounded,
+    DiscoveryMode.all: Icons.public_rounded,
+  };
+
+  static const Map<DiscoveryMode, String> _modeLabels = {
+    DiscoveryMode.people: 'People',
+    DiscoveryMode.groups: 'Groups',
+    DiscoveryMode.all: 'All',
+  };
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -1819,21 +1786,14 @@ class _DiscoveryModeToggle extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        mode == DiscoveryMode.people
-                            ? '👤'
-                            : mode == DiscoveryMode.groups
-                                ? '👥'
-                                : '🌐',
-                        style: const TextStyle(fontSize: 14),
+                      Icon(
+                        _modeIcons[mode]!,
+                        size: 16,
+                        color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
-                        mode == DiscoveryMode.people
-                            ? 'People'
-                            : mode == DiscoveryMode.groups
-                                ? 'Groups'
-                                : 'All',
+                        _modeLabels[mode]!,
                         style: TextStyle(
                           color: isSelected ? cs.onPrimary : cs.onSurface,
                           fontWeight:
