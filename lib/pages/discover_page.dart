@@ -6,6 +6,7 @@ import 'package:thittam1hub/widgets/event_card.dart';
 import 'package:thittam1hub/services/event_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/result.dart';
+import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
