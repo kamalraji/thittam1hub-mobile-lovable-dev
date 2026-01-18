@@ -37,9 +37,9 @@ class ImpactService {
     try {
       // Get user metadata from auth
       final user = _supabase.auth.currentUser;
-      final fullName = user?.userMetadata?['full_name'] as String? ?? 
-                       user?.email?.split('@').first ?? 
-                       'New User';
+      final fullName = user?.userMetadata?['full_name'] as String? ??
+          user?.email?.split('@').first ??
+          'New User';
       final avatarUrl = user?.userMetadata?['avatar_url'] as String?;
 
       final profileData = {
@@ -89,12 +89,12 @@ class ImpactService {
     final result = calculateMatchInsights(me, other);
     return result.totalScore;
   }
-  
+
   /// Calculate detailed match insights explaining WHY two profiles match
   /// Returns a MatchResult with breakdown of all match categories
   MatchResult calculateMatchInsights(ImpactProfile me, ImpactProfile other) {
     final insights = <MatchInsight>[];
-    
+
     final meSkills = me.skills.toSet();
     final otherSkills = other.skills.toSet();
     final meInterests = me.interests.toSet();
@@ -109,14 +109,15 @@ class ImpactService {
       insights.add(MatchInsight(
         category: MatchCategory.skills,
         title: 'Shared Expertise',
-        description: 'You both have ${sharedSkills.length} skill${sharedSkills.length > 1 ? 's' : ''} in common',
+        description:
+            'You both have ${sharedSkills.length} skill${sharedSkills.length > 1 ? 's' : ''} in common',
         items: sharedSkills.toList(),
         contribution: contribution,
         icon: Icons.code_rounded,
         color: Colors.blue,
       ));
     }
-    
+
     // 2. INTERESTS MATCH (Social - like Instagram)
     final sharedInterests = meInterests.intersection(otherInterests);
     if (sharedInterests.isNotEmpty) {
@@ -124,14 +125,15 @@ class ImpactService {
       insights.add(MatchInsight(
         category: MatchCategory.interests,
         title: 'Common Passions',
-        description: 'You share ${sharedInterests.length} interest${sharedInterests.length > 1 ? 's' : ''}',
+        description:
+            'You share ${sharedInterests.length} interest${sharedInterests.length > 1 ? 's' : ''}',
         items: sharedInterests.toList(),
         contribution: contribution,
         icon: Icons.favorite_rounded,
         color: Colors.pink,
       ));
     }
-    
+
     // 3. GOAL COMPLEMENTARITY (You offer what they seek)
     final iCanHelp = meSkills.intersection(otherLF);
     final theyCanHelp = otherSkills.intersection(meLF);
@@ -139,13 +141,14 @@ class ImpactService {
       final allComplementary = {...iCanHelp, ...theyCanHelp};
       String description;
       if (iCanHelp.isNotEmpty && theyCanHelp.isNotEmpty) {
-        description = 'You can help with ${iCanHelp.first}, they can help with ${theyCanHelp.first}';
+        description =
+            'You can help with ${iCanHelp.first}, they can help with ${theyCanHelp.first}';
       } else if (iCanHelp.isNotEmpty) {
         description = 'You can help them with ${iCanHelp.join(", ")}';
       } else {
         description = 'They can help you with ${theyCanHelp.join(", ")}';
       }
-      
+
       insights.add(MatchInsight(
         category: MatchCategory.goals,
         title: 'Perfect Fit',
@@ -157,10 +160,10 @@ class ImpactService {
         isComplementary: true,
       ));
     }
-    
+
     // 4. SAME EVENT/ACTIVITY
-    if (me.currentEventId != null && 
-        other.currentEventId != null && 
+    if (me.currentEventId != null &&
+        other.currentEventId != null &&
         me.currentEventId == other.currentEventId) {
       insights.add(MatchInsight(
         category: MatchCategory.activity,
@@ -172,9 +175,9 @@ class ImpactService {
         color: Colors.purple,
       ));
     }
-    
+
     // 5. ORGANIZATION MATCH
-    if (me.organization != null && 
+    if (me.organization != null &&
         other.organization != null &&
         me.organization!.toLowerCase() == other.organization!.toLowerCase()) {
       insights.add(MatchInsight(
@@ -187,9 +190,9 @@ class ImpactService {
         color: Colors.blueGrey,
       ));
     }
-    
+
     // 6. EDUCATION MATCH
-    if (me.educationStatus == other.educationStatus && 
+    if (me.educationStatus == other.educationStatus &&
         me.educationStatus != 'PROFESSIONAL') {
       final eduLabel = _getEducationLabel(me.educationStatus);
       insights.add(MatchInsight(
@@ -202,21 +205,21 @@ class ImpactService {
         color: Colors.green,
       ));
     }
-    
+
     // Calculate total score
-    final totalScore = insights
-        .fold<int>(0, (sum, i) => sum + i.contribution)
-        .clamp(0, 100);
-    
+    final totalScore =
+        insights.fold<int>(0, (sum, i) => sum + i.contribution).clamp(0, 100);
+
     // Sort by contribution
     insights.sort((a, b) => b.contribution.compareTo(a.contribution));
-    
+
     // Determine summary
     final summaryText = _getSummaryText(insights);
     final summaryIcon = _getScoreIcon(totalScore);
-    final primaryCategory = insights.isNotEmpty ? insights.first.category : null;
+    final primaryCategory =
+        insights.isNotEmpty ? insights.first.category : null;
     final matchStory = _generateMatchStory(me, other, insights, totalScore);
-    
+
     return MatchResult(
       totalScore: totalScore,
       insights: insights,
@@ -226,7 +229,7 @@ class ImpactService {
       matchStory: matchStory,
     );
   }
-  
+
   IconData _getScoreIcon(int score) {
     if (score >= 85) return Icons.local_fire_department_rounded;
     if (score >= 70) return Icons.star_rounded;
@@ -234,16 +237,16 @@ class ImpactService {
     if (score >= 30) return Icons.thumbs_up_down_rounded;
     return Icons.waving_hand_rounded;
   }
-  
+
   String _getSummaryText(List<MatchInsight> insights) {
     if (insights.isEmpty) return 'New potential connection';
-    
+
     final categories = insights.map((i) => i.category).toSet();
-    
+
     if (categories.contains(MatchCategory.goals)) {
       return 'You can help each other grow';
     }
-    if (categories.contains(MatchCategory.skills) && 
+    if (categories.contains(MatchCategory.skills) &&
         categories.contains(MatchCategory.interests)) {
       return 'Strong professional & social match';
     }
@@ -262,60 +265,74 @@ class ImpactService {
     if (categories.contains(MatchCategory.education)) {
       return 'Same academic journey';
     }
-    
+
     return 'Potential connection';
   }
-  
+
   String? _generateMatchStory(
-    ImpactProfile me, 
-    ImpactProfile other, 
-    List<MatchInsight> insights, 
+    ImpactProfile me,
+    ImpactProfile other,
+    List<MatchInsight> insights,
     int score,
   ) {
     if (insights.isEmpty) return null;
-    
+
     final parts = <String>[];
     parts.add('You and ${other.fullName} are a **$score% match**!');
-    
+
     // Add skill story
-    final skillInsight = insights.where((i) => i.category == MatchCategory.skills).firstOrNull;
+    final skillInsight =
+        insights.where((i) => i.category == MatchCategory.skills).firstOrNull;
     if (skillInsight != null && skillInsight.items.isNotEmpty) {
       if (skillInsight.items.length == 1) {
         parts.add('You both know ${skillInsight.items.first}.');
       } else {
-        parts.add('You share expertise in ${skillInsight.items.take(2).join(" and ")}.');
+        parts.add(
+            'You share expertise in ${skillInsight.items.take(2).join(" and ")}.');
       }
     }
-    
+
     // Add goal story
-    final goalInsight = insights.where((i) => i.category == MatchCategory.goals).firstOrNull;
+    final goalInsight =
+        insights.where((i) => i.category == MatchCategory.goals).firstOrNull;
     if (goalInsight != null) {
       parts.add(goalInsight.description + '.');
     }
-    
+
     // Add interest story
-    final interestInsight = insights.where((i) => i.category == MatchCategory.interests).firstOrNull;
+    final interestInsight = insights
+        .where((i) => i.category == MatchCategory.interests)
+        .firstOrNull;
     if (interestInsight != null && interestInsight.items.isNotEmpty) {
       parts.add('You\'re both into ${interestInsight.items.first}.');
     }
-    
+
     return parts.join(' ');
   }
-  
+
   String _getEducationLabel(String status) {
     switch (status) {
-      case 'UNDERGRADUATE': return 'undergrad students';
-      case 'GRADUATE': return 'grad students';
-      case 'PHD': return 'PhD candidates';
-      case 'HIGH_SCHOOL': return 'high school students';
-      default: return 'students';
+      case 'UNDERGRADUATE':
+        return 'undergrad students';
+      case 'GRADUATE':
+        return 'grad students';
+      case 'PHD':
+        return 'PhD candidates';
+      case 'HIGH_SCHOOL':
+        return 'high school students';
+      default:
+        return 'students';
     }
   }
 
   /// Get a profile by user id
   Future<ImpactProfile?> getImpactProfileByUserId(String userId) async {
     try {
-      final response = await _supabase.from('impact_profiles').select('*').eq('user_id', userId).maybeSingle();
+      final response = await _supabase
+          .from('impact_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
       if (response == null) return null;
       return ImpactProfile.fromMap(response as Map<String, dynamic>);
     } catch (e) {
@@ -333,20 +350,21 @@ class ImpactService {
       // Step 1: Get pending connection requests
       final rows = await _supabase
           .from('connections')
-          .select('id, requester_id, connection_type, created_at, receiver_id, status')
+          .select(
+              'id, requester_id, connection_type, created_at, receiver_id, status')
           .eq('receiver_id', myId)
           .eq('status', 'PENDING')
           .order('created_at', ascending: false);
 
       final myProfile = await getMyImpactProfile();
       final items = <ConnectionRequestItem>[];
-      
+
       for (final r in (rows as List)) {
         final requesterId = r['requester_id'] as String;
-        
+
         // Step 2: Fetch requester's impact_profile
         final requesterProfile = await getImpactProfileByUserId(requesterId);
-        
+
         // Compute match score if my profile available
         int match = 50;
         try {
@@ -356,7 +374,7 @@ class ImpactService {
         } catch (e) {
           debugPrint('Error computing match score for request: $e');
         }
-        
+
         items.add(ConnectionRequestItem(
           id: r['id'] as String,
           requesterId: requesterId,
@@ -375,18 +393,20 @@ class ImpactService {
   }
 
   /// Accept or decline a connection request
-  Future<void> respondToConnectionRequest({required String requestId, required bool accept}) async {
+  Future<void> respondToConnectionRequest(
+      {required String requestId, required bool accept}) async {
     try {
-      await _supabase
-          .from('connections')
-          .update({'status': accept ? 'ACCEPTED' : 'DECLINED', 'responded_at': DateTime.now().toIso8601String()})
-          .eq('id', requestId);
+      await _supabase.from('connections').update({
+        'status': accept ? 'ACCEPTED' : 'DECLINED',
+        'responded_at': DateTime.now().toIso8601String()
+      }).eq('id', requestId);
       debugPrint(accept ? '✅ Connection accepted' : '🚫 Connection declined');
     } catch (e) {
       debugPrint('❌ Error responding to connection request: $e');
       rethrow;
     }
   }
+
   /// Fetches a list of impact profiles with optional filters
   Future<List<ImpactProfile>> getImpactProfiles({
     List<String>? skills,
@@ -410,13 +430,19 @@ class ImpactService {
 
       // Apply client-side filters
       if (skills != null && skills.isNotEmpty) {
-        profiles = profiles.where((p) => p.skills.any((s) => skills.contains(s))).toList();
+        profiles = profiles
+            .where((p) => p.skills.any((s) => skills.contains(s)))
+            .toList();
       }
       if (interests != null && interests.isNotEmpty) {
-        profiles = profiles.where((p) => p.interests.any((i) => interests.contains(i))).toList();
+        profiles = profiles
+            .where((p) => p.interests.any((i) => interests.contains(i)))
+            .toList();
       }
       if (lookingFor != null && lookingFor.isNotEmpty) {
-        profiles = profiles.where((p) => p.lookingFor.any((l) => lookingFor.contains(l))).toList();
+        profiles = profiles
+            .where((p) => p.lookingFor.any((l) => lookingFor.contains(l)))
+            .toList();
       }
 
       return profiles;
@@ -427,7 +453,8 @@ class ImpactService {
   }
 
   /// Send connection request
-  Future<void> sendConnectionRequest(String targetUserId, String connectionType) async {
+  Future<void> sendConnectionRequest(
+      String targetUserId, String connectionType) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Not authenticated');
@@ -499,13 +526,10 @@ class ImpactService {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      await _supabase
-          .from('impact_profiles')
-          .update({
-            'is_online': isOnline,
-            'last_seen': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await _supabase.from('impact_profiles').update({
+        'is_online': isOnline,
+        'last_seen': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
       debugPrint('📡 Online status: $isOnline');
     } catch (e) {
       debugPrint('❌ Error updating online status: $e');
@@ -513,26 +537,28 @@ class ImpactService {
   }
 
   /// Subscribe to online status changes for Pulse profiles
-  RealtimeChannel subscribeToOnlineStatus(Function(String userId, bool isOnline) onStatusChange) {
-    final channel = _supabase.channel('online_status')
-      .onPostgresChanges(
-        event: PostgresChangeEvent.update,
-        schema: 'public',
-        table: 'impact_profiles',
-        callback: (payload) {
-          try {
-            final data = payload.newRecord;
-            final userId = data['user_id'] as String?;
-            final isOnline = data['is_online'] as bool? ?? false;
-            if (userId != null) {
-              onStatusChange(userId, isOnline);
+  RealtimeChannel subscribeToOnlineStatus(
+      Function(String userId, bool isOnline) onStatusChange) {
+    final channel = _supabase
+        .channel('online_status')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'impact_profiles',
+          callback: (payload) {
+            try {
+              final data = payload.newRecord;
+              final userId = data['user_id'] as String?;
+              final isOnline = data['is_online'] as bool? ?? false;
+              if (userId != null) {
+                onStatusChange(userId, isOnline);
+              }
+            } catch (e) {
+              debugPrint('Error in online status callback: $e');
             }
-          } catch (e) {
-            debugPrint('Error in online status callback: $e');
-          }
-        },
-      )
-      .subscribe();
+          },
+        )
+        .subscribe();
     return channel;
   }
 
@@ -575,7 +601,8 @@ class ImpactService {
       }
 
       // Find intersection
-      final mutualIds = myConnectionIds.intersection(theirConnectionIds).toList();
+      final mutualIds =
+          myConnectionIds.intersection(theirConnectionIds).toList();
       if (mutualIds.isEmpty) return [];
 
       // Fetch profiles

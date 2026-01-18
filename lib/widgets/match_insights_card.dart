@@ -21,7 +21,7 @@ class MatchInsightsCard extends StatefulWidget {
   State<MatchInsightsCard> createState() => _MatchInsightsCardState();
 }
 
-class _MatchInsightsCardState extends State<MatchInsightsCard> 
+class _MatchInsightsCardState extends State<MatchInsightsCard>
     with SingleTickerProviderStateMixin {
   late bool _isExpanded;
   late AnimationController _controller;
@@ -65,11 +65,11 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = widget.matchResult;
-    
+
     if (widget.compact) {
       return _buildCompactView(cs, textTheme, result);
     }
-    
+
     return GestureDetector(
       onTap: widget.onTap ?? _toggleExpanded,
       child: ClipRRect(
@@ -83,8 +83,10 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+                  (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.08),
+                  (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.04),
                 ],
               ),
               border: Border.all(
@@ -97,7 +99,7 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
               children: [
                 // Header with score and summary
                 _buildHeader(cs, textTheme, result),
-                
+
                 // Expandable insights list
                 SizeTransition(
                   sizeFactor: _expandAnimation,
@@ -118,7 +120,8 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
     );
   }
 
-  Widget _buildCompactView(ColorScheme cs, TextTheme textTheme, MatchResult result) {
+  Widget _buildCompactView(
+      ColorScheme cs, TextTheme textTheme, MatchResult result) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -245,7 +248,8 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(meta?.icon ?? Icons.auto_awesome_rounded, size: 12, color: insight.color),
+                    Icon(meta?.icon ?? Icons.auto_awesome_rounded,
+                        size: 12, color: insight.color),
                     const SizedBox(width: 4),
                     Text(
                       '+${insight.contribution}%',
@@ -265,7 +269,8 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
     );
   }
 
-  Widget _buildInsightsList(ColorScheme cs, TextTheme textTheme, MatchResult result) {
+  Widget _buildInsightsList(
+      ColorScheme cs, TextTheme textTheme, MatchResult result) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: Column(
@@ -292,9 +297,10 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
     );
   }
 
-  Widget _buildInsightRow(ColorScheme cs, TextTheme textTheme, MatchInsight insight) {
+  Widget _buildInsightRow(
+      ColorScheme cs, TextTheme textTheme, MatchInsight insight) {
     final meta = MatchInsight.categoryMeta[insight.category];
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -309,7 +315,8 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Icon(meta?.icon ?? Icons.auto_awesome_rounded, size: 20, color: insight.color),
+              child: Icon(meta?.icon ?? Icons.auto_awesome_rounded,
+                  size: 20, color: insight.color),
             ),
           ),
           const SizedBox(width: 12),
@@ -328,7 +335,8 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                     if (insight.isComplementary) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.teal.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
@@ -336,11 +344,13 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Icon(Icons.handshake_rounded, size: 10, color: Colors.teal),
+                            Icon(Icons.handshake_rounded,
+                                size: 10, color: Colors.teal),
                             SizedBox(width: 3),
                             Text(
                               'Perfect Fit',
-                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -360,24 +370,28 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
-                    children: insight.items.take(5).map((item) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: insight.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: insight.color.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        item,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: insight.color,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )).toList(),
+                    children: insight.items
+                        .take(5)
+                        .map((item) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: insight.color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: insight.color.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: insight.color,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ))
+                        .toList(),
                   ),
                 ],
               ],
@@ -448,17 +462,17 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
 class MatchSummaryBadge extends StatelessWidget {
   final MatchResult matchResult;
   final bool showScore;
-  
+
   const MatchSummaryBadge({
     Key? key,
     required this.matchResult,
     this.showScore = true,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     final result = matchResult;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
