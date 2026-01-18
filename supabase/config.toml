@@ -1,1 +1,7 @@
 project_id = "ltsniuflqfahdcirrmjh"
+
+[functions.giphy-proxy]
+verify_jwt = false
+
+[functions.link-preview]
+verify_jwt = false

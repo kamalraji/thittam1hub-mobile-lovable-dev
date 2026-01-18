@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/services/media_upload_service.dart';
 import 'package:thittam1hub/services/giphy_service.dart';
+import 'package:thittam1hub/services/link_preview_service.dart';
 import 'package:thittam1hub/widgets/gif_picker_sheet.dart';
 import 'package:thittam1hub/models/post_poll.dart';
 import 'package:thittam1hub/theme.dart';
@@ -19,6 +20,7 @@ class NewSparkPostContent extends StatefulWidget {
     String? imageUrl,
     String? gifUrl,
     String? pollId,
+    String? linkUrl,
   }) onSubmit;
 
   const NewSparkPostContent({Key? key, required this.onSubmit}) : super(key: key);
@@ -30,6 +32,7 @@ class NewSparkPostContent extends StatefulWidget {
 class _NewSparkPostContentState extends State<NewSparkPostContent> {
   final _contentController = TextEditingController();
   final _tagController = TextEditingController();
+  final _linkController = TextEditingController();
   SparkPostType _selectedType = SparkPostType.IDEA;
   List<String> _tags = [];
   bool _isSubmitting = false;
@@ -44,12 +47,16 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
 
   // GIF state
   String? _selectedGifUrl;
-  static const String _giphyApiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65'; // Free tier key
 
   // Poll state
   bool _showPollCreator = false;
   List<TextEditingController> _pollOptionControllers = [];
   Duration _pollDuration = const Duration(hours: 24);
+
+  // Link preview state
+  final _linkPreviewService = LinkPreviewService();
+  LinkPreview? _linkPreview;
+  bool _isLoadingLinkPreview = false;
 
   // Event-based suggested tags
   static const List<String> _eventTags = [
@@ -76,6 +83,7 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
   void dispose() {
     _contentController.dispose();
     _tagController.dispose();
+    _linkController.dispose();
     for (final c in _pollOptionControllers) {
       c.dispose();
     }
@@ -116,6 +124,8 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
       _selectedImageName = null;
       _selectedGifUrl = null;
       _showPollCreator = false;
+      _linkPreview = null;
+      _linkController.clear();
       _selectedMediaType = null;
     });
   }
@@ -148,6 +158,106 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
     }
   }
 
+  Future<void> _captureImage() async {
+    HapticFeedback.lightImpact();
+    _clearMedia();
+    
+    try {
+      final result = await _mediaUploadService.pickImageFromCamera();
+      if (result != null) {
+        setState(() {
+          _selectedImageBytes = result.bytes;
+          _selectedImageName = result.name;
+          _selectedMediaType = 'image';
+        });
+      }
+    } on ImageValidationError catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to capture image')),
+        );
+      }
+    }
+  }
+
+  void _showImageSourcePicker() {
+    HapticFeedback.lightImpact();
+    final cs = Theme.of(context).colorScheme;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cs.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Add Photo',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: cs.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.camera_alt_rounded, color: cs.primary),
+                ),
+                title: const Text('Take Photo'),
+                subtitle: Text('Use camera', style: TextStyle(color: cs.onSurfaceVariant)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _captureImage();
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: cs.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.photo_library_rounded, color: cs.secondary),
+                ),
+                title: const Text('Choose from Gallery'),
+                subtitle: Text('Select existing photo', style: TextStyle(color: cs.onSurfaceVariant)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickGif() async {
     HapticFeedback.lightImpact();
     _clearMedia();
@@ -157,7 +267,6 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => GifPickerSheet(
-        giphyApiKey: _giphyApiKey,
         onGifSelected: (g) => Navigator.pop(context, g),
       ),
     );
@@ -203,11 +312,35 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
     }
   }
 
-  Future<void> _addLink() async {
+  void _showLinkInput() {
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('🔗 Link preview coming soon!'), duration: Duration(seconds: 2)),
-    );
+    _clearMedia();
+    setState(() {
+      _selectedMediaType = 'link';
+    });
+  }
+
+  Future<void> _fetchLinkPreview() async {
+    final url = _linkController.text.trim();
+    if (url.isEmpty) return;
+    
+    setState(() => _isLoadingLinkPreview = true);
+    
+    final preview = await _linkPreviewService.extractPreview(url);
+    
+    if (mounted) {
+      setState(() {
+        _linkPreview = preview;
+        _isLoadingLinkPreview = false;
+      });
+      
+      if (preview == null || !preview.hasContent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not fetch link preview')),
+        );
+      }
+    }
+  }
   }
 
   String? _validatePoll() {
@@ -369,7 +502,7 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                   icon: Icons.image_rounded,
                   label: 'Photo',
                   isSelected: _selectedMediaType == 'image',
-                  onTap: _pickImage,
+                  onTap: _showImageSourcePicker,
                 ),
                 _UploadButton(
                   icon: Icons.gif_box_rounded,
@@ -387,13 +520,16 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                   icon: Icons.link_rounded,
                   label: 'Link',
                   isSelected: _selectedMediaType == 'link',
-                  onTap: _addLink,
+                  onTap: _showLinkInput,
                 ),
               ],
             ),
             
             // Poll Creator (if active)
             if (_showPollCreator) _buildPollCreator(),
+            
+            // Link Input (if active)
+            if (_selectedMediaType == 'link') _buildLinkInput(),
             
             const SizedBox(height: 12),
             
@@ -760,6 +896,189 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLinkInput() {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.link_rounded, size: 16, color: cs.primary),
+                const SizedBox(width: 6),
+                Text('Add Link', style: textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.primary,
+                )),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _clearMedia,
+                  child: Icon(Icons.close, size: 18, color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            
+            // URL input
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _linkController,
+                    style: textTheme.bodySmall,
+                    keyboardType: TextInputType.url,
+                    textInputAction: TextInputAction.go,
+                    onSubmitted: (_) => _fetchLinkPreview(),
+                    decoration: InputDecoration(
+                      hintText: 'Enter URL...',
+                      hintStyle: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      prefixIcon: Icon(Icons.language_rounded, size: 18, color: cs.onSurfaceVariant),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.3)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _isLoadingLinkPreview ? null : _fetchLinkPreview,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cs.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _isLoadingLinkPreview
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: cs.onPrimary,
+                            ),
+                          )
+                        : Icon(Icons.search_rounded, size: 18, color: cs.onPrimary),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Link preview card
+            if (_linkPreview != null && _linkPreview!.hasContent) ...[
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: cs.outline.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Image preview
+                    if (_linkPreview!.image != null)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        child: CachedNetworkImage(
+                          imageUrl: _linkPreview!.image!,
+                          height: 100,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            height: 100,
+                            color: cs.surfaceContainerHighest,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Site info row
+                          Row(
+                            children: [
+                              if (_linkPreview!.favicon != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: CachedNetworkImage(
+                                    imageUrl: _linkPreview!.favicon!,
+                                    width: 14,
+                                    height: 14,
+                                    errorWidget: (_, __, ___) => Icon(
+                                      Icons.language_rounded,
+                                      size: 14,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                _linkPreview!.domain ?? _linkPreview!.siteName ?? '',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          
+                          // Title
+                          if (_linkPreview!.title != null)
+                            Text(
+                              _linkPreview!.title!,
+                              style: textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          
+                          // Description
+                          if (_linkPreview!.description != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _linkPreview!.description!,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                fontSize: 11,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

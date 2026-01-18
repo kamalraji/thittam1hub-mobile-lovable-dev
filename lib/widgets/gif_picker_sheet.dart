@@ -5,12 +5,10 @@ import 'package:thittam1hub/services/giphy_service.dart';
 import 'package:thittam1hub/theme.dart';
 
 class GifPickerSheet extends StatefulWidget {
-  final String giphyApiKey;
   final Function(GiphyGif) onGifSelected;
 
   const GifPickerSheet({
     super.key,
-    required this.giphyApiKey,
     required this.onGifSelected,
   });
 
@@ -19,7 +17,7 @@ class GifPickerSheet extends StatefulWidget {
 }
 
 class _GifPickerSheetState extends State<GifPickerSheet> {
-  late final GiphyService _giphyService;
+  final GiphyService _giphyService = GiphyService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
@@ -34,7 +32,6 @@ class _GifPickerSheetState extends State<GifPickerSheet> {
   @override
   void initState() {
     super.initState();
-    _giphyService = GiphyService(apiKey: widget.giphyApiKey);
     _loadTrending();
     _scrollController.addListener(_onScroll);
   }
@@ -149,11 +146,26 @@ class _GifPickerSheetState extends State<GifPickerSheet> {
                   ),
                 ),
                 const Spacer(),
-                // Powered by Giphy
-                Image.network(
-                  'https://giphy.com/static/img/giphy_logo_square_social.png',
-                  height: 24,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                // Powered by Giphy badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Powered by ',
+                        style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                      ),
+                      Text(
+                        'GIPHY',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

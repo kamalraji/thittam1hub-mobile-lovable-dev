@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:thittam1hub/supabase/supabase_config.dart';
 
 class GiphyGif {
   final String id;
@@ -35,59 +35,68 @@ class GiphyGif {
   }
 }
 
+/// Giphy service using secure edge function proxy
 class GiphyService {
-  // Note: In production, use edge function proxy for security
-  static const String _baseUrl = 'https://api.giphy.com/v1/gifs';
-  
-  final String apiKey;
-  
-  GiphyService({required this.apiKey});
-  
-  /// Get trending GIFs
+  /// Get trending GIFs via edge function proxy
   Future<List<GiphyGif>> getTrending({int limit = 25, int offset = 0}) async {
     try {
-      final url = Uri.parse(
-        '$_baseUrl/trending?api_key=$apiKey&limit=$limit&offset=$offset&rating=pg-13'
+      final response = await SupabaseConfig.client.functions.invoke(
+        'giphy-proxy',
+        queryParameters: {
+          'action': 'trending',
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
       );
       
-      final response = await http.get(url);
-      
-      if (response.statusCode != 200) {
-        throw Exception('Failed to fetch trending GIFs');
+      if (response.status != 200) {
+        throw Exception('Failed to fetch trending GIFs: ${response.status}');
       }
       
-      return _parseGifs(response.body);
+      return _parseGifs(response.data);
     } catch (e) {
       debugPrint('Error fetching trending GIFs: $e');
       return [];
     }
   }
   
-  /// Search GIFs by query
+  /// Search GIFs by query via edge function proxy
   Future<List<GiphyGif>> search(String query, {int limit = 25, int offset = 0}) async {
     if (query.trim().isEmpty) return getTrending(limit: limit);
     
     try {
-      final url = Uri.parse(
-        '$_baseUrl/search?api_key=$apiKey&q=${Uri.encodeComponent(query)}&limit=$limit&offset=$offset&rating=pg-13&lang=en'
+      final response = await SupabaseConfig.client.functions.invoke(
+        'giphy-proxy',
+        queryParameters: {
+          'action': 'search',
+          'q': query,
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
       );
       
-      final response = await http.get(url);
-      
-      if (response.statusCode != 200) {
-        throw Exception('Failed to search GIFs');
+      if (response.status != 200) {
+        throw Exception('Failed to search GIFs: ${response.status}');
       }
       
-      return _parseGifs(response.body);
+      return _parseGifs(response.data);
     } catch (e) {
       debugPrint('Error searching GIFs: $e');
       return [];
     }
   }
   
-  /// Parse GIF response
-  List<GiphyGif> _parseGifs(String body) {
-    final json = jsonDecode(body) as Map<String, dynamic>;
+  /// Parse GIF response from edge function
+  List<GiphyGif> _parseGifs(dynamic responseData) {
+    if (responseData == null) return [];
+    
+    final Map<String, dynamic> json;
+    if (responseData is String) {
+      json = jsonDecode(responseData) as Map<String, dynamic>;
+    } else {
+      json = responseData as Map<String, dynamic>;
+    }
+    
     final data = json['data'] as List<dynamic>? ?? [];
     
     return data
