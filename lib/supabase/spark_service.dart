@@ -20,6 +20,11 @@ class SparkPost {
   final int commentCount;
   final DateTime createdAt;
   
+  // Media fields
+  final String? imageUrl;
+  final String? gifUrl;
+  final String? pollId;
+  
   // Optimistic state
   final bool isOptimisticallySparked;
   final int optimisticSparkCount;
@@ -36,6 +41,9 @@ class SparkPost {
     required this.sparkCount,
     required this.commentCount,
     required this.createdAt,
+    this.imageUrl,
+    this.gifUrl,
+    this.pollId,
     this.isOptimisticallySparked = false,
     this.optimisticSparkCount = 0,
   });
@@ -56,6 +64,9 @@ class SparkPost {
       sparkCount: map['spark_count'] ?? 0,
       commentCount: map['comment_count'] ?? 0,
       createdAt: DateTime.parse(map['created_at']),
+      imageUrl: map['image_url'],
+      gifUrl: map['gif_url'],
+      pollId: map['poll_id'],
     );
   }
 
@@ -72,6 +83,9 @@ class SparkPost {
       'spark_count': sparkCount,
       'comment_count': commentCount,
       'created_at': createdAt.toIso8601String(),
+      'image_url': imageUrl,
+      'gif_url': gifUrl,
+      'poll_id': pollId,
     };
   }
 
@@ -89,6 +103,9 @@ class SparkPost {
       sparkCount: sparkCount,
       commentCount: commentCount,
       createdAt: createdAt,
+      imageUrl: imageUrl,
+      gifUrl: gifUrl,
+      pollId: pollId,
       isOptimisticallySparked: true,
       optimisticSparkCount: sparkCount + 1,
     );
@@ -96,6 +113,9 @@ class SparkPost {
 
   /// Get display spark count (considers optimistic state)
   int get displaySparkCount => isOptimisticallySparked ? optimisticSparkCount : sparkCount;
+  
+  /// Check if post has media attachment
+  bool get hasMedia => imageUrl != null || gifUrl != null || pollId != null;
 }
 
 class SparkService {
@@ -156,12 +176,15 @@ class SparkService {
     }
   }
 
-  /// Create a new spark post
+  /// Create a new spark post with optional media
   Future<void> createSparkPost({
     required SparkPostType type,
     required String title,
     required String content,
     required List<String> tags,
+    String? imageUrl,
+    String? gifUrl,
+    String? pollId,
   }) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -179,6 +202,9 @@ class SparkService {
         'title': title,
         'content': content,
         'tags': tags,
+        'image_url': imageUrl,
+        'gif_url': gifUrl,
+        'poll_id': pollId,
       });
       debugPrint('✅ Spark post created');
     } catch (e) {
