@@ -21,6 +21,15 @@ class ImpactProfile {
   final String? currentEventId;
   final bool isOnline;
   final DateTime lastSeen;
+  final int streakCount;
+  final int streakActionsToday;
+  final DateTime? lastStreakDate;
+  final bool isPremium;
+  final bool isVerified;
+  final String? verificationType;
+  final bool isBoosted;
+  final DateTime? boostExpiresAt;
+  final int superLikeCount;
 
   const ImpactProfile({
     required this.id,
@@ -42,6 +51,15 @@ class ImpactProfile {
     this.currentEventId,
     required this.isOnline,
     required this.lastSeen,
+    this.streakCount = 0,
+    this.streakActionsToday = 0,
+    this.lastStreakDate,
+    this.isPremium = false,
+    this.isVerified = false,
+    this.verificationType,
+    this.isBoosted = false,
+    this.boostExpiresAt,
+    this.superLikeCount = 0,
   });
 
   factory ImpactProfile.fromMap(Map<String, dynamic> map) {
@@ -65,6 +83,19 @@ class ImpactProfile {
       currentEventId: map['current_event_id'] as String?,
       isOnline: map['is_online'] as bool? ?? false,
       lastSeen: DateTime.tryParse(map['last_seen'] ?? '') ?? DateTime.now(),
+      streakCount: map['streak_count'] as int? ?? 0,
+      streakActionsToday: map['streak_actions_today'] as int? ?? 0,
+      lastStreakDate: map['last_streak_date'] != null 
+          ? DateTime.tryParse(map['last_streak_date']) 
+          : null,
+      isPremium: map['is_premium'] as bool? ?? false,
+      isVerified: map['is_verified'] as bool? ?? false,
+      verificationType: map['verification_type'] as String?,
+      isBoosted: map['is_boosted'] as bool? ?? false,
+      boostExpiresAt: map['boost_expires_at'] != null 
+          ? DateTime.tryParse(map['boost_expires_at']) 
+          : null,
+      superLikeCount: map['super_like_count'] as int? ?? 0,
     );
   }
 
@@ -89,6 +120,15 @@ class ImpactProfile {
       'current_event_id': currentEventId,
       'is_online': isOnline,
       'last_seen': lastSeen.toIso8601String(),
+      'streak_count': streakCount,
+      'streak_actions_today': streakActionsToday,
+      'last_streak_date': lastStreakDate?.toIso8601String(),
+      'is_premium': isPremium,
+      'is_verified': isVerified,
+      'verification_type': verificationType,
+      'is_boosted': isBoosted,
+      'boost_expires_at': boostExpiresAt?.toIso8601String(),
+      'super_like_count': superLikeCount,
     };
   }
 }
