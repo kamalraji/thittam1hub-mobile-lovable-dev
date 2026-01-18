@@ -129,7 +129,7 @@ class _MatchInsightsCardState extends State<MatchInsightsCard>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(result.summaryEmoji, style: const TextStyle(fontSize: 14)),
+          Icon(result.summaryIcon, size: 16, color: result.summaryColor),
           const SizedBox(width: 6),
           Text(
             '${result.totalScore}%',
@@ -468,7 +468,7 @@ class MatchSummaryBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(result.summaryEmoji, style: const TextStyle(fontSize: 12)),
+          Icon(result.summaryIcon, size: 14, color: result.summaryColor),
           const SizedBox(width: 4),
           if (showScore) ...[
             Text(

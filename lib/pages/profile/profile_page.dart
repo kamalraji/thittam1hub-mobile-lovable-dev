@@ -736,13 +736,13 @@ class _StatsRow extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _StatItem(value: stats.impactScore, label: 'Impact', icon: '⚡'),
+            _StatItem(value: stats.impactScore, label: 'Impact', icon: Icons.bolt_rounded),
             _Divider(),
-            _StatItem(value: stats.eventsAttended, label: 'Events', icon: '📅'),
+            _StatItem(value: stats.eventsAttended, label: 'Events', icon: Icons.event_rounded),
             _Divider(),
-            _StatItem(value: stats.badgesEarned, label: 'Badges', icon: '🏆'),
+            _StatItem(value: stats.badgesEarned, label: 'Badges', icon: Icons.emoji_events_rounded),
             _Divider(),
-            _StatItem(value: stats.currentStreak, label: 'Streak', icon: '🔥'),
+            _StatItem(value: stats.currentStreak, label: 'Streak', icon: Icons.local_fire_department_rounded),
           ],
         ),
       ),
@@ -753,7 +753,7 @@ class _StatsRow extends StatelessWidget {
 class _StatItem extends StatelessWidget {
   final int value;
   final String label;
-  final String icon;
+  final IconData icon;
 
   const _StatItem({
     required this.value,
@@ -771,7 +771,7 @@ class _StatItem extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 12)),
+            Icon(icon, size: 14, color: cs.primary),
             const SizedBox(width: 4),
             AnimatedStatCounter(
               value: value,

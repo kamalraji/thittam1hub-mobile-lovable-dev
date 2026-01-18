@@ -180,6 +180,67 @@ class IconMappings {
     SparkPostType.QUESTION: 'Q&A',
     SparkPostType.ANNOUNCEMENT: 'Announcements',
   };
+
+  // ============================================
+  // CIRCLE / CATEGORY ICONS
+  // ============================================
+
+  /// Get icon for a circle based on its category or stored icon string
+  static IconData getCircleIcon(String? iconOrCategory) {
+    if (iconOrCategory == null) return Icons.group_work_rounded;
+    
+    // Check if it's a category key
+    final categoryIcon = _circleCategoryIcons[iconOrCategory.toUpperCase()];
+    if (categoryIcon != null) return categoryIcon;
+    
+    // Fallback to default
+    return Icons.group_work_rounded;
+  }
+
+  /// Get color for a circle category
+  static Color getCircleCategoryColor(String? category) {
+    return _circleCategoryColors[category?.toUpperCase()] ?? const Color(0xFF9C27B0);
+  }
+
+  static const Map<String, IconData> _circleCategoryIcons = {
+    'INTEREST': Icons.interests_rounded,
+    'TOPIC': Icons.topic_rounded,
+    'EVENT': Icons.event_rounded,
+    'NETWORKING': Icons.hub_rounded,
+    'TECH': Icons.code_rounded,
+    'DESIGN': Icons.brush_rounded,
+    'MUSIC': Icons.music_note_rounded,
+    'SPORTS': Icons.sports_soccer_rounded,
+    'GAMING': Icons.sports_esports_rounded,
+    'STARTUP': Icons.rocket_launch_rounded,
+    'CAREER': Icons.work_rounded,
+    'EDUCATION': Icons.school_rounded,
+    'HEALTH': Icons.favorite_rounded,
+    'TRAVEL': Icons.flight_rounded,
+    'FOOD': Icons.restaurant_rounded,
+    'ART': Icons.palette_rounded,
+    'BOOK': Icons.menu_book_rounded,
+    'FILM': Icons.movie_rounded,
+    'SCIENCE': Icons.science_rounded,
+    'FINANCE': Icons.trending_up_rounded,
+    'SOCIAL': Icons.people_rounded,
+    'GENERAL': Icons.chat_rounded,
+  };
+
+  static const Map<String, Color> _circleCategoryColors = {
+    'INTEREST': Color(0xFF9C27B0),
+    'TOPIC': Color(0xFF2196F3),
+    'EVENT': Color(0xFFFF5722),
+    'NETWORKING': Color(0xFF673AB7),
+    'TECH': Color(0xFF4CAF50),
+    'DESIGN': Color(0xFFE91E63),
+    'MUSIC': Color(0xFFFF9800),
+    'SPORTS': Color(0xFF009688),
+    'GAMING': Color(0xFF795548),
+    'STARTUP': Color(0xFF3F51B5),
+    'CAREER': Color(0xFF607D8B),
+    'EDUCATION': Color(0xFF8BC34A),
+  };
 }
 
 /// Configuration for filter chips
