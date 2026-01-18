@@ -11,6 +11,7 @@ import 'package:thittam1hub/pages/impact/impact_hub_page.dart';
 import 'package:thittam1hub/pages/impact/circle_chat_page.dart';
 import 'package:thittam1hub/pages/impact/space_room_page.dart';
 import 'package:thittam1hub/pages/impact/profile_detail_page.dart';
+import 'package:thittam1hub/pages/notifications/notification_center_page.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/pages/splash_screen.dart';
 import 'package:thittam1hub/pages/auth/sign_in_page.dart';
@@ -305,6 +306,14 @@ class AppRouter {
                 state,
               ),
             ),
+            // Notification Center
+            GoRoute(
+              path: AppRoutes.notifications,
+              pageBuilder: (context, state) => _buildPageTransition(
+                const NotificationCenterPage(),
+                state,
+              ),
+            ),
             // Public profile deep link route (accessible without auth)
             GoRoute(
               path: '/p/:userId',
@@ -331,6 +340,7 @@ class AppRoutes {
   static const String impact = '/impact';
   static const String chat = '/chat';
   static const String profile = '/profile';
+  static const String notifications = '/notifications';
   static const String signIn = '/signin';
   static const String signUp = '/signup';
   
