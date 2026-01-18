@@ -8,7 +8,9 @@ import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 
 class CirclesPage extends StatefulWidget {
-  const CirclesPage({Key? key}) : super(key: key);
+  final String? searchQuery;
+
+  const CirclesPage({Key? key, this.searchQuery}) : super(key: key);
 
   @override
   State<CirclesPage> createState() => _CirclesPageState();
@@ -116,21 +118,14 @@ class _CirclesPageState extends State<CirclesPage> {
           child: ListView(
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search circles...',
-                    prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: cs.surfaceContainerHighest,
+              if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Searching: "${widget.searchQuery}"',
+                    style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ),
-              ),
               _buildSectionTitle('📍 Auto-Matched Circles'),
               FutureBuilder<List<Circle>>(
                 future: _autoMatchedCirclesFuture,

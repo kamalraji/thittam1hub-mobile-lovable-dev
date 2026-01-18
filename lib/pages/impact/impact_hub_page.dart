@@ -6,18 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/models/connection_request_item.dart';
-import 'package:thittam1hub/models/notification_item.dart';
-import 'package:thittam1hub/services/notification_service.dart';
 import 'pulse_page.dart';
 import 'circles_page.dart';
 import 'vibe_page.dart';
-import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
-import 'package:thittam1hub/widgets/confetti_overlay.dart';
 import 'package:thittam1hub/widgets/score_detail_sheet.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
   final String? initialTab;
@@ -39,19 +34,27 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   int _selectedIndex = 0;
   late PageController _pageController;
   final ImpactService _impactService = ImpactService();
-  final NotificationService _notificationService = NotificationService();
   ImpactProfile? _myProfile;
   List<ConnectionRequestItem> _pendingRequests = [];
-  List<NotificationItem> _notifications = [];
-  int _unreadCount = 0;
-  RealtimeChannel? _notificationChannel;
-  bool _notificationsLoading = true;
   bool _profileLoading = true;
   bool _profileError = false;
   bool _showConfetti = false;
   String? _celebrationMessage;
 
-  late List<Widget> _pages;
+  // Search state
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+
+  List<Widget> get _pages => [
+    PulsePage(
+      initialIntent: widget.initialIntent,
+      initialMode: widget.initialMode,
+      searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
+    ),
+    CirclesPage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
+    VibePage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
+  ];
 
   static const _tabNames = ['pulse', 'circles', 'vibe'];
   static const _tabLabels = ['Pulse', 'Circles', 'Vibe'];
@@ -66,17 +69,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     super.initState();
     _selectedIndex = _getInitialTabIndex();
     _pageController = PageController(initialPage: _selectedIndex);
-    _pages = [
-      PulsePage(
-        initialIntent: widget.initialIntent,
-        initialMode: widget.initialMode,
-      ),
-      CirclesPage(),
-      VibePage(),
-    ];
     _loadMyProfile();
-    _loadNotifications();
-    _subscribeToNotifications();
   }
 
   int _getInitialTabIndex() {
@@ -101,7 +94,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
 
   @override
   void dispose() {
-    _notificationChannel?.unsubscribe();
+    _searchController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -130,57 +123,36 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     }
   }
 
-  Future<void> _loadNotifications() async {
-    setState(() => _notificationsLoading = true);
-    try {
-      final notifications = await _notificationService.getNotifications();
-      final count = await _notificationService.getUnreadCount();
-      if (mounted) {
-        setState(() {
-          _notifications = notifications;
-          _unreadCount = count;
-          _notificationsLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading notifications: $e');
-      if (mounted) {
-        setState(() => _notificationsLoading = false);
-      }
-    }
-  }
-
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
-    await Future.wait([
-      _loadMyProfile(),
-      _loadNotifications(),
-    ]);
+    await _loadMyProfile();
   }
 
-  void _subscribeToNotifications() {
-    try {
-      _notificationChannel =
-          _notificationService.subscribeToNotifications((notification) {
-        if (mounted) {
-          setState(() {
-            _notifications.insert(0, notification);
-            _unreadCount++;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(notification.title),
-              duration: Duration(seconds: 2),
-              action: SnackBarAction(
-                label: 'View',
-                onPressed: () => _showNotificationsSheet(),
-              ),
-            ),
-          );
-        }
-      });
-    } catch (e) {
-      debugPrint('Error subscribing to notifications: $e');
+  void _toggleSearch() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _searchQuery = '';
+      }
+    });
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() => _searchQuery = query);
+  }
+
+  String _getSearchHint() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Search people, skills...';
+      case 1:
+        return 'Search circles...';
+      case 2:
+        return 'Search games, challenges...';
+      default:
+        return 'Search...';
     }
   }
 
@@ -189,84 +161,6 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     if (mounted) setState(() => _pendingRequests = items);
   }
 
-  void _showNotificationsSheet() async {
-    await _loadNotifications();
-    if (!mounted) return;
-    final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    showGlassBottomSheet(
-      context: context,
-      title: 'Notifications',
-      maxHeight: MediaQuery.of(context).size.height * 0.8,
-      actions: [
-        if (_unreadCount > 0)
-          TextButton(
-            onPressed: () async {
-              await _notificationService.markAllAsRead();
-              await _loadNotifications();
-            },
-            child: Text('Mark all read', style: TextStyle(color: cs.primary)),
-          ),
-        Chip(label: Text('${_unreadCount} new')),
-      ],
-      child: _notifications.isEmpty
-          ? Center(
-              child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Text('No notifications',
-                  style: textTheme.bodyMedium
-                      ?.copyWith(color: cs.onSurfaceVariant)),
-            ))
-          : ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final n = _notifications[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  color: n.isRead
-                      ? cs.surfaceContainerHighest
-                      : cs.primary.withValues(alpha: 0.05),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: n.avatarUrl != null
-                          ? NetworkImage(n.avatarUrl!)
-                          : null,
-                      child: n.avatarUrl == null
-                          ? Icon(_getNotificationIcon(n.type))
-                          : null,
-                      backgroundColor:
-                          _getNotificationColor(n.type).withValues(alpha: 0.2),
-                    ),
-                    title: Text(n.title,
-                        style: TextStyle(
-                            fontWeight: n.isRead
-                                ? FontWeight.normal
-                                : FontWeight.bold)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(n.message),
-                        SizedBox(height: 4),
-                        Text(_formatTimestamp(n.createdAt),
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: cs.onSurfaceVariant)),
-                      ],
-                    ),
-                    onTap: () async {
-                      if (!n.isRead) {
-                        await _notificationService.markAsRead(n.id);
-                        await _loadNotifications();
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-    );
-  }
 
   void _showRequestsSheet() async {
     await _loadPendingRequests();
@@ -359,56 +253,6 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     );
   }
 
-  IconData _getNotificationIcon(NotificationType type) {
-    switch (type) {
-      case NotificationType.CONNECTION_REQUEST:
-        return Icons.person_add;
-      case NotificationType.CONNECTION_ACCEPTED:
-        return Icons.check_circle;
-      case NotificationType.CIRCLE_INVITE:
-        return Icons.group_add;
-      case NotificationType.SPARK_REACTION:
-        return Icons.lightbulb;
-      case NotificationType.NEW_BADGE:
-        return Icons.emoji_events;
-      case NotificationType.LEVEL_UP:
-        return Icons.trending_up;
-      case NotificationType.MUTUAL_CONNECTION:
-        return Icons.people;
-      case NotificationType.HIGH_MATCH_ONLINE:
-        return Icons.favorite;
-    }
-  }
-
-  Color _getNotificationColor(NotificationType type) {
-    final cs = Theme.of(context).colorScheme;
-    switch (type) {
-      case NotificationType.CONNECTION_REQUEST:
-      case NotificationType.CONNECTION_ACCEPTED:
-        return cs.primary;
-      case NotificationType.CIRCLE_INVITE:
-        return cs.tertiary;
-      case NotificationType.SPARK_REACTION:
-        return Colors.amber;
-      case NotificationType.NEW_BADGE:
-      case NotificationType.LEVEL_UP:
-        return Colors.orange;
-      case NotificationType.MUTUAL_CONNECTION:
-        return Colors.blue;
-      case NotificationType.HIGH_MATCH_ONLINE:
-        return Colors.pink;
-    }
-  }
-
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final diff = now.difference(timestamp);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
-  }
 
   void _onPageChanged(int index) {
     setState(() {
@@ -465,25 +309,56 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                       onChanged: _onModeTapped,
                     ),
                     const Spacer(),
-                    // Right: Score Badge + Notifications
+                    // Right: Score Badge + Search
                     _ImpactScoreBadge(
                       profile: _myProfile,
                       isLoading: _profileLoading,
                       onTap: _showScoreDetailSheet,
                     ),
                     SizedBox(width: 4),
-                    _notificationsLoading
-                        ? const _NotificationBadgeSkeleton()
-                        : PulsingWidget(
-                            isPulsing: _unreadCount > 0,
-                            glowColor: cs.error,
-                            child: _HeaderIconButton(
-                              icon: Icons.notifications_outlined,
-                              badgeCount: _unreadCount,
-                              onPressed: _showNotificationsSheet,
-                            ),
-                          ),
+                    _HeaderIconButton(
+                      icon: _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                      onPressed: _toggleSearch,
+                    ),
                   ],
+                ),
+              ),
+              // Expandable Search Bar
+              SliverToBoxAdapter(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  height: _isSearching ? 64 : 0,
+                  child: _isSearching
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: TextField(
+                            controller: _searchController,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: _getSearchHint(),
+                              prefixIcon: Icon(Icons.search, color: cs.onSurfaceVariant),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(Icons.clear, color: cs.onSurfaceVariant),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _onSearchChanged('');
+                                      },
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: cs.surfaceContainerHighest,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                            onChanged: _onSearchChanged,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ),
             ];
@@ -848,25 +723,6 @@ class _StatTile extends StatelessWidget {
 
 // ============ Skeleton Widgets ============
 
-class _NotificationBadgeSkeleton extends StatelessWidget {
-  const _NotificationBadgeSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return ShimmerLoading(
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
 class _AppBarAvatarSkeleton extends StatelessWidget {
   const _AppBarAvatarSkeleton();
 
@@ -1183,73 +1039,3 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
   }
 }
 
-// ============ Pulsing Animation Widget ============
-
-class PulsingWidget extends StatefulWidget {
-  final Widget child;
-  final bool isPulsing;
-  final Color glowColor;
-
-  const PulsingWidget({
-    Key? key,
-    required this.child,
-    this.isPulsing = false,
-    this.glowColor = Colors.red,
-  }) : super(key: key);
-
-  @override
-  State<PulsingWidget> createState() => _PulsingWidgetState();
-}
-
-class _PulsingWidgetState extends State<PulsingWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    _animation = Tween<double>(begin: 1.0, end: 1.1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    if (widget.isPulsing) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(PulsingWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPulsing && !_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    } else if (!widget.isPulsing && _controller.isAnimating) {
-      _controller.stop();
-      _controller.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!widget.isPulsing) return widget.child;
-
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _animation.value,
-          child: widget.child,
-        );
-      },
-    );
-  }
-}

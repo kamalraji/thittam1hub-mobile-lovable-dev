@@ -24,8 +24,9 @@ enum DiscoveryMode { people, groups, all }
 class PulsePage extends StatefulWidget {
   final String? initialIntent;
   final String? initialMode;
+  final String? searchQuery;
 
-  const PulsePage({Key? key, this.initialIntent, this.initialMode}) : super(key: key);
+  const PulsePage({Key? key, this.initialIntent, this.initialMode, this.searchQuery}) : super(key: key);
 
   @override
   State<PulsePage> createState() => _PulsePageState();
@@ -380,30 +381,23 @@ class _PulsePageState extends State<PulsePage> with TickerProviderStateMixin {
                 ),
               ),
 
-              // Search and Filter Row
+              // Filter Button Row
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: _discoveryMode == DiscoveryMode.groups
-                                ? 'Search groups...'
-                                : 'Search by name, skill, etc...',
-                            prefixIcon:
-                                Icon(Icons.search, color: cs.onSurfaceVariant),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: cs.surfaceContainerHighest,
+                      if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            'Searching: "${widget.searchQuery}"',
+                            style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ),
+                        )
+                      else
+                        const Spacer(),
                       IconButton(
                         icon: Stack(
                           children: [
