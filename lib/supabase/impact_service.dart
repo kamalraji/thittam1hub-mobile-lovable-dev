@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class ImpactService {
   final _supabase = SupabaseConfig.client;
 
-  /// Get current user's impact profile
+  /// Get current user's impact profile (creates one if doesn't exist)
   Future<ImpactProfile?> getMyImpactProfile() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -21,10 +21,63 @@ class ImpactService {
           .eq('user_id', userId)
           .maybeSingle();
 
-      if (response == null) return null;
+      if (response == null) {
+        // Auto-create a profile for the user
+        return await _createDefaultImpactProfile(userId);
+      }
       return ImpactProfile.fromMap(response as Map<String, dynamic>);
     } catch (e) {
       debugPrint('Error fetching my impact profile: $e');
+      return null;
+    }
+  }
+
+  /// Create a default impact profile for new users
+  Future<ImpactProfile?> _createDefaultImpactProfile(String userId) async {
+    try {
+      // Get user metadata from auth
+      final user = _supabase.auth.currentUser;
+      final fullName = user?.userMetadata?['full_name'] as String? ?? 
+                       user?.email?.split('@').first ?? 
+                       'New User';
+      final avatarUrl = user?.userMetadata?['avatar_url'] as String?;
+
+      final profileData = {
+        'user_id': userId,
+        'full_name': fullName,
+        'avatar_url': avatarUrl,
+        'headline': 'Just joined! 👋',
+        'bio': null,
+        'organization': null,
+        'looking_for': <String>[],
+        'interests': <String>[],
+        'skills': <String>[],
+        'relationship_status': 'OPEN_TO_CONNECT',
+        'education_status': 'PROFESSIONAL',
+        'impact_score': 0,
+        'level': 1,
+        'badges': <String>[],
+        'vibe_emoji': '🚀',
+        'is_online': true,
+        'last_seen': DateTime.now().toIso8601String(),
+        'streak_count': 0,
+        'streak_actions_today': 0,
+        'is_premium': false,
+        'is_verified': false,
+        'is_boosted': false,
+        'super_like_count': 0,
+      };
+
+      final response = await _supabase
+          .from('impact_profiles')
+          .insert(profileData)
+          .select()
+          .single();
+
+      debugPrint('✅ Created default impact profile for user');
+      return ImpactProfile.fromMap(response as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error creating default impact profile: $e');
       return null;
     }
   }
