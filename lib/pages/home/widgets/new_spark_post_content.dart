@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/services/media_upload_service.dart';
 import 'package:thittam1hub/services/giphy_service.dart';
@@ -340,7 +339,7 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
         );
       }
     }
-  }
+    }
   }
 
   String? _validatePoll() {
@@ -722,15 +721,23 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: _selectedGifUrl!,
+              child: Image.network(
+                _selectedGifUrl!,
                 height: 140,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 140,
+                    color: cs.surfaceContainerHighest,
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                },
+                errorBuilder: (_, __, ___) => Container(
                   height: 140,
                   color: cs.surfaceContainerHighest,
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: Icon(Icons.broken_image_outlined, color: cs.outline),
                 ),
               ),
             ),
@@ -1002,17 +1009,20 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                     if (_linkPreview!.image != null)
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                        child: CachedNetworkImage(
-                          imageUrl: _linkPreview!.image!,
+                        child: Image.network(
+                          _linkPreview!.image!,
                           height: 100,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
-                            height: 100,
-                            color: cs.surfaceContainerHighest,
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                          ),
-                          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 100,
+                              color: cs.surfaceContainerHighest,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
                       ),
                     
@@ -1027,11 +1037,11 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                               if (_linkPreview!.favicon != null)
                                 Padding(
                                   padding: const EdgeInsets.only(right: 6),
-                                  child: CachedNetworkImage(
-                                    imageUrl: _linkPreview!.favicon!,
+                                  child: Image.network(
+                                    _linkPreview!.favicon!,
                                     width: 14,
                                     height: 14,
-                                    errorWidget: (_, __, ___) => Icon(
+                                    errorBuilder: (_, __, ___) => Icon(
                                       Icons.language_rounded,
                                       size: 14,
                                       color: cs.onSurfaceVariant,
