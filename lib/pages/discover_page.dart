@@ -238,7 +238,9 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: cs.surface,
       body: SafeArea(
-        child: CustomScrollView(
+        child: BrandedRefreshIndicator(
+          onRefresh: () => _loadEvents(forceRefresh: true),
+          child: CustomScrollView(
           slivers: [
             // Compact App Bar - 56px height
             SliverAppBar(
@@ -339,6 +341,7 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
               ),
             ),
           ],
+        ),
         ),
       ),
     );
