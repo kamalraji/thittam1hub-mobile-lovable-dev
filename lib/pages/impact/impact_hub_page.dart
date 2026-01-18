@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/models/connection_request_item.dart';
@@ -18,7 +19,9 @@ import 'package:thittam1hub/widgets/confetti_overlay.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
-  const ImpactHubPage({Key? key}) : super(key: key);
+  final String? initialTab;
+  
+  const ImpactHubPage({Key? key, this.initialTab}) : super(key: key);
 
   @override
   _ImpactHubPageState createState() => _ImpactHubPageState();
@@ -26,7 +29,7 @@ class ImpactHubPage extends StatefulWidget {
 
 class _ImpactHubPageState extends State<ImpactHubPage> {
   int _selectedIndex = 0;
-  final PageController _pageController = PageController();
+  late PageController _pageController;
   final ImpactService _impactService = ImpactService();
   final NotificationService _notificationService = NotificationService();
   ImpactProfile? _myProfile;
@@ -46,12 +49,41 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     VibePage(),
   ];
 
+  static const _tabNames = ['pulse', 'circles', 'vibe'];
+  static const _tabLabels = ['Pulse', 'Circles', 'Vibe'];
+  static const _tabIcons = [
+    Icons.explore_rounded,
+    Icons.group_rounded,
+    Icons.gamepad_rounded,
+  ];
+
   @override
   void initState() {
     super.initState();
+    _selectedIndex = _getInitialTabIndex();
+    _pageController = PageController(initialPage: _selectedIndex);
     _loadMyProfile();
     _loadNotifications();
     _subscribeToNotifications();
+  }
+
+  int _getInitialTabIndex() {
+    if (widget.initialTab != null) {
+      final index = _tabNames.indexOf(widget.initialTab!.toLowerCase());
+      return index >= 0 ? index : 0;
+    }
+    return 0;
+  }
+
+  @override
+  void didUpdateWidget(ImpactHubPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != oldWidget.initialTab && widget.initialTab != null) {
+      final index = _tabNames.indexOf(widget.initialTab!.toLowerCase());
+      if (index >= 0 && index != _selectedIndex) {
+        _onModeTapped(index);
+      }
+    }
   }
 
   @override
@@ -267,6 +299,145 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     );
   }
 
+  void _showScoreDetailSheet() {
+    if (_myProfile == null) return;
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    final score = _myProfile?.impactScore ?? 0;
+    final level = _myProfile?.level ?? 1;
+    final streak = _myProfile?.streakCount ?? 0;
+    final pointsToNextLevel = (level * 1000) - score;
+    final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
+    
+    showGlassBottomSheet(
+      context: context,
+      title: 'Impact Score',
+      maxHeight: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        children: [
+          // Large score display
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  cs.primary.withValues(alpha: 0.9),
+                  cs.tertiary.withValues(alpha: 0.85),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.bolt_rounded, size: 32, color: Colors.amber),
+                    SizedBox(width: 8),
+                    Text(
+                      '$score',
+                      style: textTheme.displaySmall?.copyWith(
+                        color: cs.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Level $level',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: cs.onPrimary.withValues(alpha: 0.9),
+                  ),
+                ),
+                SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
+                    minHeight: 10,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '$pointsToNextLevel pts to Level ${level + 1}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: cs.onPrimary.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16),
+          // Stats row
+          Row(
+            children: [
+              Expanded(
+                child: _StatTile(
+                  icon: Icons.local_fire_department_rounded,
+                  iconColor: Colors.orange,
+                  label: 'Streak',
+                  value: '$streak days',
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: _StatTile(
+                  icon: Icons.emoji_events_rounded,
+                  iconColor: Colors.amber,
+                  label: 'Badges',
+                  value: '${_myProfile?.badges.length ?? 0}',
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showGlassBottomSheet(
+                      context: context,
+                      title: 'Your Badges',
+                      maxHeight: MediaQuery.of(context).size.height * 0.8,
+                      child: const BadgesContent(),
+                    );
+                  },
+                  icon: Icon(Icons.emoji_events_outlined),
+                  label: Text('Badges'),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showGlassBottomSheet(
+                      context: context,
+                      title: 'Leaderboard',
+                      maxHeight: MediaQuery.of(context).size.height * 0.8,
+                      child: const LeaderboardContent(),
+                    );
+                  },
+                  icon: Icon(Icons.leaderboard_outlined),
+                  label: Text('Rank'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
       case NotificationType.CONNECTION_REQUEST:
@@ -322,6 +493,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     setState(() {
       _selectedIndex = index;
     });
+    _updateUrl(index);
   }
 
   void _onModeTapped(int index) {
@@ -333,13 +505,15 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     );
   }
 
+  void _updateUrl(int index) {
+    final tabName = _tabNames[index];
+    context.replace('/impact?tab=$tabName');
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 400;
     
     return Scaffold(
       body: BrandedRefreshIndicator(
@@ -349,173 +523,53 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
             return <Widget>[
               SliverAppBar(
                 backgroundColor: cs.surface,
+                surfaceTintColor: Colors.transparent,
                 pinned: true,
-                floating: true,
-                snap: true,
-                expandedHeight: 120.0,
+                floating: false,
+                expandedHeight: 60,
                 collapsedHeight: 60,
-                flexibleSpace: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final expandRatio = ((constraints.maxHeight - 60) / 60).clamp(0.0, 1.0);
-                    final isExpanded = expandRatio > 0.5;
-                    
-                    return FlexibleSpaceBar(
-                      titlePadding: EdgeInsets.only(
-                        left: isExpanded ? 16 : 56,
-                        bottom: 12,
-                        right: isExpanded ? 120 : 140,
-                      ),
-                      centerTitle: false,
-                      title: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 200),
-                        opacity: 1,
-                        child: Text(
-                          'Impact Hub',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: isExpanded ? cs.onPrimary : cs.onSurface,
-                            fontWeight: FontWeight.bold,
-                            fontSize: isExpanded ? 20 : 18,
-                          ),
-                        ),
-                      ),
-                      background: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              cs.primary,
-                              cs.tertiary,
-                            ],
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Decorative circles
-                            Positioned(
-                              top: -20,
-                              right: -30,
-                              child: Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: cs.onPrimary.withValues(alpha: 0.1),
-                                ),
-                              ),
+                toolbarHeight: 60,
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    // Left: Impact Hub Logo
+                    _ImpactHubLogoInline(),
+                    const Spacer(),
+                    // Center: Tab Dropdown
+                    _TabDropdown(
+                      selectedIndex: _selectedIndex,
+                      labels: _tabLabels,
+                      icons: _tabIcons,
+                      onChanged: _onModeTapped,
+                    ),
+                    const Spacer(),
+                    // Right: Score Badge + Notifications
+                    _ImpactScoreBadge(
+                      profile: _myProfile,
+                      isLoading: _profileLoading,
+                      onTap: _showScoreDetailSheet,
+                    ),
+                    SizedBox(width: 4),
+                    _notificationsLoading
+                        ? const _NotificationBadgeSkeleton()
+                        : PulsingWidget(
+                            isPulsing: _unreadCount > 0,
+                            glowColor: cs.error,
+                            child: _HeaderIconButton(
+                              icon: Icons.notifications_outlined,
+                              badgeCount: _unreadCount,
+                              onPressed: _showNotificationsSheet,
                             ),
-                            Positioned(
-                              bottom: 10,
-                              left: -20,
-                              child: Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: cs.onPrimary.withValues(alpha: 0.08),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: _profileLoading
-                      ? const _AppBarAvatarSkeleton()
-                      : CircleAvatar(
-                          backgroundImage: _myProfile?.avatarUrl != null
-                              ? NetworkImage(_myProfile!.avatarUrl!)
-                              : null,
-                          backgroundColor: cs.primaryContainer,
-                          child: _myProfile?.avatarUrl == null
-                              ? Text(
-                                  _myProfile?.fullName.isNotEmpty == true 
-                                      ? _myProfile!.fullName[0] 
-                                      : 'U',
-                                  style: TextStyle(color: cs.onPrimaryContainer),
-                                )
-                              : null,
-                        ),
-                ),
-                actions: [
-                  _notificationsLoading
-                      ? const _NotificationBadgeSkeleton()
-                      : PulsingWidget(
-                          isPulsing: _unreadCount > 0,
-                          glowColor: Theme.of(context).colorScheme.error,
-                          child: Stack(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.notifications_outlined, color: cs.onSurface),
-                                onPressed: _showNotificationsSheet,
-                              ),
-                              if (_unreadCount > 0)
-                                Positioned(
-                                  right: 6,
-                                  top: 6,
-                                  child: Container(
-                                    padding: EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: cs.error,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    constraints: BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    child: Text(
-                                      _unreadCount > 9 ? '9+' : '$_unreadCount',
-                                      style: TextStyle(
-                                        color: cs.onError,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
                           ),
-                        ),
-                  IconButton(
-                    icon: Icon(Icons.people_outline, color: cs.onSurface),
-                    onPressed: _showRequestsSheet,
-                  ),
-                  SizedBox(width: 4),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSmallScreen ? 12 : 16,
-                    vertical: 12,
-                  ),
-                  child: _profileLoading
-                      ? const _ScoreCardSkeleton()
-                      : _profileError
-                          ? _ScoreCardError(onRetry: _loadMyProfile)
-                          : _ScoreCard(profile: _myProfile),
+                  ],
                 ),
-              ),
-              SliverPersistentHeader(
-                delegate: _SliverAppBarDelegate(
-                  child: _ModeSelector(
-                    selectedIndex: _selectedIndex,
-                    onTap: _onModeTapped,
-                  ),
-                  height: 64,
-                ),
-                pinned: true,
               ),
             ];
           },
           body: PageView(
             controller: _pageController,
             onPageChanged: _onPageChanged,
+            physics: const BouncingScrollPhysics(),
             children: _pages,
           ),
         ),
@@ -524,211 +578,130 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   }
 }
 
-// ============ Modern Glassmorphism ScoreCard ============
+// ============ Impact Hub Logo Inline ============
 
-class _ScoreCard extends StatelessWidget {
-  final ImpactProfile? profile;
-
-  const _ScoreCard({Key? key, this.profile}) : super(key: key);
+class _ImpactHubLogoInline extends StatelessWidget {
+  const _ImpactHubLogoInline();
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 380;
-    
-    final score = profile?.impactScore ?? 0;
-    final level = profile?.level ?? 1;
-    final streak = profile?.streakCount ?? 0;
-    final pointsToNextLevel = (level * 1000) - score;
-    final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
-    
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+
+    // Brand colors
+    const gradientStart = Color(0xFF8B5CF6);
+    const gradientEnd = Color(0xFF06B6D4);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                cs.primary.withValues(alpha: 0.9),
-                cs.tertiary.withValues(alpha: 0.85),
-              ],
+              colors: [gradientStart, gradientEnd],
             ),
-            border: Border.all(
-              color: cs.onPrimary.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: const Center(
+            child: Icon(
+              Icons.volunteer_activism_rounded,
+              size: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Impact Hub',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============ Tab Dropdown Selector ============
+
+class _TabDropdown extends StatelessWidget {
+  final int selectedIndex;
+  final List<String> labels;
+  final List<IconData> icons;
+  final Function(int) onChanged;
+
+  const _TabDropdown({
+    required this.selectedIndex,
+    required this.labels,
+    required this.icons,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return PopupMenuButton<int>(
+      onSelected: onChanged,
+      offset: const Offset(0, 48),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: cs.surface,
+      surfaceTintColor: cs.surfaceTint,
+      elevation: 8,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icons[selectedIndex], size: 18, color: cs.primary),
+            const SizedBox(width: 6),
+            Text(
+              labels[selectedIndex],
+              style: textTheme.labelLarge?.copyWith(
+                color: cs.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: cs.primary),
+          ],
+        ),
+      ),
+      itemBuilder: (context) => List.generate(
+        labels.length,
+        (index) => PopupMenuItem<int>(
+          value: index,
+          child: Row(
             children: [
-              // Header with score
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.gps_fixed_rounded, size: 14, color: cs.onPrimary.withValues(alpha: 0.8)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Impact Score',
-                            style: textTheme.labelMedium?.copyWith(
-                              color: cs.onPrimary.withValues(alpha: 0.8),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '$score',
-                        style: textTheme.headlineMedium?.copyWith(
-                          color: cs.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Level badge
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: cs.onPrimary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: cs.onPrimary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.trending_up, size: 16, color: cs.onPrimary),
-                        SizedBox(width: 4),
-                        Text(
-                          'Level $level',
-                          style: textTheme.labelMedium?.copyWith(
-                            color: cs.onPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              Icon(
+                icons[index],
+                size: 20,
+                color: index == selectedIndex ? cs.primary : cs.onSurfaceVariant,
               ),
-              
-              SizedBox(height: 16),
-              
-              // Progress bar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                      valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
-                      minHeight: 8,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '$pointsToNextLevel pts to Level ${level + 1}',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: cs.onPrimary.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Text(
+                labels[index],
+                style: textTheme.bodyMedium?.copyWith(
+                  color: index == selectedIndex ? cs.primary : cs.onSurface,
+                  fontWeight: index == selectedIndex ? FontWeight.w600 : FontWeight.normal,
+                ),
               ),
-              
-              SizedBox(height: 16),
-              
-              // Stats row and action buttons
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final useCompact = constraints.maxWidth < 300;
-                  
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.spaceBetween,
-                    children: [
-                      // Streak chip
-                      if (streak > 0)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.local_fire_department_rounded, size: 16, color: Colors.orange),
-                              SizedBox(width: 4),
-                              Text(
-                                '$streak day${streak > 1 ? 's' : ''}',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: cs.onPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      
-                      // Action buttons
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _CompactActionButton(
-                            icon: Icons.emoji_events_outlined,
-                            label: useCompact ? null : 'Badges',
-                            onTap: () {
-                              showGlassBottomSheet(
-                                context: context,
-                                title: 'Your Badges',
-                                maxHeight: MediaQuery.of(context).size.height * 0.8,
-                                child: const BadgesContent(),
-                              );
-                            },
-                          ),
-                          SizedBox(width: 8),
-                          _CompactActionButton(
-                            icon: Icons.leaderboard_outlined,
-                            label: useCompact ? null : 'Rank',
-                            onTap: () {
-                              showGlassBottomSheet(
-                                context: context,
-                                title: 'Leaderboard',
-                                maxHeight: MediaQuery.of(context).size.height * 0.8,
-                                child: const LeaderboardContent(),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
+              if (index == selectedIndex) ...[
+                const Spacer(),
+                Icon(Icons.check_rounded, size: 18, color: cs.primary),
+              ],
             ],
           ),
         ),
@@ -737,47 +710,102 @@ class _ScoreCard extends StatelessWidget {
   }
 }
 
-class _CompactActionButton extends StatelessWidget {
-  final IconData icon;
-  final String? label;
+// ============ Compact Impact Score Badge ============
+
+class _ImpactScoreBadge extends StatelessWidget {
+  final ImpactProfile? profile;
+  final bool isLoading;
   final VoidCallback onTap;
 
-  const _CompactActionButton({
-    required this.icon,
-    this.label,
+  const _ImpactScoreBadge({
+    required this.profile,
+    required this.isLoading,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (isLoading) {
+      return ShimmerLoading(
+        child: Container(
+          width: 70,
+          height: 32,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      );
+    }
+
+    final score = profile?.impactScore ?? 0;
+    final level = profile?.level ?? 1;
+    final streak = profile?.streakCount ?? 0;
     
+    // Format score compactly
+    String scoreText;
+    if (score >= 1000) {
+      scoreText = '${(score / 1000).toStringAsFixed(1)}K';
+    } else {
+      scoreText = '$score';
+    }
+
     return Material(
-      color: cs.surface.withValues(alpha: 0.9),
-      borderRadius: BorderRadius.circular(12),
+      color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: label != null ? 12 : 10,
-            vertical: 8,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                cs.primary.withValues(alpha: 0.15),
+                cs.tertiary.withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: cs.primary),
-              if (label != null) ...[
-                SizedBox(width: 6),
+              Icon(Icons.bolt_rounded, size: 14, color: Colors.amber),
+              const SizedBox(width: 2),
+              Text(
+                scoreText,
+                style: textTheme.labelSmall?.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 3,
+                height: 3,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ),
+              Text(
+                'Lv$level',
+                style: textTheme.labelSmall?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (streak > 0) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.local_fire_department_rounded, size: 12, color: Colors.orange),
                 Text(
-                  label!,
-                  style: TextStyle(
-                    color: cs.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  '$streak',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -789,89 +817,101 @@ class _CompactActionButton extends StatelessWidget {
   }
 }
 
-// ============ Score Card Loading & Error States ============
+// ============ Header Icon Button ============
 
-class _ScoreCardSkeleton extends StatelessWidget {
-  const _ScoreCardSkeleton({Key? key}) : super(key: key);
+class _HeaderIconButton extends StatelessWidget {
+  final IconData icon;
+  final int badgeCount;
+  final VoidCallback onPressed;
+
+  const _HeaderIconButton({
+    required this.icon,
+    this.badgeCount = 0,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
-    return ShimmerLoading(
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: cs.surfaceContainerHighest,
+
+    return Stack(
+      children: [
+        IconButton(
+          icon: Icon(icon, color: cs.onSurface),
+          onPressed: onPressed,
+          visualDensity: VisualDensity.compact,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(height: 14, width: 90, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
-                    SizedBox(height: 8),
-                    Container(height: 28, width: 70, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
-                  ],
+        if (badgeCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: cs.error,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: Text(
+                badgeCount > 9 ? '9+' : '$badgeCount',
+                style: TextStyle(
+                  color: cs.onError,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
-                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(16))),
-              ],
+                textAlign: TextAlign.center,
+              ),
             ),
-            SizedBox(height: 16),
-            Container(height: 8, width: double.infinity, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
-            SizedBox(height: 8),
-            Container(height: 12, width: 140, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(4))),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(12))),
-                SizedBox(width: 8),
-                Container(height: 32, width: 80, decoration: BoxDecoration(color: cs.surfaceContainerHigh, borderRadius: BorderRadius.circular(12))),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }
 
-class _ScoreCardError extends StatelessWidget {
-  final VoidCallback onRetry;
+// ============ Stat Tile for Score Detail Sheet ============
 
-  const _ScoreCardError({required this.onRetry});
+class _StatTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  const _StatTile({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: cs.errorContainer.withValues(alpha: 0.3),
-        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: cs.error, size: 32),
-          SizedBox(height: 8),
+          Icon(icon, size: 28, color: iconColor),
+          const SizedBox(height: 8),
           Text(
-            'Unable to load profile',
-            style: textTheme.bodyMedium?.copyWith(color: cs.onErrorContainer),
+            value,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: onRetry,
-            icon: Icon(Icons.refresh, size: 18),
-            label: Text('Retry'),
-            style: TextButton.styleFrom(foregroundColor: cs.error),
+          Text(
+            label,
+            style: textTheme.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -879,161 +919,47 @@ class _ScoreCardError extends StatelessWidget {
   }
 }
 
-// ============ Mode Selector (Fixed - Only 3 tabs) ============
+// ============ Skeleton Widgets ============
 
-class _ModeSelector extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onTap;
-
-  const _ModeSelector({
-    Key? key,
-    required this.selectedIndex,
-    required this.onTap,
-  }) : super(key: key);
+class _NotificationBadgeSkeleton extends StatelessWidget {
+  const _NotificationBadgeSkeleton();
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    
-    // Mode items - matches _pages list (3 items)
-    final modes = [
-      _ModeItem(Icons.explore_outlined, Icons.explore, 'Pulse'),
-      _ModeItem(Icons.group_outlined, Icons.group, 'Circles'),
-      _ModeItem(Icons.gamepad_outlined, Icons.gamepad, 'Vibe'),
-    ];
-    
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(
-          bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3), width: 0.5),
+    return ShimmerLoading(
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          shape: BoxShape.circle,
         ),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: List.generate(modes.length, (index) {
-          final mode = modes[index];
-          final isSelected = selectedIndex == index;
-          
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                margin: EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: isSelected ? cs.primary : cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: cs.primary.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isSelected ? mode.selectedIcon : mode.icon,
-                      color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
-                      size: 22,
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      mode.label,
-                      style: TextStyle(
-                        color: isSelected ? cs.onPrimary : cs.onSurfaceVariant,
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
 }
-
-class _ModeItem {
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-
-  _ModeItem(this.icon, this.selectedIcon, this.label);
-}
-
-// ============ AppBar Skeletons ============
 
 class _AppBarAvatarSkeleton extends StatelessWidget {
-  const _AppBarAvatarSkeleton({Key? key}) : super(key: key);
+  const _AppBarAvatarSkeleton();
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return ShimmerLoading(
-      child: CircleAvatar(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
-    );
-  }
-}
-
-class _NotificationBadgeSkeleton extends StatelessWidget {
-  const _NotificationBadgeSkeleton({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ShimmerLoading(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            shape: BoxShape.circle,
-          ),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          shape: BoxShape.circle,
         ),
       ),
     );
   }
 }
 
-// ============ Sliver Delegate ============
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({required this.child, this.height = 64});
-
-  final Widget child;
-  final double height;
-
-  @override
-  double get minExtent => height;
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox(height: height, child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return oldDelegate.height != height || oldDelegate.child != child;
-  }
-}
-
-// ============ Badges Content ============
+// ============ Badges & Leaderboard Content ============
 
 class BadgesContent extends StatefulWidget {
   const BadgesContent({Key? key}) : super(key: key);
@@ -1043,114 +969,47 @@ class BadgesContent extends StatefulWidget {
 }
 
 class _BadgesContentState extends State<BadgesContent> {
-  final _svc = GamificationService();
-  List<BadgeItem> _all = [];
-  List<String> _mine = [];
+  final GamificationService _gamificationService = GamificationService();
+  List<Map<String, dynamic>> _earnedBadges = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadBadges();
   }
 
-  Future<void> _load() async {
+  Future<void> _loadBadges() async {
     try {
-      final results = await Future.wait([
-        _svc.getAllBadges(),
-        _svc.getMyBadgeIds(),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _all = results[0] as List<BadgeItem>;
-        _mine = results[1] as List<String>;
-        _loading = false;
-      });
+      final badges = await _gamificationService.getUserBadges();
+      if (mounted) {
+        setState(() {
+          _earnedBadges = badges;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      debugPrint('BadgesContent load error: $e');
+      debugPrint('Error loading badges: $e');
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    if (_loading) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(32),
-        child: CircularProgressIndicator(),
-      ));
-    }
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Chip(label: Text('${_mine.length}/${_all.length}')),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.82,
-          ),
-          itemCount: _all.length,
-          itemBuilder: (context, index) {
-            final b = _all[index];
-            final earned = _mine.contains(b.id);
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 250),
-              opacity: earned ? 1 : 0.4,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(_getBadgeIcon(b.category), size: 28, color: _getBadgeColor(b.rarity)),
-                    const SizedBox(height: 8),
-                    Text(b.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text(b.rarity, style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
   }
 
   IconData _getBadgeIcon(String category) {
     switch (category.toUpperCase()) {
       case 'NETWORKING':
         return Icons.hub_rounded;
+      case 'ENGAGEMENT':
+        return Icons.thumb_up_rounded;
+      case 'CONTENT':
+        return Icons.create_rounded;
       case 'COMMUNITY':
         return Icons.groups_rounded;
-      case 'CONTRIBUTION':
-        return Icons.volunteer_activism_rounded;
+      case 'ACHIEVEMENT':
+        return Icons.emoji_events_rounded;
       case 'SPECIAL':
         return Icons.auto_awesome_rounded;
-      case 'EVENT':
-        return Icons.event_rounded;
-      case 'STREAK':
-        return Icons.local_fire_department_rounded;
       default:
-        return Icons.emoji_events_rounded;
+        return Icons.verified_rounded;
     }
   }
 
@@ -1167,9 +1026,75 @@ class _BadgesContentState extends State<BadgesContent> {
         return Colors.grey;
     }
   }
-}
 
-// ============ Leaderboard Content ============
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (_loading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_earnedBadges.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events_outlined, size: 48, color: cs.onSurfaceVariant),
+            SizedBox(height: 16),
+            Text('No badges earned yet', style: textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
+            SizedBox(height: 8),
+            Text('Keep engaging to earn badges!', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _earnedBadges.length,
+      itemBuilder: (context, index) {
+        final b = _earnedBadges[index];
+        final badge = b['badge'] as Map<String, dynamic>? ?? b;
+        final category = (badge['category'] ?? 'ACHIEVEMENT') as String;
+        final rarity = (badge['rarity'] ?? 'COMMON') as String;
+        
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          child: ListTile(
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _getBadgeColor(rarity).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(_getBadgeIcon(category), color: _getBadgeColor(rarity), size: 24),
+            ),
+            title: Text(badge['name'] ?? 'Badge', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text(badge['description'] ?? '', style: textTheme.bodySmall),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getBadgeColor(rarity).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                rarity,
+                style: textTheme.labelSmall?.copyWith(
+                  color: _getBadgeColor(rarity),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 class LeaderboardContent extends StatefulWidget {
   const LeaderboardContent({Key? key}) : super(key: key);
@@ -1179,157 +1104,194 @@ class LeaderboardContent extends StatefulWidget {
 }
 
 class _LeaderboardContentState extends State<LeaderboardContent> {
-  final _svc = GamificationService();
-  List<LeaderboardEntry> _entries = [];
+  final ImpactService _impactService = ImpactService();
+  List<ImpactProfile> _topUsers = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadLeaderboard();
   }
 
-  Future<void> _load() async {
+  Future<void> _loadLeaderboard() async {
     try {
-      final list = await _svc.getTopLeaderboard();
-      if (!mounted) return;
-      setState(() {
-        _entries = list;
-        _loading = false;
-      });
+      final users = await _impactService.getLeaderboard(limit: 20);
+      if (mounted) {
+        setState(() {
+          _topUsers = users;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      debugPrint('Leaderboard load error: $e');
+      debugPrint('Error loading leaderboard: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     if (_loading) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(32),
-        child: CircularProgressIndicator(),
-      ));
+      return Center(child: CircularProgressIndicator());
     }
-    
+
+    if (_topUsers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.leaderboard_outlined, size: 48, color: cs.onSurfaceVariant),
+            SizedBox(height: 16),
+            Text('Leaderboard is empty', style: textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _entries.length,
+      itemCount: _topUsers.length,
       itemBuilder: (context, index) {
-        final e = _entries[index];
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundImage: e.avatarUrl != null ? NetworkImage(e.avatarUrl!) : null,
-            child: e.avatarUrl == null ? Text(e.name.isNotEmpty ? e.name[0] : '?') : null,
-          ),
-          title: Text('#${e.rank}  ${e.name}'),
-          subtitle: Text('${e.score} pts'),
-          trailing: index == 0
-              ? const Text('🥇')
-              : index == 1
-                  ? const Text('🥈')
-                  : index == 2
-                      ? const Text('🥉')
+        final user = _topUsers[index];
+        final rank = index + 1;
+        
+        Color rankColor;
+        IconData? rankIcon;
+        if (rank == 1) {
+          rankColor = Colors.amber;
+          rankIcon = Icons.emoji_events_rounded;
+        } else if (rank == 2) {
+          rankColor = Colors.grey.shade400;
+          rankIcon = Icons.emoji_events_rounded;
+        } else if (rank == 3) {
+          rankColor = Colors.brown.shade300;
+          rankIcon = Icons.emoji_events_rounded;
+        } else {
+          rankColor = cs.onSurfaceVariant;
+          rankIcon = null;
+        }
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: ListTile(
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 32,
+                  child: rankIcon != null
+                      ? Icon(rankIcon, color: rankColor, size: 24)
+                      : Text(
+                          '#$rank',
+                          style: textTheme.titleSmall?.copyWith(
+                            color: rankColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                ),
+                SizedBox(width: 8),
+                CircleAvatar(
+                  backgroundImage: user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+                  child: user.avatarUrl == null
+                      ? Text(user.fullName.isNotEmpty ? user.fullName[0] : '?')
                       : null,
+                ),
+              ],
+            ),
+            title: Text(user.fullName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+            subtitle: Text('Level ${user.level}', style: textTheme.bodySmall),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bolt_rounded, size: 16, color: Colors.amber),
+                SizedBox(width: 4),
+                Text(
+                  '${user.impactScore}',
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 }
 
-// Legacy skeleton classes kept for backward compatibility
-class AppBarAvatarSkeleton extends StatelessWidget {
-  const AppBarAvatarSkeleton({Key? key}) : super(key: key);
+// ============ Pulsing Animation Widget ============
+
+class PulsingWidget extends StatefulWidget {
+  final Widget child;
+  final bool isPulsing;
+  final Color glowColor;
+
+  const PulsingWidget({
+    Key? key,
+    required this.child,
+    this.isPulsing = false,
+    this.glowColor = Colors.red,
+  }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => const _AppBarAvatarSkeleton();
+  State<PulsingWidget> createState() => _PulsingWidgetState();
 }
 
-class NotificationBadgeSkeleton extends StatelessWidget {
-  const NotificationBadgeSkeleton({Key? key}) : super(key: key);
+class _PulsingWidgetState extends State<PulsingWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
-  Widget build(BuildContext context) => const _NotificationBadgeSkeleton();
-}
-
-class ScoreChipSkeleton extends StatelessWidget {
-  const ScoreChipSkeleton({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ShimmerLoading(
-      child: Chip(
-        label: Container(width: 50, height: 14),
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
     );
+    _animation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    if (widget.isPulsing) {
+      _controller.repeat(reverse: true);
+    }
   }
-}
-
-class ScoreCardSkeleton extends StatelessWidget {
-  const ScoreCardSkeleton({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => const _ScoreCardSkeleton();
-}
+  void didUpdateWidget(PulsingWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPulsing && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.isPulsing && _controller.isAnimating) {
+      _controller.stop();
+      _controller.reset();
+    }
+  }
 
-// Legacy ModeSelector and ModePill kept for backward compatibility
-class ModeSelector extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onTap;
-
-  const ModeSelector({
-    Key? key,
-    required this.selectedIndex,
-    required this.onTap,
-  }) : super(key: key);
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return _ModeSelector(selectedIndex: selectedIndex, onTap: onTap);
-  }
-}
+    if (!widget.isPulsing) return widget.child;
 
-class ModePill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const ModePill({
-    Key? key,
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: isSelected ? cs.onPrimary : cs.onSurface, size: 20),
-            SizedBox(height: 2),
-            Text(label, style: TextStyle(color: isSelected ? cs.onPrimary : cs.onSurface, fontSize: 11)),
-          ],
-        ),
-      ),
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _animation.value,
+          child: widget.child,
+        );
+      },
     );
   }
 }

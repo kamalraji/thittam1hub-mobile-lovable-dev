@@ -143,7 +143,11 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.impact,
-              pageBuilder: (context, state) => const NoTransitionPage(child: ImpactHubPage()),
+              pageBuilder: (context, state) {
+                // Handle tab query parameter for deep linking
+                final tab = state.uri.queryParameters['tab'];
+                return NoTransitionPage(child: ImpactHubPage(initialTab: tab));
+              },
             ),
             GoRoute(
               path: AppRoutes.chat,
