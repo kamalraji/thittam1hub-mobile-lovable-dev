@@ -7,9 +7,13 @@ import 'package:thittam1hub/services/event_service.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/result.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/nav.dart';
 
 class DiscoverPage extends StatefulWidget {
-  const DiscoverPage({super.key});
+  final String? initialCategory;
+  final String? initialMode;
+  
+  const DiscoverPage({super.key, this.initialCategory, this.initialMode});
 
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
@@ -31,7 +35,64 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _initializeFilters();
     _loadEvents();
+  }
+  
+  void _initializeFilters() {
+    if (widget.initialCategory != null) {
+      _selectedCategory = _parseCategory(widget.initialCategory!);
+    }
+    if (widget.initialMode != null) {
+      _selectedMode = _parseMode(widget.initialMode!);
+    }
+  }
+  
+  EventCategory? _parseCategory(String category) {
+    switch (category.toLowerCase()) {
+      case 'hackathon':
+        return EventCategory.HACKATHON;
+      case 'workshop':
+        return EventCategory.WORKSHOP;
+      case 'conference':
+        return EventCategory.CONFERENCE;
+      case 'meetup':
+        return EventCategory.MEETUP;
+      case 'webinar':
+        return EventCategory.WEBINAR;
+      case 'seminar':
+        return EventCategory.SEMINAR;
+      case 'competition':
+        return EventCategory.COMPETITION;
+      default:
+        return null;
+    }
+  }
+  
+  EventMode? _parseMode(String mode) {
+    switch (mode.toLowerCase()) {
+      case 'online':
+        return EventMode.ONLINE;
+      case 'offline':
+        return EventMode.OFFLINE;
+      case 'hybrid':
+        return EventMode.HYBRID;
+      default:
+        return null;
+    }
+  }
+  
+  void _updateUrl() {
+    String? categoryStr;
+    if (_selectedCategory != null) {
+      categoryStr = _selectedCategory!.name.toLowerCase();
+    }
+    String? modeStr;
+    if (_selectedMode != null) {
+      modeStr = _selectedMode!.name.toLowerCase();
+    }
+    final url = AppRoutes.discoverWithFilters(category: categoryStr, mode: modeStr);
+    context.replace(url);
   }
 
   Future<void> _loadEvents({bool forceRefresh = false}) async {
@@ -160,7 +221,10 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
           final selected = _selectedCategory == cat;
           final label = cat == null ? 'All' : cat.displayName;
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = cat),
+            onTap: () {
+              setState(() => _selectedCategory = cat);
+              _updateUrl();
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -193,7 +257,10 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
     Widget buildBtn(String label, IconData icon, EventMode mode) {
       final selected = _selectedMode == mode;
       return GestureDetector(
-        onTap: () => setState(() => _selectedMode = selected ? null : mode),
+        onTap: () {
+          setState(() => _selectedMode = selected ? null : mode);
+          _updateUrl();
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

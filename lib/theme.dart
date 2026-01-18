@@ -52,6 +52,14 @@ class AppLayout {
   
   // Content padding (accounts for bottom nav + FAB clearance)
   static const double bottomContentPadding = 80.0;
+  
+  // Content component heights for consistent sizing
+  static const double storiesBarHeight = 110.0;
+  static const double filterChipsHeight = 48.0;
+  
+  // Standard content insets
+  static const EdgeInsets horizontalPadding = EdgeInsets.symmetric(horizontal: 16.0);
+  static const EdgeInsets contentPadding = EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
 }
 
 // =============================================================================

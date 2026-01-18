@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/pages/home/home_service.dart';
 import 'package:thittam1hub/pages/home/widgets/stories_bar.dart';
 import 'package:thittam1hub/pages/home/widgets/streak_badge.dart';
@@ -14,6 +15,7 @@ import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/notification_item.dart';
+import 'package:thittam1hub/nav.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
 import 'package:thittam1hub/utils/icon_mappings.dart';
@@ -22,7 +24,9 @@ import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 import 'package:thittam1hub/widgets/thittam1hub_logo.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final String? initialFilter;
+  
+  const HomePage({Key? key, this.initialFilter}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -47,8 +51,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _initializeFilter();
     _loadAllData();
     _subscribeToNotifications();
+  }
+  
+  void _initializeFilter() {
+    if (widget.initialFilter != null) {
+      _selectedFilter = _parseFilter(widget.initialFilter!);
+    }
+  }
+  
+  SparkPostType? _parseFilter(String filter) {
+    switch (filter.toLowerCase()) {
+      case 'ideas':
+        return SparkPostType.IDEA;
+      case 'seeking':
+        return SparkPostType.SEEKING;
+      case 'offering':
+        return SparkPostType.OFFERING;
+      case 'question':
+      case 'qa':
+        return SparkPostType.QUESTION;
+      case 'announcement':
+      case 'announcements':
+        return SparkPostType.ANNOUNCEMENT;
+      default:
+        return null;
+    }
   }
 
   @override
@@ -113,7 +143,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _setFilter(SparkPostType? type) {
     if (_selectedFilter == type) return;
     setState(() => _selectedFilter = type);
+    
+    // Update URL with filter parameter for deep linking
+    final filterName = _filterToString(type);
+    context.replace(filterName == 'all' ? '/' : '/?filter=$filterName');
+    
     _loadAllData();
+  }
+  
+  String _filterToString(SparkPostType? type) {
+    if (type == null) return 'all';
+    switch (type) {
+      case SparkPostType.IDEA:
+        return 'ideas';
+      case SparkPostType.SEEKING:
+        return 'seeking';
+      case SparkPostType.OFFERING:
+        return 'offering';
+      case SparkPostType.QUESTION:
+        return 'qa';
+      case SparkPostType.ANNOUNCEMENT:
+        return 'announcements';
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -311,13 +362,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
               ),
               
-              // Filter Chips
+              // Filter Chips - Fixed height for consistency
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                child: SizedBox(
+                  height: AppLayout.filterChipsHeight,
+                  child: Padding(
+                    padding: AppLayout.contentPadding,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                       children: [
                         _FilterChip(
                           label: 'All',
@@ -360,7 +413,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           isSelected: _selectedFilter == SparkPostType.ANNOUNCEMENT,
                           onTap: () => _setFilter(SparkPostType.ANNOUNCEMENT),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
