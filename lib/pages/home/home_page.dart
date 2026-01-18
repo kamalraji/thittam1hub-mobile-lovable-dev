@@ -15,7 +15,7 @@ import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/models/notification_item.dart';
 import 'package:thittam1hub/utils/animations.dart' hide BrandedRefreshIndicator;
-import 'package:thittam1hub/utils/date_utils.dart';
+
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 
 class HomePage extends StatefulWidget {
@@ -34,8 +34,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   StreakData? _streakData;
   List<StoryItem> _stories = [];
   List<String> _trendingTags = [];
-  String? _userName;
-  
   bool _isLoading = true;
   int _unreadNotificationCount = 0;
   StreamSubscription? _notificationSubscription;
@@ -43,48 +41,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   SparkPostType? _selectedFilter;
   
-  late AnimationController _greetingAnimController;
-  late Animation<double> _waveAnimation;
-
   @override
   void initState() {
     super.initState();
     _loadAllData();
     _subscribeToNotifications();
-    _loadUserName();
-    
-    _greetingAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    
-    _waveAnimation = Tween<double>(begin: -0.05, end: 0.05).animate(
-      CurvedAnimation(parent: _greetingAnimController, curve: Curves.easeInOut),
-    );
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _notificationSubscription?.cancel();
-    _greetingAnimController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadUserName() async {
-    final user = SupabaseConfig.client.auth.currentUser;
-    if (user != null) {
-      final profile = await SupabaseConfig.client
-          .from('impact_profiles')
-          .select('full_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
-      if (mounted && profile != null) {
-        setState(() {
-          _userName = (profile['full_name'] as String?)?.split(' ').first;
-        });
-      }
-    }
   }
 
   void _subscribeToNotifications() {
@@ -296,26 +264,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     title: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        AnimatedBuilder(
-                          animation: _waveAnimation,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _waveAnimation.value,
-                              child: Text(
-                                getGreetingEmoji(),
-                                style: const TextStyle(fontSize: 20),
-                              ),
-                            );
-                          },
+                        Icon(
+                          Icons.hub_outlined,
+                          color: cs.primary,
+                          size: 22,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _userName != null 
-                              ? '${getGreeting()}, $_userName'
-                              : getGreeting(),
+                          'Thittam1hub',
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: cs.onSurface,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
