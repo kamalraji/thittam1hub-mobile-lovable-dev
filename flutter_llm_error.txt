@@ -1,0 +1,132 @@
+Error: Couldn't resolve the package 'cached_network_image' in 'package:cached_network_image/cached_network_image.dart'.
+Error: Expected a declaration, but got '}'.
+Error: Not found: 'package:cached_network_image/cached_network_image.dart'
+Error: Not found: 'package:cached_network_image/cached_network_image.dart'
+Error: Type 'GamificationService' not found.
+Error: Type 'GamificationService' not found.
+Error: Type 'LeaderboardEntry' not found.
+Error: The non-abstract class '_NewSparkPostContentState' is missing implementations for these members:
+Error: Expected ':' before this.
+Error: Expected an identifier, but got ','.
+Error: A value of type 'SliverList' can't be assigned to a variable of type 'bool'.
+Error: 'GamificationService' isn't a type.
+Error: Method not found: 'GamificationService'.
+Error: 'GamificationService' isn't a type.
+Error: Method not found: 'GamificationService'.
+Error: 'LeaderboardEntry' isn't a type.
+Error: The argument type 'Future<void> Function(SparkPostType, String, String, List<String>)' can't be assigned to the parameter type 'Future<void> Function(SparkPostType, String, String, List<String>, {String? gifUrl, String? imageUrl, String? linkUrl, String? pollId})'.
+Error: Undefined name '_pollOptionControllers'.
+Error: Undefined name '_pollDuration'.
+Error: Undefined name '_contentController'.
+Error: Undefined name 'context'.
+Error: Undefined name '_showPollCreator'.
+Error: Undefined name 'context'.
+Error: Undefined name 'context'.
+Error: Setter not found: '_isSubmitting'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_selectedImageBytes'.
+Error: Undefined name '_selectedImageName'.
+Error: Setter not found: '_isUploadingImage'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_selectedImageBytes'.
+Error: Undefined name '_selectedImageName'.
+Error: Undefined name 'mounted'.
+Error: Setter not found: '_uploadProgress'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_mediaUploadService'.
+Error: Setter not found: '_isUploadingImage'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_contentController'.
+Error: Undefined name '_selectedGifUrl'.
+Error: Undefined name '_selectedType'.
+Error: Undefined name '_tags'.
+Error: Undefined name 'widget'.
+Error: Undefined name 'mounted'.
+Error: Undefined name 'context'.
+Error: Undefined name 'context'.
+Error: Undefined name 'mounted'.
+Error: Undefined name 'context'.
+Error: Undefined name 'mounted'.
+Error: Setter not found: '_isSubmitting'.
+Error: Setter not found: '_isUploadingImage'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_postTypeOptions'.
+Error: Undefined name '_selectedType'.
+Error: Method not found: '_selectType'.
+Error: Undefined name '_contentController'.
+Error: Undefined name '_selectedMediaType'.
+Error: Undefined name '_showImageSourcePicker'.
+Error: Undefined name '_selectedMediaType'.
+Error: Undefined name '_pickGif'.
+Error: Undefined name '_selectedMediaType'.
+Error: Undefined name '_showPollCreatorToggle'.
+Error: Undefined name '_selectedMediaType'.
+Error: Undefined name '_showLinkInput'.
+Error: Undefined name '_showPollCreator'.
+Error: Undefined name '_selectedMediaType'.
+Error: Undefined name '_tags'.
+Error: Undefined name '_tags'.
+Error: Method not found: '_removeTag'.
+Error: Method not found: '_addTag'.
+Error: Undefined name '_eventTags'.
+Error: Undefined name '_tagController'.
+Error: Method not found: '_addTag'.
+Error: Undefined name '_tagController'.
+Error: Method not found: '_addTag'.
+Error: Undefined name '_tags'.
+Error: Undefined name '_postTypeOptions'.
+Error: Undefined name '_postTypeOptions'.
+Error: Undefined name '_postTypeOptions'.
+Error: Method not found: '_removeTag'.
+Error: Undefined name '_tags'.
+Error: Undefined name '_isSubmitting'.
+Error: Undefined name '_isSubmitting'.
+Error: Undefined name 'context'.
+Error: Undefined name '_selectedImageBytes'.
+Error: Undefined name '_selectedImageBytes'.
+Error: Undefined name '_isUploadingImage'.
+Error: Undefined name '_uploadProgress'.
+Error: Undefined name '_uploadProgress'.
+Error: Undefined name '_clearMedia'.
+Error: Undefined name '_selectedGifUrl'.
+Error: Undefined name '_selectedGifUrl'.
+Error: Method not found: 'CachedNetworkImage'.
+Error: Undefined name '_clearMedia'.
+Error: Undefined name 'context'.
+Error: Undefined name 'context'.
+Error: Undefined name '_clearMedia'.
+Error: Undefined name '_pollDuration'.
+Error: Setter not found: '_pollDuration'.
+Error: Method not found: 'setState'.
+Error: Undefined name '_pollOptionControllers'.
+Error: Undefined name '_pollOptionControllers'.
+Error: Undefined name '_pollOptionControllers'.
+Error: Method not found: '_removePollOption'.
+Error: Undefined name '_pollOptionControllers'.
+Error: Undefined name '_addPollOption'.
+Error: Undefined name 'context'.
+Error: Undefined name 'context'.
+Error: Undefined name '_clearMedia'.
+Error: Undefined name '_linkController'.
+Error: Method not found: '_fetchLinkPreview'.
+Error: Undefined name '_isLoadingLinkPreview'.
+Error: Undefined name '_fetchLinkPreview'.
+Error: Undefined name '_isLoadingLinkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Method not found: 'CachedNetworkImage'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Method not found: 'CachedNetworkImage'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: Undefined name '_linkPreview'.
+Error: The argument type 'FileOptions/*1*/' can't be assigned to the parameter type 'FileOptions/*2*/'.
+Error: The method 'CachedNetworkImage' isn't defined for the type '_GifTile'.
+Error: Compilation failed.
+Error: Failed to compile application for the Web.
