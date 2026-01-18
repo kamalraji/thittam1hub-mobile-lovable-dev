@@ -24,6 +24,7 @@ class SparkPost {
   final String? imageUrl;
   final String? gifUrl;
   final String? pollId;
+  final String? linkUrl; // Added linkUrl
   
   // Optimistic state
   final bool isOptimisticallySparked;
@@ -44,6 +45,7 @@ class SparkPost {
     this.imageUrl,
     this.gifUrl,
     this.pollId,
+    this.linkUrl, // Added linkUrl to constructor
     this.isOptimisticallySparked = false,
     this.optimisticSparkCount = 0,
   });
@@ -67,6 +69,7 @@ class SparkPost {
       imageUrl: map['image_url'],
       gifUrl: map['gif_url'],
       pollId: map['poll_id'],
+      linkUrl: map['link_url'], // Added linkUrl to fromMap
     );
   }
 
@@ -86,6 +89,7 @@ class SparkPost {
       'image_url': imageUrl,
       'gif_url': gifUrl,
       'poll_id': pollId,
+      'link_url': linkUrl, // Added linkUrl to toMap
     };
   }
 
@@ -106,6 +110,7 @@ class SparkPost {
       imageUrl: imageUrl,
       gifUrl: gifUrl,
       pollId: pollId,
+      linkUrl: linkUrl, // Added linkUrl
       isOptimisticallySparked: true,
       optimisticSparkCount: sparkCount + 1,
     );
@@ -115,7 +120,7 @@ class SparkPost {
   int get displaySparkCount => isOptimisticallySparked ? optimisticSparkCount : sparkCount;
   
   /// Check if post has media attachment
-  bool get hasMedia => imageUrl != null || gifUrl != null || pollId != null;
+  bool get hasMedia => imageUrl != null || gifUrl != null || pollId != null || linkUrl != null; // Updated hasMedia
 }
 
 class SparkService {
@@ -185,6 +190,7 @@ class SparkService {
     String? imageUrl,
     String? gifUrl,
     String? pollId,
+    String? linkUrl, // Added linkUrl parameter
   }) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -205,6 +211,7 @@ class SparkService {
         'image_url': imageUrl,
         'gif_url': gifUrl,
         'poll_id': pollId,
+        'link_url': linkUrl, // Added linkUrl to insert statement
       });
       debugPrint('✅ Spark post created');
     } catch (e) {
