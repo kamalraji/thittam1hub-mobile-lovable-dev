@@ -66,8 +66,15 @@ class _VibePageState extends State<VibePage> {
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
-        title: Text('🎮 Vibe Check',
-            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sports_esports_rounded, color: cs.primary, size: 24),
+            const SizedBox(width: 8),
+            Text('Vibe Check',
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: _showVibeHistorySheet,
@@ -89,7 +96,7 @@ class _VibePageState extends State<VibePage> {
                   padding: EdgeInsets.only(
                       bottom: MediaQuery.of(context).padding.bottom + 16),
                   children: [
-                    _buildSectionTitle('🔥 Live Now'),
+                    _buildSectionTitle('Live Now', Icons.whatshot_rounded, Colors.orange),
                     if (_quick != null)
                       QuickMatchCard(
                         game: _quick!,
@@ -120,7 +127,7 @@ class _VibePageState extends State<VibePage> {
                             style: textTheme.bodyMedium
                                 ?.copyWith(color: cs.onSurfaceVariant)),
                       ),
-                    _buildSectionTitle('🏆 Trivia Challenge'),
+                    _buildSectionTitle('Trivia Challenge', Icons.emoji_events_rounded, Colors.amber),
                     if (_trivia != null)
                       TriviaCard(
                         trivia: _trivia!,
@@ -155,7 +162,7 @@ class _VibePageState extends State<VibePage> {
                             style: textTheme.bodyMedium
                                 ?.copyWith(color: cs.onSurfaceVariant)),
                       ),
-                    _buildSectionTitle('🧊 Icebreaker of the Day'),
+                    _buildSectionTitle('Icebreaker of the Day', Icons.ac_unit_rounded, Colors.cyan),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: IcebreakerCard(
@@ -199,7 +206,7 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildSectionTitle('💭 Would You Rather'),
+                    _buildSectionTitle('Would You Rather', Icons.chat_bubble_outline_rounded, Colors.purple),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: WouldYouRatherCard(
@@ -214,7 +221,7 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildSectionTitle('🧠 Personality Quiz'),
+                    _buildSectionTitle('Personality Quiz', Icons.psychology_rounded, Colors.indigo),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: PersonalityGameCard(
@@ -237,7 +244,7 @@ class _VibePageState extends State<VibePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildSectionTitle('💕 Compatibility Check'),
+                    _buildSectionTitle('Compatibility Check', Icons.favorite_border_rounded, Colors.pink),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: CompatibilityQuizCard(
@@ -259,12 +266,18 @@ class _VibePageState extends State<VibePage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, IconData icon, Color iconColor) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Text(title,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: iconColor),
+          const SizedBox(width: 8),
+          Text(title,
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }
@@ -293,8 +306,14 @@ class QuickMatchCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('⚡ QUICK MATCH',
-              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Icon(Icons.bolt_rounded, size: 16, color: cs.primary),
+              const SizedBox(width: 4),
+              Text('QUICK MATCH',
+                  style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(game.question,
               style:
@@ -303,8 +322,14 @@ class QuickMatchCard extends StatelessWidget {
           for (int i = 0; i < game.options.length; i++)
             _buildOption(context, i, game.options[i]),
           const SizedBox(height: 12),
-          Text('⏱️ ends soon • ${game.participantCount} playing',
-              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 14, color: cs.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text('ends soon • ${game.participantCount} playing',
+                  style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ],
+          ),
         ]),
       ),
     );
@@ -355,8 +380,14 @@ class TriviaCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('🏆 TRIVIA',
-              style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Icon(Icons.emoji_events_rounded, size: 16, color: cs.primary),
+              const SizedBox(width: 4),
+              Text('TRIVIA',
+                  style: TextStyle(color: cs.primary, fontWeight: FontWeight.bold)),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(trivia.question,
               style:
@@ -365,9 +396,15 @@ class TriviaCard extends StatelessWidget {
           for (int i = 0; i < trivia.options.length; i++)
             _buildOption(context, i, trivia.options[i]),
           const SizedBox(height: 12),
-          Text(
-              '⏱️ ${(trivia.expiresAt.difference(DateTime.now()).inMinutes).clamp(0, 59)} min left • ${trivia.participantCount} playing',
-              style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 14, color: cs.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                  '${(trivia.expiresAt.difference(DateTime.now()).inMinutes).clamp(0, 59)} min left • ${trivia.participantCount} playing',
+                  style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ],
+          ),
         ]),
       ),
     );

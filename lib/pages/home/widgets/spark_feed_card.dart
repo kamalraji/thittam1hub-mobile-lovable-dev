@@ -102,18 +102,18 @@ class _SparkFeedCardState extends State<SparkFeedCard> with TickerProviderStateM
     }
   }
 
-  String _getTypeEmoji() {
+  IconData _getTypeIcon() {
     switch (widget.post.type) {
       case SparkPostType.IDEA:
-        return '💡';
+        return Icons.lightbulb_outline_rounded;
       case SparkPostType.SEEKING:
-        return '🔍';
+        return Icons.search_rounded;
       case SparkPostType.OFFERING:
-        return '🎁';
+        return Icons.card_giftcard_rounded;
       case SparkPostType.QUESTION:
-        return '❓';
+        return Icons.help_outline_rounded;
       case SparkPostType.ANNOUNCEMENT:
-        return '📢';
+        return Icons.campaign_outlined;
     }
   }
 
@@ -244,9 +244,10 @@ class _SparkFeedCardState extends State<SparkFeedCard> with TickerProviderStateM
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          _getTypeEmoji(),
-                                          style: const TextStyle(fontSize: 11),
+                                        Icon(
+                                          _getTypeIcon(),
+                                          size: 12,
+                                          color: typeColor,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class IntentConfig {
   final String key;
   final String label;
-  final String emoji;
   final IconData icon;
   final Color color;
   final String description;
@@ -14,7 +13,6 @@ class IntentConfig {
   const IntentConfig({
     required this.key,
     required this.label,
-    required this.emoji,
     required this.icon,
     required this.color,
     required this.description,
@@ -26,7 +24,6 @@ class IntentConfig {
     IntentConfig(
       key: 'DATING',
       label: 'Dating',
-      emoji: '💕',
       icon: Icons.favorite_rounded,
       color: Color(0xFFE91E63), // Pink
       description: 'Find a romantic connection',
@@ -34,7 +31,6 @@ class IntentConfig {
     IntentConfig(
       key: 'FRIENDS',
       label: 'Friends',
-      emoji: '🤝',
       icon: Icons.people_rounded,
       color: Color(0xFF2196F3), // Blue
       description: 'Meet new friends',
@@ -42,7 +38,6 @@ class IntentConfig {
     IntentConfig(
       key: 'COFOUNDER',
       label: 'Co-Founder',
-      emoji: '🚀',
       icon: Icons.rocket_launch_rounded,
       color: Color(0xFF673AB7), // Deep Purple
       description: 'Find a startup partner',
@@ -50,7 +45,6 @@ class IntentConfig {
     IntentConfig(
       key: 'PROJECT_PARTNER',
       label: 'Project Partner',
-      emoji: '💼',
       icon: Icons.handshake_rounded,
       color: Color(0xFF009688), // Teal
       description: 'Collaborate on projects',
@@ -58,7 +52,6 @@ class IntentConfig {
     IntentConfig(
       key: 'STUDY_GROUP',
       label: 'Study Buddy',
-      emoji: '📚',
       icon: Icons.school_rounded,
       color: Color(0xFFFF9800), // Orange
       description: 'Study together',
@@ -66,7 +59,6 @@ class IntentConfig {
     IntentConfig(
       key: 'HACKATHON_TEAM',
       label: 'Hackathon',
-      emoji: '💻',
       icon: Icons.code_rounded,
       color: Color(0xFF4CAF50), // Green
       description: 'Build together',
@@ -74,7 +66,6 @@ class IntentConfig {
     IntentConfig(
       key: 'MENTOR',
       label: 'Mentor',
-      emoji: '🎯',
       icon: Icons.psychology_rounded,
       color: Color(0xFF3F51B5), // Indigo
       description: 'Get guidance',
@@ -83,7 +74,6 @@ class IntentConfig {
     IntentConfig(
       key: 'MENTEE',
       label: 'Mentee',
-      emoji: '🌱',
       icon: Icons.spa_rounded,
       color: Color(0xFF8BC34A), // Light Green
       description: 'Share your knowledge',
@@ -92,7 +82,6 @@ class IntentConfig {
     IntentConfig(
       key: 'JOB',
       label: 'Job',
-      emoji: '💼',
       icon: Icons.work_rounded,
       color: Color(0xFF607D8B), // Blue Grey
       description: 'Find opportunities',
@@ -101,7 +90,6 @@ class IntentConfig {
     IntentConfig(
       key: 'HIRE',
       label: 'Hire',
-      emoji: '🔍',
       icon: Icons.person_search_rounded,
       color: Color(0xFF00BCD4), // Cyan
       description: 'Find talent',
@@ -110,7 +98,6 @@ class IntentConfig {
     IntentConfig(
       key: 'NETWORKING',
       label: 'Networking',
-      emoji: '🌐',
       icon: Icons.hub_rounded,
       color: Color(0xFF9C27B0), // Purple
       description: 'Expand your network',

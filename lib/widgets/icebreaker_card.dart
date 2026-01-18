@@ -84,10 +84,12 @@ class _IcebreakerCardState extends State<IcebreakerCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                    Row(
                     children: [
+                      Icon(Icons.ac_unit_rounded, size: 14, color: Colors.cyan),
+                      const SizedBox(width: 6),
                       Text(
-                        '🧊 ICEBREAKER OF THE DAY',
+                        'ICEBREAKER OF THE DAY',
                         style: TextStyle(
                           color: Colors.cyan,
                           fontWeight: FontWeight.bold,
@@ -106,7 +108,7 @@ class _IcebreakerCardState extends State<IcebreakerCard> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text('🔥', style: TextStyle(fontSize: 12)),
+                              Icon(Icons.local_fire_department_rounded, size: 14, color: Colors.orange),
                               const SizedBox(width: 4),
                               Text(
                                 '${widget.streakDays} day streak',
