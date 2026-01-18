@@ -20,7 +20,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ImpactHubPage extends StatefulWidget {
   final String? initialTab;
-  
+
   const ImpactHubPage({Key? key, this.initialTab}) : super(key: key);
 
   @override
@@ -78,7 +78,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   @override
   void didUpdateWidget(ImpactHubPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialTab != oldWidget.initialTab && widget.initialTab != null) {
+    if (widget.initialTab != oldWidget.initialTab &&
+        widget.initialTab != null) {
       final index = _tabNames.indexOf(widget.initialTab!.toLowerCase());
       if (index >= 0 && index != _selectedIndex) {
         _onModeTapped(index);
@@ -147,7 +148,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
 
   void _subscribeToNotifications() {
     try {
-      _notificationChannel = _notificationService.subscribeToNotifications((notification) {
+      _notificationChannel =
+          _notificationService.subscribeToNotifications((notification) {
         if (mounted) {
           setState(() {
             _notifications.insert(0, notification);
@@ -180,7 +182,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     if (!mounted) return;
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     showGlassBottomSheet(
       context: context,
       title: 'Notifications',
@@ -197,9 +199,12 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
         Chip(label: Text('${_unreadCount} new')),
       ],
       child: _notifications.isEmpty
-          ? Center(child: Padding(
+          ? Center(
+              child: Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('No notifications', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              child: Text('No notifications',
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: cs.onSurfaceVariant)),
             ))
           : ListView.builder(
               shrinkWrap: true,
@@ -209,20 +214,33 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                 final n = _notifications[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 4),
-                  color: n.isRead ? cs.surfaceContainerHighest : cs.primary.withValues(alpha: 0.05),
+                  color: n.isRead
+                      ? cs.surfaceContainerHighest
+                      : cs.primary.withValues(alpha: 0.05),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: n.avatarUrl != null ? NetworkImage(n.avatarUrl!) : null,
-                      child: n.avatarUrl == null ? Icon(_getNotificationIcon(n.type)) : null,
-                      backgroundColor: _getNotificationColor(n.type).withValues(alpha: 0.2),
+                      backgroundImage: n.avatarUrl != null
+                          ? NetworkImage(n.avatarUrl!)
+                          : null,
+                      child: n.avatarUrl == null
+                          ? Icon(_getNotificationIcon(n.type))
+                          : null,
+                      backgroundColor:
+                          _getNotificationColor(n.type).withValues(alpha: 0.2),
                     ),
-                    title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold)),
+                    title: Text(n.title,
+                        style: TextStyle(
+                            fontWeight: n.isRead
+                                ? FontWeight.normal
+                                : FontWeight.bold)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(n.message),
                         SizedBox(height: 4),
-                        Text(_formatTimestamp(n.createdAt), style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                        Text(_formatTimestamp(n.createdAt),
+                            style: textTheme.bodySmall
+                                ?.copyWith(color: cs.onSurfaceVariant)),
                       ],
                     ),
                     onTap: () async {
@@ -243,16 +261,19 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     if (!mounted) return;
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     showGlassBottomSheet(
       context: context,
       title: 'Connection Requests',
       maxHeight: MediaQuery.of(context).size.height * 0.7,
       actions: [Chip(label: Text('${_pendingRequests.length}'))],
       child: _pendingRequests.isEmpty
-          ? Center(child: Padding(
+          ? Center(
+              child: Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('No pending requests', style: textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+              child: Text('No pending requests',
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: cs.onSurfaceVariant)),
             ))
           : ListView.builder(
               shrinkWrap: true,
@@ -264,11 +285,18 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: r.requesterAvatar != null ? NetworkImage(r.requesterAvatar!) : null,
-                      child: r.requesterAvatar == null ? Text(r.requesterName.isNotEmpty ? r.requesterName[0] : '?') : null,
+                      backgroundImage: r.requesterAvatar != null
+                          ? NetworkImage(r.requesterAvatar!)
+                          : null,
+                      child: r.requesterAvatar == null
+                          ? Text(r.requesterName.isNotEmpty
+                              ? r.requesterName[0]
+                              : '?')
+                          : null,
                     ),
                     title: Text(r.requesterName),
-                    subtitle: Text('${r.connectionType} • ${r.matchScore}% match'),
+                    subtitle:
+                        Text('${r.connectionType} • ${r.matchScore}% match'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -276,18 +304,28 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
                           tooltip: 'Decline',
                           icon: Icon(Icons.close, color: cs.error),
                           onPressed: () async {
-                            await _impactService.respondToConnectionRequest(requestId: r.id, accept: false);
+                            await _impactService.respondToConnectionRequest(
+                                requestId: r.id, accept: false);
                             await _loadPendingRequests();
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Declined ${r.requesterName}')));
+                            if (mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Declined ${r.requesterName}')));
                           },
                         ),
                         IconButton(
                           tooltip: 'Accept',
                           icon: Icon(Icons.check_circle, color: cs.primary),
                           onPressed: () async {
-                            await _impactService.respondToConnectionRequest(requestId: r.id, accept: true);
+                            await _impactService.respondToConnectionRequest(
+                                requestId: r.id, accept: true);
                             await _loadPendingRequests();
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Connected with ${r.requesterName}')));
+                            if (mounted)
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Connected with ${r.requesterName}')));
                           },
                         ),
                       ],
@@ -303,13 +341,13 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
     if (_myProfile == null) return;
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     final score = _myProfile?.impactScore ?? 0;
     final level = _myProfile?.level ?? 1;
     final streak = _myProfile?.streakCount ?? 0;
     final pointsToNextLevel = (level * 1000) - score;
     final progress = level > 0 ? (score % 1000) / 1000 : 0.0;
-    
+
     showGlassBottomSheet(
       context: context,
       title: 'Impact Score',
@@ -514,7 +552,7 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Scaffold(
       body: BrandedRefreshIndicator(
         onRefresh: _onRefresh,
@@ -675,7 +713,8 @@ class _TabDropdown extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: cs.primary),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                size: 18, color: cs.primary),
           ],
         ),
       ),
@@ -688,14 +727,17 @@ class _TabDropdown extends StatelessWidget {
               Icon(
                 icons[index],
                 size: 20,
-                color: index == selectedIndex ? cs.primary : cs.onSurfaceVariant,
+                color:
+                    index == selectedIndex ? cs.primary : cs.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Text(
                 labels[index],
                 style: textTheme.bodyMedium?.copyWith(
                   color: index == selectedIndex ? cs.primary : cs.onSurface,
-                  fontWeight: index == selectedIndex ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: index == selectedIndex
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
               if (index == selectedIndex) ...[
@@ -744,7 +786,7 @@ class _ImpactScoreBadge extends StatelessWidget {
     final score = profile?.impactScore ?? 0;
     final level = profile?.level ?? 1;
     final streak = profile?.streakCount ?? 0;
-    
+
     // Format score compactly
     String scoreText;
     if (score >= 1000) {
@@ -800,7 +842,8 @@ class _ImpactScoreBadge extends StatelessWidget {
               ),
               if (streak > 0) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.local_fire_department_rounded, size: 12, color: Colors.orange),
+                Icon(Icons.local_fire_department_rounded,
+                    size: 12, color: Colors.orange),
                 Text(
                   '$streak',
                   style: textTheme.labelSmall?.copyWith(
@@ -981,10 +1024,23 @@ class _BadgesContentState extends State<BadgesContent> {
 
   Future<void> _loadBadges() async {
     try {
-      final badges = await _gamificationService.getUserBadges();
+      final badgeIds = await _gamificationService.getMyBadgeIds();
+      final allBadges = await _gamificationService.getAllBadges();
+      final earnedBadges = allBadges
+          .where((b) => badgeIds.contains(b.id))
+          .map((b) => {
+                'id': b.id,
+                'name': b.name,
+                'description': b.description,
+                'icon': b.icon,
+                'category': b.category,
+                'points_required': b.pointsRequired,
+                'rarity': b.rarity,
+              })
+          .toList();
       if (mounted) {
         setState(() {
-          _earnedBadges = badges;
+          _earnedBadges = earnedBadges;
           _loading = false;
         });
       }
@@ -1041,11 +1097,16 @@ class _BadgesContentState extends State<BadgesContent> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.emoji_events_outlined, size: 48, color: cs.onSurfaceVariant),
+            Icon(Icons.emoji_events_outlined,
+                size: 48, color: cs.onSurfaceVariant),
             SizedBox(height: 16),
-            Text('No badges earned yet', style: textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
+            Text('No badges earned yet',
+                style:
+                    textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
             SizedBox(height: 8),
-            Text('Keep engaging to earn badges!', style: textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            Text('Keep engaging to earn badges!',
+                style:
+                    textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
           ],
         ),
       );
@@ -1060,7 +1121,7 @@ class _BadgesContentState extends State<BadgesContent> {
         final badge = b['badge'] as Map<String, dynamic>? ?? b;
         final category = (badge['category'] ?? 'ACHIEVEMENT') as String;
         final rarity = (badge['rarity'] ?? 'COMMON') as String;
-        
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6),
           child: ListTile(
@@ -1071,10 +1132,14 @@ class _BadgesContentState extends State<BadgesContent> {
                 color: _getBadgeColor(rarity).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(_getBadgeIcon(category), color: _getBadgeColor(rarity), size: 24),
+              child: Icon(_getBadgeIcon(category),
+                  color: _getBadgeColor(rarity), size: 24),
             ),
-            title: Text(badge['name'] ?? 'Badge', style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-            subtitle: Text(badge['description'] ?? '', style: textTheme.bodySmall),
+            title: Text(badge['name'] ?? 'Badge',
+                style: textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.bold)),
+            subtitle:
+                Text(badge['description'] ?? '', style: textTheme.bodySmall),
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -1105,7 +1170,8 @@ class LeaderboardContent extends StatefulWidget {
 
 class _LeaderboardContentState extends State<LeaderboardContent> {
   final ImpactService _impactService = ImpactService();
-  List<ImpactProfile> _topUsers = [];
+  final GamificationService _gamificationService = GamificationService();
+  List<LeaderboardEntry> _topUsers = [];
   bool _loading = true;
 
   @override
@@ -1116,7 +1182,7 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
 
   Future<void> _loadLeaderboard() async {
     try {
-      final users = await _impactService.getLeaderboard(limit: 20);
+      final users = await _gamificationService.getTopLeaderboard(limit: 20);
       if (mounted) {
         setState(() {
           _topUsers = users;
@@ -1143,9 +1209,12 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.leaderboard_outlined, size: 48, color: cs.onSurfaceVariant),
+            Icon(Icons.leaderboard_outlined,
+                size: 48, color: cs.onSurfaceVariant),
             SizedBox(height: 16),
-            Text('Leaderboard is empty', style: textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
+            Text('Leaderboard is empty',
+                style:
+                    textTheme.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
           ],
         ),
       );
@@ -1157,8 +1226,8 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
       itemCount: _topUsers.length,
       itemBuilder: (context, index) {
         final user = _topUsers[index];
-        final rank = index + 1;
-        
+        final rank = user.rank;
+
         Color rankColor;
         IconData? rankIcon;
         if (rank == 1) {
@@ -1196,22 +1265,26 @@ class _LeaderboardContentState extends State<LeaderboardContent> {
                 ),
                 SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundImage: user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+                  backgroundImage: user.avatarUrl != null
+                      ? NetworkImage(user.avatarUrl!)
+                      : null,
                   child: user.avatarUrl == null
-                      ? Text(user.fullName.isNotEmpty ? user.fullName[0] : '?')
+                      ? Text(user.name.isNotEmpty ? user.name[0] : '?')
                       : null,
                 ),
               ],
             ),
-            title: Text(user.fullName, style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-            subtitle: Text('Level ${user.level}', style: textTheme.bodySmall),
+            title: Text(user.name,
+                style: textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+            subtitle: Text('Rank #${user.rank}', style: textTheme.bodySmall),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.bolt_rounded, size: 16, color: Colors.amber),
                 SizedBox(width: 4),
                 Text(
-                  '${user.impactScore}',
+                  '${user.score}',
                   style: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: cs.primary,
@@ -1244,7 +1317,8 @@ class PulsingWidget extends StatefulWidget {
   State<PulsingWidget> createState() => _PulsingWidgetState();
 }
 
-class _PulsingWidgetState extends State<PulsingWidget> with SingleTickerProviderStateMixin {
+class _PulsingWidgetState extends State<PulsingWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
