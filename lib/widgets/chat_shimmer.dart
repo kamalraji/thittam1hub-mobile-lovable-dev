@@ -34,7 +34,7 @@ class _ChatTileShimmer extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+          color: theme.colorScheme.outline.withOpacity(0.3),
         ),
       ),
       child: Row(
