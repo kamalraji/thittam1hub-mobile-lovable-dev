@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:thittam1hub/supabase/spark_service.dart';
 import 'package:thittam1hub/services/media_upload_service.dart';
 import 'package:thittam1hub/services/giphy_service.dart';
@@ -721,20 +722,17 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                _selectedGifUrl!,
+              child: CachedNetworkImage(
+                imageUrl: _selectedGifUrl!,
                 height: 140,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 140,
-                    color: cs.surfaceContainerHighest,
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  );
-                },
-                errorBuilder: (_, __, ___) => Container(
+                placeholder: (context, url) => Container(
+                  height: 140,
+                  color: cs.surfaceContainerHighest,
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                errorWidget: (context, url, error) => Container(
                   height: 140,
                   color: cs.surfaceContainerHighest,
                   child: Icon(Icons.broken_image_outlined, color: cs.outline),
@@ -1009,20 +1007,17 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                     if (_linkPreview!.image != null)
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                        child: Image.network(
-                          _linkPreview!.image!,
+                        child: CachedNetworkImage(
+                          imageUrl: _linkPreview!.image!,
                           height: 100,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              height: 100,
-                              color: cs.surfaceContainerHighest,
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            );
-                          },
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                          placeholder: (context, url) => Container(
+                            height: 100,
+                            color: cs.surfaceContainerHighest,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (context, url, error) => const SizedBox.shrink(),
                         ),
                       ),
                     
@@ -1037,11 +1032,11 @@ class _NewSparkPostContentState extends State<NewSparkPostContent> {
                               if (_linkPreview!.favicon != null)
                                 Padding(
                                   padding: const EdgeInsets.only(right: 6),
-                                  child: Image.network(
-                                    _linkPreview!.favicon!,
+                                  child: CachedNetworkImage(
+                                    imageUrl: _linkPreview!.favicon!,
                                     width: 14,
                                     height: 14,
-                                    errorBuilder: (_, __, ___) => Icon(
+                                    errorWidget: (context, url, error) => Icon(
                                       Icons.language_rounded,
                                       size: 14,
                                       color: cs.onSurfaceVariant,
