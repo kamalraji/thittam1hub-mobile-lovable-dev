@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/services/chat_service.dart';
 import 'package:thittam1hub/theme.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -315,16 +318,18 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.forum_outlined, size: 48, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(height: 12),
-        Text('No channels yet', style: context.textStyles.titleMedium),
-        const SizedBox(height: 6),
-        Text('Start by joining a workspace channel', style: context.textStyles.bodySmall!.withColor(AppColors.textMuted)),
-        const SizedBox(height: 12),
-        TextButton.icon(onPressed: onTap, icon: const Icon(Icons.refresh, color: AppColors.textPrimary), label: const Text('Refresh')),
-      ]),
+    return EnhancedEmptyState(
+      icon: EmptyStateConfig.messages.icon,
+      title: EmptyStateConfig.messages.title,
+      subtitle: 'Start by joining a workspace channel',
+      primaryButtonLabel: 'New Message',
+      primaryButtonIcon: Icons.chat_rounded,
+      onPrimaryAction: () {
+        HapticFeedback.lightImpact();
+        context.push('/chat/new');
+      },
+      secondaryButtonLabel: 'Refresh',
+      onSecondaryAction: onTap,
     );
   }
 }

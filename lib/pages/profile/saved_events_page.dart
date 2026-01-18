@@ -5,7 +5,9 @@ import 'package:thittam1hub/models/saved_event.dart';
 import 'package:thittam1hub/services/saved_events_service.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 
 /// Saved Events page with filtering and reminders
 class SavedEventsPage extends StatefulWidget {
@@ -178,72 +180,29 @@ class _SavedEventsPageState extends State<SavedEventsPage> {
   }
 
   Widget _buildEmptyState() {
-    final cs = Theme.of(context).colorScheme;
-
-    String title;
-    String subtitle;
+    EmptyStateConfig config;
     
     switch (_filter) {
       case 'upcoming':
-        title = 'No upcoming saved events';
-        subtitle = 'Save events you\'re interested in attending';
+        config = EmptyStateConfig.upcomingEvents;
         break;
       case 'past':
-        title = 'No past saved events';
-        subtitle = 'Your past saved events will appear here';
+        config = EmptyStateConfig.pastEvents;
         break;
       case 'reminders':
-        title = 'No events with reminders';
-        subtitle = 'Enable reminders on saved events to get notified';
+        config = EmptyStateConfig.reminders;
         break;
       default:
-        title = 'No saved events yet';
-        subtitle = 'Save events you\'re interested in to find them here later!';
+        config = EmptyStateConfig.savedEvents;
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.bookmark_border,
-                size: 48,
-                color: cs.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.go('/discover'),
-              icon: const Icon(Icons.explore),
-              label: const Text('Discover Events'),
-            ),
-          ],
-        ),
-      ),
+    return EnhancedEmptyState(
+      icon: config.icon,
+      title: config.title,
+      subtitle: config.subtitle,
+      primaryButtonLabel: config.buttonLabel,
+      primaryButtonIcon: config.buttonIcon,
+      onPrimaryAction: config.buttonLabel != null ? () => context.go('/discover') : null,
     );
   }
 }

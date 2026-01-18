@@ -6,8 +6,10 @@ import 'package:thittam1hub/models/impact_profile.dart';
 import 'package:thittam1hub/services/connections_service.dart';
 import 'package:thittam1hub/supabase/impact_service.dart';
 import 'package:thittam1hub/theme.dart';
-import 'package:thittam1hub/widgets/connection_card.dart';
 import 'package:thittam1hub/utils/animations.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
+import 'package:thittam1hub/widgets/connection_card.dart';
+import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 
 /// Connections page with tabs for mutual, pending, and suggestions
 class ConnectionsPage extends StatefulWidget {
@@ -181,12 +183,13 @@ class _ConnectionsPageState extends State<ConnectionsPage> with SingleTickerProv
 
   Widget _buildMutualTab() {
     if (_mutualConnections.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.people_outline,
-        title: 'No connections yet',
-        subtitle: 'Connect with others to grow your network',
-        actionLabel: 'Find People',
-        onAction: () => _tabController.animateTo(2),
+      return EnhancedEmptyState(
+        icon: EmptyStateConfig.connections.icon,
+        title: EmptyStateConfig.connections.title,
+        subtitle: EmptyStateConfig.connections.subtitle,
+        primaryButtonLabel: EmptyStateConfig.connections.buttonLabel,
+        primaryButtonIcon: EmptyStateConfig.connections.buttonIcon,
+        onPrimaryAction: () => _tabController.animateTo(2),
       );
     }
 
@@ -212,10 +215,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> with SingleTickerProv
 
   Widget _buildPendingTab() {
     if (_pendingRequests.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.hourglass_empty,
-        title: 'No pending requests',
-        subtitle: 'When someone wants to connect, you\'ll see them here',
+      return EnhancedEmptyState(
+        icon: EmptyStateConfig.pending.icon,
+        title: EmptyStateConfig.pending.title,
+        subtitle: EmptyStateConfig.pending.subtitle,
       );
     }
 
@@ -242,10 +245,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> with SingleTickerProv
 
   Widget _buildSuggestionsTab() {
     if (_suggestions.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.person_search,
-        title: 'No suggestions available',
-        subtitle: 'Check back later for new connection suggestions',
+      return EnhancedEmptyState(
+        icon: EmptyStateConfig.suggestions.icon,
+        title: EmptyStateConfig.suggestions.title,
+        subtitle: EmptyStateConfig.suggestions.subtitle,
       );
     }
 
@@ -291,59 +294,4 @@ class _ConnectionsPageState extends State<ConnectionsPage> with SingleTickerProv
     );
   }
 
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    String? actionLabel,
-    VoidCallback? onAction,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: cs.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: onAction,
-                child: Text(actionLabel),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }
