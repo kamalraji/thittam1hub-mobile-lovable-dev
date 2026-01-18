@@ -3305,8 +3305,11 @@ export type Database = {
           created_at: string
           event_id: string | null
           expires_at: string | null
+          gif_url: string | null
           id: string
+          image_url: string | null
           is_anonymous: boolean
+          poll_id: string | null
           spark_count: number
           status: string
           tags: string[] | null
@@ -3322,8 +3325,11 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           expires_at?: string | null
+          gif_url?: string | null
           id?: string
+          image_url?: string | null
           is_anonymous?: boolean
+          poll_id?: string | null
           spark_count?: number
           status?: string
           tags?: string[] | null
@@ -3339,15 +3345,26 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           expires_at?: string | null
+          gif_url?: string | null
           id?: string
+          image_url?: string | null
           is_anonymous?: boolean
+          poll_id?: string | null
           spark_count?: number
           status?: string
           tags?: string[] | null
           title?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "spark_posts_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "vibe_games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spark_reactions: {
         Row: {
