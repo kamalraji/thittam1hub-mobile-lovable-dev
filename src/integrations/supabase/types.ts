@@ -1399,6 +1399,47 @@ export type Database = {
           },
         ]
       }
+      event_checkins: {
+        Row: {
+          checkin_date: string
+          checkin_time: string
+          checkout_time: string | null
+          created_at: string | null
+          event_id: string
+          id: string
+          location: string | null
+          user_id: string
+        }
+        Insert: {
+          checkin_date?: string
+          checkin_time?: string
+          checkout_time?: string | null
+          created_at?: string | null
+          event_id: string
+          id?: string
+          location?: string | null
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          checkin_time?: string
+          checkout_time?: string | null
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          location?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_checkins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_page_views: {
         Row: {
           created_at: string
@@ -1442,6 +1483,115 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "event_page_views_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_poll_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          poll_id: string
+          text: string
+          vote_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          poll_id: string
+          text: string
+          vote_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          poll_id?: string
+          text?: string
+          vote_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "event_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_poll_votes: {
+        Row: {
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+          voted_at: string | null
+        }
+        Insert: {
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+          voted_at?: string | null
+        }
+        Update: {
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "event_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "event_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_polls: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          event_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          question: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_polls_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
@@ -10861,6 +11011,7 @@ export type Database = {
     }
     Functions: {
       count_not_checked_in: { Args: { p_event_id: string }; Returns: number }
+      decrement_poll_vote: { Args: { p_option_id: string }; Returns: undefined }
       decrement_ticket_sold_count: {
         Args: { quantity: number; ticket_id: string }
         Returns: undefined
@@ -11024,6 +11175,7 @@ export type Database = {
         Args: { _user_id?: string; _workspace_id: string }
         Returns: boolean
       }
+      increment_poll_vote: { Args: { p_option_id: string }; Returns: undefined }
       increment_spark_count: { Args: { post_id: string }; Returns: undefined }
       increment_ticket_sold_count: {
         Args: { quantity: number; ticket_id: string }
