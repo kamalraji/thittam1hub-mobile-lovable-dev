@@ -50,14 +50,21 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   }
   
   EventCategory? _parseCategory(String category) {
-    final upper = category.toUpperCase();
-    try {
-      return EventCategory.values.firstWhere(
-        (e) => e.name == upper,
-      );
-    } catch (_) {
-      return null;
+    if (category.isEmpty) return null;
+    
+    final upper = category.toUpperCase().trim();
+    
+    // Direct lookup using firstWhere with orElse for null safety
+    final match = EventCategory.values.cast<EventCategory?>().firstWhere(
+      (e) => e?.name == upper,
+      orElse: () => null,
+    );
+    
+    if (match == null) {
+      debugPrint('DiscoverPage: Unknown event category "$category"');
     }
+    
+    return match;
   }
   
   EventMode? _parseMode(String mode) {
