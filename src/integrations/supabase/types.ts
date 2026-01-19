@@ -7694,6 +7694,7 @@ export type Database = {
           updated_at: string
           uploaded_by: string | null
           uploader_name: string | null
+          usage_count: number
           workspace_id: string
         }
         Insert: {
@@ -7715,6 +7716,7 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string | null
           uploader_name?: string | null
+          usage_count?: number
           workspace_id: string
         }
         Update: {
@@ -7736,6 +7738,7 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string | null
           uploader_name?: string | null
+          usage_count?: number
           workspace_id?: string
         }
         Relationships: [
