@@ -8,6 +8,7 @@ import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/background_sync_service.dart';
 import 'services/offline_action_queue.dart';
+import 'services/presence_service.dart';
 import 'supabase/supabase_config.dart';
 
 /// Main entry point for the application
@@ -51,6 +52,14 @@ void main() async {
     debugPrint('✅ BackgroundSyncService initialized successfully');
   } catch (e) {
     debugPrint('❌ Failed to initialize BackgroundSyncService: $e');
+  }
+
+  // Initialize presence tracking (online/offline status)
+  try {
+    PresenceService().init();
+    debugPrint('✅ PresenceService initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Failed to initialize PresenceService: $e');
   }
 
   // Initialize theme service
