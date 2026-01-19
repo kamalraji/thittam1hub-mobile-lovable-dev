@@ -3,6 +3,7 @@ import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/hero_animations.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
@@ -33,18 +34,13 @@ class EventCard extends StatelessWidget {
     return '$datePart • $timePart';
   }
 
-  Color _categoryColor(EventCategory category) => switch (category) {
-        EventCategory.HACKATHON => AppColors.violet500,
-        EventCategory.WORKSHOP => AppColors.amber500,
-        EventCategory.CONFERENCE => AppColors.rose500,
-        EventCategory.MEETUP => AppColors.emerald500,
-        EventCategory.WEBINAR => AppColors.pink500,
-        EventCategory.COMPETITION => AppColors.indigo500,
-        EventCategory.SEMINAR => AppColors.teal500,
-        EventCategory.CULTURAL_FEST => AppColors.fuchsia500,
-        EventCategory.SPORTS_EVENT => AppColors.red500,
-        _ => AppColors.accent,
-      };
+  /// Get category color from centralized IconMappings
+  Color _categoryColor(EventCategory category) =>
+      IconMappings.getEventCategoryColor(category);
+
+  /// Get category icon from centralized IconMappings
+  IconData _categoryIcon(EventCategory category) =>
+      IconMappings.getEventCategoryIcon(category);
 
   (IconData, Color, String) _modeBadge(EventMode mode) => switch (mode) {
         EventMode.ONLINE => (Icons.public, Colors.blue, 'Online'),
@@ -125,20 +121,21 @@ class EventCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Badges
+                // Category badge - prominent with icon
                 Positioned(
                   left: 6,
                   bottom: 6,
-                  child: Row(
-                    children: [
-                      _CompactBadge(icon: icon, label: label, color: clr),
-                      const SizedBox(width: 4),
-                      _CompactBadge(
-                        label: event.category.displayName,
-                        color: _categoryColor(event.category),
-                      ),
-                    ],
+                  child: _CategoryBadge(
+                    icon: _categoryIcon(event.category),
+                    label: event.category.displayName,
+                    color: _categoryColor(event.category),
                   ),
+                ),
+                // Mode badge
+                Positioned(
+                  left: 6,
+                  top: 6,
+                  child: _CompactBadge(icon: icon, label: label, color: clr),
                 ),
                 // Status badge
                 if (event.status == EventStatus.ONGOING)
@@ -225,6 +222,68 @@ class EventCard extends StatelessWidget {
   }
 }
 
+/// Prominent category badge with large icon and colored background
+class _CategoryBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _CategoryBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.95),
+            color.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(icon, size: 12, color: Colors.white),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 9,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact badge for mode and status indicators
 class _CompactBadge extends StatelessWidget {
   final IconData? icon;
   final String label;
@@ -239,6 +298,13 @@ class _CompactBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
