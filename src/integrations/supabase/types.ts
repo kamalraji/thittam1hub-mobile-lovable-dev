@@ -233,6 +233,44 @@ export type Database = {
         }
         Relationships: []
       }
+      booth_visits: {
+        Row: {
+          booth_id: string
+          collected_swag: boolean | null
+          id: string
+          notes: string | null
+          scanned_qr: boolean | null
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          booth_id: string
+          collected_swag?: boolean | null
+          id?: string
+          notes?: string | null
+          scanned_qr?: boolean | null
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          booth_id?: string
+          collected_swag?: boolean | null
+          id?: string
+          notes?: string | null
+          scanned_qr?: boolean | null
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booth_visits_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_booths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catering_dietary_requirements: {
         Row: {
           count: number
@@ -1440,6 +1478,68 @@ export type Database = {
           },
         ]
       }
+      event_materials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_id: string
+          external_link: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          is_downloadable: boolean | null
+          is_public: boolean | null
+          material_type: string
+          session_id: string | null
+          sort_order: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_id: string
+          external_link?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_downloadable?: boolean | null
+          is_public?: boolean | null
+          material_type: string
+          session_id?: string | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_id?: string
+          external_link?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_downloadable?: boolean | null
+          is_public?: boolean | null
+          material_type?: string
+          session_id?: string | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_materials_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_page_views: {
         Row: {
           created_at: string
@@ -1690,6 +1790,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "event_status_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tracks: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          event_id: string
+          icon: string | null
+          id: string
+          location: string | null
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          event_id: string
+          icon?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          icon?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_tracks_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
@@ -2528,6 +2672,35 @@ export type Database = {
             columns: ["submission_id"]
             isOneToOne: false
             referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_downloads: {
+        Row: {
+          downloaded_at: string
+          id: string
+          material_id: string
+          user_id: string
+        }
+        Insert: {
+          downloaded_at?: string
+          id?: string
+          material_id: string
+          user_id: string
+        }
+        Update: {
+          downloaded_at?: string
+          id?: string
+          material_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_downloads_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "event_materials"
             referencedColumns: ["id"]
           },
         ]
@@ -4229,6 +4402,68 @@ export type Database = {
           },
         ]
       }
+      sponsor_booths: {
+        Row: {
+          booth_number: string | null
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean | null
+          location: string | null
+          offerings: string[] | null
+          social_links: Json | null
+          sponsor_logo: string | null
+          sponsor_name: string
+          tier: string | null
+          updated_at: string
+          visit_count: number | null
+          website: string | null
+        }
+        Insert: {
+          booth_number?: string | null
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          offerings?: string[] | null
+          social_links?: Json | null
+          sponsor_logo?: string | null
+          sponsor_name: string
+          tier?: string | null
+          updated_at?: string
+          visit_count?: number | null
+          website?: string | null
+        }
+        Update: {
+          booth_number?: string | null
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          offerings?: string[] | null
+          social_links?: Json | null
+          sponsor_logo?: string | null
+          sponsor_name?: string
+          tier?: string | null
+          updated_at?: string
+          visit_count?: number | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_booths_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_group_members: {
         Row: {
           group_id: string
@@ -5465,6 +5700,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      workshop_progress: {
+        Row: {
+          completed_at: string | null
+          current_step: number | null
+          event_id: string
+          id: string
+          last_activity_at: string
+          notes: Json | null
+          started_at: string
+          total_steps: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: number | null
+          event_id: string
+          id?: string
+          last_activity_at?: string
+          notes?: Json | null
+          started_at?: string
+          total_steps?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: number | null
+          event_id?: string
+          id?: string
+          last_activity_at?: string
+          notes?: Json | null
+          started_at?: string
+          total_steps?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_progress_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_ab_tests: {
         Row: {
@@ -11457,6 +11736,10 @@ export type Database = {
       has_workspace_management_access: {
         Args: { _user_id?: string; _workspace_id: string }
         Returns: boolean
+      }
+      increment_booth_visit: {
+        Args: { p_booth_id: string }
+        Returns: undefined
       }
       increment_poll_vote: { Args: { p_option_id: string }; Returns: undefined }
       increment_spark_count: { Args: { post_id: string }; Returns: undefined }
