@@ -9,6 +9,7 @@ import 'package:thittam1hub/models/connection_request_item.dart';
 import 'package:thittam1hub/supabase/gamification_service.dart';
 import 'pulse_page.dart';
 import 'circles_page.dart';
+import 'zone_page.dart';
 import 'vibe_page.dart';
 import 'package:thittam1hub/widgets/glassmorphism_bottom_sheet.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
@@ -54,14 +55,16 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
           searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
         ),
         CirclesPage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
+        ZonePage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
         VibePage(searchQuery: _searchQuery.isEmpty ? null : _searchQuery),
       ];
 
-  static const _tabNames = ['pulse', 'circles', 'vibe'];
-  static const _tabLabels = ['Pulse', 'Circles', 'Vibe'];
+  static const _tabNames = ['pulse', 'circles', 'zone', 'vibe'];
+  static const _tabLabels = ['Pulse', 'Circles', 'Zone', 'Vibe'];
   static const _tabIcons = [
     Icons.explore_rounded,
     Icons.group_rounded,
+    Icons.location_on_rounded,
     Icons.gamepad_rounded,
   ];
 
@@ -151,6 +154,8 @@ class _ImpactHubPageState extends State<ImpactHubPage> {
       case 1:
         return 'Search circles...';
       case 2:
+        return 'Search sessions, attendees...';
+      case 3:
         return 'Search games, challenges...';
       default:
         return 'Search...';
