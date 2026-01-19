@@ -7,22 +7,61 @@ import 'package:flutter/material.dart';
 enum EventMode { ONLINE, OFFLINE, HYBRID }
 
 enum EventCategory {
+  // Tech & Learning
   HACKATHON,
+  BOOTCAMP,
   WORKSHOP,
-  CONFERENCE,
-  MEETUP,
   WEBINAR,
   SEMINAR,
-  BOOTCAMP,
+  LECTURE,
+  TRAINING,
+  SYMPOSIUM,
+  
+  // Professional & Career
+  CONFERENCE,
+  MEETUP,
+  NETWORKING,
+  CAREER_FAIR,
+  SUMMIT,
+  PANEL_DISCUSSION,
+  TOWN_HALL,
+  TEAM_BUILDING,
+  OFFSITE,
+  TRADE_SHOW,
+  EXPO,
+  
+  // Startup & Innovation
   STARTUP_PITCH,
+  DEMO_DAY,
+  PRODUCT_LAUNCH,
+  HIRING_CHALLENGE,
+  
+  // Academic & Education
   COMPETITION,
+  QUIZ,
+  DEBATE,
+  ORIENTATION,
+  ALUMNI_MEET,
+  
+  // Cultural & Entertainment
   CULTURAL_FEST,
   SPORTS_EVENT,
-  CAREER_FAIR,
-  NETWORKING,
-  PRODUCT_LAUNCH,
-  SUMMIT,
-  DEMO_DAY,
+  CONCERT,
+  EXHIBITION,
+  FESTIVAL,
+  
+  // Social & Community
+  SOCIAL_GATHERING,
+  AWARDS_CEREMONY,
+  GALA,
+  
+  // Charity & Cause
+  FUNDRAISER,
+  CHARITY_EVENT,
+  VOLUNTEER_DRIVE,
+  AWARENESS_CAMPAIGN,
+  
+  // Other
   OTHER,
 }
 
@@ -764,22 +803,60 @@ class NotificationPreferences {
 
 extension EventCategoryX on EventCategory {
   String get displayName => switch (this) {
+    // Tech & Learning
     EventCategory.HACKATHON => 'Hackathon',
+    EventCategory.BOOTCAMP => 'Bootcamp',
     EventCategory.WORKSHOP => 'Workshop',
-    EventCategory.CONFERENCE => 'Conference',
-    EventCategory.MEETUP => 'Meetup',
     EventCategory.WEBINAR => 'Webinar',
     EventCategory.SEMINAR => 'Seminar',
-    EventCategory.BOOTCAMP => 'Bootcamp',
+    EventCategory.LECTURE => 'Lecture',
+    EventCategory.TRAINING => 'Training',
+    EventCategory.SYMPOSIUM => 'Symposium',
+    
+    // Professional & Career
+    EventCategory.CONFERENCE => 'Conference',
+    EventCategory.MEETUP => 'Meetup',
+    EventCategory.NETWORKING => 'Networking',
+    EventCategory.CAREER_FAIR => 'Career Fair',
+    EventCategory.SUMMIT => 'Summit',
+    EventCategory.PANEL_DISCUSSION => 'Panel Discussion',
+    EventCategory.TOWN_HALL => 'Town Hall',
+    EventCategory.TEAM_BUILDING => 'Team Building',
+    EventCategory.OFFSITE => 'Offsite',
+    EventCategory.TRADE_SHOW => 'Trade Show',
+    EventCategory.EXPO => 'Expo',
+    
+    // Startup & Innovation
     EventCategory.STARTUP_PITCH => 'Startup Pitch',
+    EventCategory.DEMO_DAY => 'Demo Day',
+    EventCategory.PRODUCT_LAUNCH => 'Product Launch',
+    EventCategory.HIRING_CHALLENGE => 'Hiring Challenge',
+    
+    // Academic & Education
     EventCategory.COMPETITION => 'Competition',
+    EventCategory.QUIZ => 'Quiz',
+    EventCategory.DEBATE => 'Debate',
+    EventCategory.ORIENTATION => 'Orientation',
+    EventCategory.ALUMNI_MEET => 'Alumni Meet',
+    
+    // Cultural & Entertainment
     EventCategory.CULTURAL_FEST => 'Cultural Fest',
     EventCategory.SPORTS_EVENT => 'Sports Event',
-    EventCategory.CAREER_FAIR => 'Career Fair',
-    EventCategory.NETWORKING => 'Networking',
-    EventCategory.PRODUCT_LAUNCH => 'Product Launch',
-    EventCategory.SUMMIT => 'Summit',
-    EventCategory.DEMO_DAY => 'Demo Day',
+    EventCategory.CONCERT => 'Concert',
+    EventCategory.EXHIBITION => 'Exhibition',
+    EventCategory.FESTIVAL => 'Festival',
+    
+    // Social & Community
+    EventCategory.SOCIAL_GATHERING => 'Social Gathering',
+    EventCategory.AWARDS_CEREMONY => 'Awards Ceremony',
+    EventCategory.GALA => 'Gala',
+    
+    // Charity & Cause
+    EventCategory.FUNDRAISER => 'Fundraiser',
+    EventCategory.CHARITY_EVENT => 'Charity Event',
+    EventCategory.VOLUNTEER_DRIVE => 'Volunteer Drive',
+    EventCategory.AWARENESS_CAMPAIGN => 'Awareness Campaign',
+    
     EventCategory.OTHER => 'Other',
   };
 }
