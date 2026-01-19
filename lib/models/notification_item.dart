@@ -9,6 +9,13 @@ enum NotificationType {
   LEVEL_UP,
   MUTUAL_CONNECTION,
   HIGH_MATCH_ONLINE,
+  // Group notifications
+  GROUP_INVITE,
+  GROUP_MEMBER_JOINED,
+  GROUP_MEMBER_LEFT,
+  GROUP_ROLE_CHANGED,
+  GROUP_REMOVED,
+  GROUP_EVENT,
 }
 
 @immutable
