@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/models/chat_group.dart';
 import 'package:thittam1hub/services/chat_service.dart';
+import 'package:thittam1hub/services/group_chat_service.dart';
 import 'package:thittam1hub/supabase/supabase_config.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/typing_indicator.dart';
@@ -13,8 +15,10 @@ import 'package:thittam1hub/widgets/message_reactions_bar.dart';
 import 'package:thittam1hub/widgets/emoji_picker_sheet.dart';
 import 'package:thittam1hub/widgets/message_status_indicator.dart';
 import 'package:thittam1hub/widgets/unread_badge.dart';
+import 'package:thittam1hub/widgets/role_badge.dart';
 import 'package:thittam1hub/services/giphy_service.dart';
 import 'package:thittam1hub/widgets/gif_picker_sheet.dart';
+import 'package:thittam1hub/pages/chat/group_settings_page.dart';
 
 class MessageThreadPage extends StatefulWidget {
   final String channelId;
@@ -22,6 +26,10 @@ class MessageThreadPage extends StatefulWidget {
   final String? dmUserId;
   final String? dmUserName;
   final String? dmUserAvatar;
+  // Group chat support
+  final String? groupId;
+  final ChatGroup? group;
+  
   const MessageThreadPage({
     super.key,
     required this.channelId,
@@ -29,7 +37,12 @@ class MessageThreadPage extends StatefulWidget {
     this.dmUserId,
     this.dmUserName,
     this.dmUserAvatar,
+    this.groupId,
+    this.group,
   });
+  
+  bool get isGroup => groupId != null;
+  
   @override
   State<MessageThreadPage> createState() => _MessageThreadPageState();
 }
@@ -48,6 +61,10 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
   // Reactions state
   Map<String, List<Map<String, dynamic>>> _reactions = {};
   Map<String, List<String>> _readReceipts = {};
+  
+  // Group member roles cache
+  Map<String, ChatGroupMember> _memberRoles = {};
+  final GroupChatService _groupService = GroupChatService();
   
   // Animation controllers
   late final AnimationController _composerController;
@@ -69,8 +86,16 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
     _subscribeTyping();
     _subscribeToReactions();
     
+    // Load group member roles if this is a group chat
+    if (widget.isGroup) {
+      _loadMemberRoles();
+    }
+    
     // Mark channel as read
     ChatService.updateLastRead(widget.channelId);
+    if (widget.isGroup && widget.groupId != null) {
+      _groupService.markAsRead(widget.groupId!);
+    }
   }
 
   @override
@@ -78,11 +103,43 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
     _typingCleanup?.cancel();
     _typingDebounce?.cancel();
     _reactionSubscription?.cancel();
+    _memberRolesSubscription?.cancel();
     _composerController.dispose();
     _input.dispose();
     _scroll.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+  
+  StreamSubscription? _memberRolesSubscription;
+  
+  Future<void> _loadMemberRoles() async {
+    if (widget.groupId == null) return;
+    
+    try {
+      final members = await _groupService.getGroupMembers(widget.groupId!);
+      if (mounted) {
+        setState(() {
+          _memberRoles = {
+            for (final m in members) m.userId: m
+          };
+        });
+      }
+      
+      // Subscribe to real-time updates
+      _memberRolesSubscription?.cancel();
+      _memberRolesSubscription = _groupService.streamGroupMembers(widget.groupId!).listen((members) {
+        if (mounted) {
+          setState(() {
+            _memberRoles = {
+              for (final m in members) m.userId: m
+            };
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint('Failed to load member roles: $e');
+    }
   }
 
   void _subscribeTyping() {
@@ -271,17 +328,31 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
   Widget build(BuildContext context) {
     final channel = widget.channel;
     final isDM = widget.dmUserId != null;
+    final isGroup = widget.isGroup;
     final theme = Theme.of(context);
     
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            _ThreadAppBar(
-              channel: channel,
-              dmUserName: widget.dmUserName,
-              dmUserAvatar: widget.dmUserAvatar,
-            ),
+            isGroup
+                ? _GroupAppBar(
+                    group: widget.group,
+                    groupId: widget.groupId!,
+                    onSettingsTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => GroupSettingsPage(groupId: widget.groupId!),
+                        ),
+                      );
+                    },
+                  )
+                : _ThreadAppBar(
+                    channel: channel,
+                    dmUserName: widget.dmUserName,
+                    dmUserAvatar: widget.dmUserAvatar,
+                  ),
             
             // Messages
             Expanded(
@@ -331,7 +402,9 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
               child: _GlassComposer(
                 controller: _input,
                 focusNode: _focusNode,
-                hintLabel: isDM ? '@${widget.dmUserName ?? 'Direct'}' : '#${channel?.name ?? 'channel'}',
+                hintLabel: isGroup 
+                    ? widget.group?.name ?? 'group'
+                    : (isDM ? '@${widget.dmUserName ?? 'Direct'}' : '#${channel?.name ?? 'channel'}'),
                 onSend: _onSend,
                 onChanged: (_) => _onTyping(),
                 sending: _sending,
@@ -407,12 +480,18 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
         }
       }
       if (index == msgIndex) {
+        // Get member role for group chats
+        final memberRole = widget.isGroup 
+            ? _memberRoles[msgs[i].senderId]?.role 
+            : null;
+        
         return _MessageBubble(
           message: msgs[i],
           reactions: _reactions[msgs[i].id] ?? [],
           readBy: _readReceipts[msgs[i].id] ?? [],
           onReactionTap: (emoji) => _onReaction(msgs[i].id, emoji),
           onLongPress: (position) => _showReactionPicker(context, msgs[i].id, position),
+          senderRole: memberRole,
         );
       }
       msgIndex++;
@@ -602,6 +681,137 @@ class _ThreadAppBar extends StatelessWidget {
   }
 }
 
+/// App bar for group chat threads
+class _GroupAppBar extends StatelessWidget {
+  final ChatGroup? group;
+  final String groupId;
+  final VoidCallback onSettingsTap;
+  
+  const _GroupAppBar({
+    this.group,
+    required this.groupId,
+    required this.onSettingsTap,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          const SizedBox(width: 4),
+          
+          // Group icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: group?.iconUrl != null && group!.iconUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: group!.iconUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => _buildGroupInitial(group!.name, theme),
+                    errorWidget: (_, __, ___) => _buildGroupInitial(group!.name, theme),
+                  )
+                : _buildGroupInitial(group?.name ?? 'Group', theme),
+          ),
+          const SizedBox(width: 12),
+          
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        group?.name ?? 'Group Chat',
+                        style: context.textStyles.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (group?.isPublic == false) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 10, color: theme.colorScheme.primary),
+                            const SizedBox(width: 2),
+                            Text(
+                              'Private',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  '${group?.memberCount ?? 0} members',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          IconButton(
+            icon: Icon(
+              Icons.settings_outlined,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            onPressed: onSettingsTap,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGroupInitial(String name, ThemeData theme) {
+    return Container(
+      color: theme.colorScheme.primary.withValues(alpha: 0.15),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : 'G',
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyThread extends StatelessWidget {
   const _EmptyThread();
   
@@ -720,6 +930,7 @@ class _MessageBubble extends StatefulWidget {
   final List<String> readBy;
   final Function(String emoji) onReactionTap;
   final Function(Offset position) onLongPress;
+  final GroupMemberRole? senderRole;
 
   const _MessageBubble({
     required this.message,
@@ -727,6 +938,7 @@ class _MessageBubble extends StatefulWidget {
     required this.readBy,
     required this.onReactionTap,
     required this.onLongPress,
+    this.senderRole,
   });
 
   @override
@@ -848,6 +1060,9 @@ class _MessageBubbleState extends State<_MessageBubble> with SingleTickerProvide
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              // Role badge for group chats
+                              if (widget.senderRole != null && widget.senderRole != GroupMemberRole.member)
+                                MessageRoleBadge(role: widget.senderRole!),
                               const SizedBox(width: 8),
                               Text(
                                 _fmtTime(widget.message.sentAt),

@@ -1784,6 +1784,53 @@ export type Database = {
         }
         Relationships: []
       }
+      group_events: {
+        Row: {
+          actor_id: string
+          actor_name: string | null
+          created_at: string | null
+          event_type: string
+          group_id: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          target_id: string | null
+          target_name: string | null
+        }
+        Insert: {
+          actor_id: string
+          actor_name?: string | null
+          created_at?: string | null
+          event_type: string
+          group_id: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_id?: string | null
+          target_name?: string | null
+        }
+        Update: {
+          actor_id?: string
+          actor_name?: string | null
+          created_at?: string | null
+          event_type?: string
+          group_id?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_id?: string | null
+          target_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "chat_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       id_card_print_jobs: {
         Row: {
           attendee_filter: Json | null
@@ -2193,6 +2240,7 @@ export type Database = {
           content: string
           deleted_at: string | null
           edited_at: string | null
+          group_id: string | null
           id: string
           is_deleted: boolean | null
           sender_avatar: string | null
@@ -2206,6 +2254,7 @@ export type Database = {
           content?: string
           deleted_at?: string | null
           edited_at?: string | null
+          group_id?: string | null
           id?: string
           is_deleted?: boolean | null
           sender_avatar?: string | null
@@ -2219,6 +2268,7 @@ export type Database = {
           content?: string
           deleted_at?: string | null
           edited_at?: string | null
+          group_id?: string | null
           id?: string
           is_deleted?: boolean | null
           sender_avatar?: string | null
@@ -2226,7 +2276,15 @@ export type Database = {
           sender_name?: string
           sent_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "chat_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {

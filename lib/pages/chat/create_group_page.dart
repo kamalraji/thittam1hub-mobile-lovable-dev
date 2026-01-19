@@ -1,6 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/chat_group.dart';
 import '../../services/group_chat_service.dart';
+import '../../services/group_icon_service.dart';
 import '../../widgets/styled_text_field.dart';
 import '../../widgets/styled_button.dart';
 import '../../theme.dart';
@@ -17,16 +20,56 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _groupService = GroupChatService();
+  final _iconService = GroupIconService();
 
   bool _isPublic = false;
   bool _isLoading = false;
   final List<String> _selectedMembers = [];
+  
+  // Icon selection
+  Uint8List? _selectedIconBytes;
+  String? _selectedIconName;
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+  
+  Future<void> _pickIcon() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      
+      if (image == null) return;
+      
+      final bytes = await image.readAsBytes();
+      if (bytes.length > 2 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image is too large (max 2MB)')),
+          );
+        }
+        return;
+      }
+      
+      setState(() {
+        _selectedIconBytes = bytes;
+        _selectedIconName = image.name;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _createGroup() async {
@@ -35,6 +78,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Create group first
       final group = await _groupService.createGroup(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
@@ -43,6 +87,16 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         memberIds: _selectedMembers,
         isPublic: _isPublic,
       );
+      
+      // Upload icon if selected
+      if (_selectedIconBytes != null && _selectedIconName != null) {
+        await _iconService.uploadIconFromBytes(
+          groupId: group.id,
+          bytes: _selectedIconBytes!,
+          fileName: _selectedIconName!,
+          logEvent: false,
+        );
+      }
 
       if (mounted) {
         Navigator.of(context).pop(group);
@@ -79,12 +133,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Group Icon
+            // Group Icon with picker
             Center(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: Implement icon picker
-                },
+                onTap: _pickIcon,
                 child: Container(
                   width: 100,
                   height: 100,
@@ -95,19 +147,27 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       color: AppColors.primary.withOpacity(0.3),
                       width: 2,
                     ),
+                    image: _selectedIconBytes != null
+                        ? DecorationImage(
+                            image: MemoryImage(_selectedIconBytes!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Icon(
-                    Icons.camera_alt_outlined,
-                    size: 40,
-                    color: AppColors.primary,
-                  ),
+                  child: _selectedIconBytes == null
+                      ? Icon(
+                          Icons.camera_alt_outlined,
+                          size: 40,
+                          color: AppColors.primary,
+                        )
+                      : null,
                 ),
               ),
             ),
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Add Group Photo',
+                _selectedIconBytes != null ? 'Tap to change' : 'Add Group Photo',
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 14,
