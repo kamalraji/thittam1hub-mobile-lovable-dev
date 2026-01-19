@@ -10,6 +10,8 @@ class EventSession {
   final String? speakerName;
   final String? speakerAvatar;
   final String? room;
+  final String? location;
+  final String? trackId;
   final DateTime startTime;
   final DateTime endTime;
   final String status; // 'upcoming', 'live', 'ended'
