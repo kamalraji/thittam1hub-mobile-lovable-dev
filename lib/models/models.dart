@@ -873,6 +873,8 @@ class Message {
   final List<MessageAttachment> attachments;
   final DateTime sentAt;
   final DateTime? editedAt;
+  final DateTime? deletedAt;
+  final bool isDeleted;
 
   const Message({
     required this.id,
@@ -884,7 +886,12 @@ class Message {
     this.attachments = const [],
     required this.sentAt,
     this.editedAt,
+    this.deletedAt,
+    this.isDeleted = false,
   });
+
+  /// Check if this message was edited
+  bool get wasEdited => editedAt != null;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -896,6 +903,8 @@ class Message {
         'attachments': attachments.map((e) => e.toJson()).toList(),
         'sent_at': sentAt.toIso8601String(),
         'edited_at': editedAt?.toIso8601String(),
+        'deleted_at': deletedAt?.toIso8601String(),
+        'is_deleted': isDeleted,
       };
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -916,8 +925,36 @@ class Message {
       attachments: atts,
       sentAt: DateTime.parse(json['sent_at'] as String),
       editedAt: json['edited_at'] != null ? DateTime.parse(json['edited_at'] as String) : null,
+      deletedAt: json['deleted_at'] != null ? DateTime.parse(json['deleted_at'] as String) : null,
+      isDeleted: json['is_deleted'] as bool? ?? json['deleted_at'] != null,
     );
   }
+
+  Message copyWith({
+    String? id,
+    String? channelId,
+    String? senderId,
+    String? senderName,
+    String? senderAvatar,
+    String? content,
+    List<MessageAttachment>? attachments,
+    DateTime? sentAt,
+    DateTime? editedAt,
+    DateTime? deletedAt,
+    bool? isDeleted,
+  }) => Message(
+    id: id ?? this.id,
+    channelId: channelId ?? this.channelId,
+    senderId: senderId ?? this.senderId,
+    senderName: senderName ?? this.senderName,
+    senderAvatar: senderAvatar ?? this.senderAvatar,
+    content: content ?? this.content,
+    attachments: attachments ?? this.attachments,
+    sentAt: sentAt ?? this.sentAt,
+    editedAt: editedAt ?? this.editedAt,
+    deletedAt: deletedAt ?? this.deletedAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
 }
 
 /// Direct message thread summary

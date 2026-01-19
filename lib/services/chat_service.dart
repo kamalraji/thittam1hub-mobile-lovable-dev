@@ -447,4 +447,445 @@ class ChatService {
     }
     return result;
   }
+
+  // ==========================
+  // ONLINE/OFFLINE PRESENCE
+  // ==========================
+
+  /// Set the current user's online status
+  static Future<void> setOnlineStatus(bool isOnline) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from(profilesTable).update({
+        'is_online': isOnline,
+        'last_seen': isOnline ? null : DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+      
+      debugPrint('📶 Online status set to: $isOnline');
+    } catch (e) {
+      debugPrint('ChatService.setOnlineStatus error: $e');
+    }
+  }
+
+  /// Update heartbeat (last_seen) for presence tracking
+  static Future<void> updateHeartbeat() async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from(profilesTable).update({
+        'last_seen': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+    } catch (e) {
+      debugPrint('ChatService.updateHeartbeat error: $e');
+    }
+  }
+
+  /// Stream online status for a specific user
+  static Stream<bool> streamUserOnlineStatus(String userId) {
+    try {
+      return _client
+          .from(profilesTable)
+          .stream(primaryKey: ['id'])
+          .eq('id', userId)
+          .map((rows) => rows.firstOrNull?['is_online'] == true);
+    } catch (e) {
+      debugPrint('ChatService.streamUserOnlineStatus error: $e');
+      return const Stream.empty();
+    }
+  }
+
+  /// Get last seen timestamp for a user
+  static Future<DateTime?> getLastSeen(String userId) async {
+    try {
+      final row = await _client
+          .from(profilesTable)
+          .select('last_seen, is_online')
+          .eq('id', userId)
+          .maybeSingle();
+      
+      if (row == null) return null;
+      if (row['is_online'] == true) return null; // User is online
+      
+      final lastSeen = row['last_seen'] as String?;
+      return lastSeen != null ? DateTime.tryParse(lastSeen) : null;
+    } catch (e) {
+      debugPrint('ChatService.getLastSeen error: $e');
+      return null;
+    }
+  }
+
+  /// Get online status for a user (single check)
+  static Future<bool> isUserOnline(String userId) async {
+    try {
+      final row = await _client
+          .from(profilesTable)
+          .select('is_online')
+          .eq('id', userId)
+          .maybeSingle();
+      
+      return row?['is_online'] == true;
+    } catch (e) {
+      debugPrint('ChatService.isUserOnline error: $e');
+      return false;
+    }
+  }
+
+  // ==========================
+  // MESSAGE MANAGEMENT
+  // ==========================
+
+  /// Delete a message (soft delete)
+  static Future<bool> deleteMessage(String messageId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      await _client.from(messagesTable).update({
+        'deleted_at': DateTime.now().toIso8601String(),
+        'is_deleted': true,
+        'content': '', // Clear content for privacy
+      }).eq('id', messageId).eq('sender_id', userId);
+      
+      debugPrint('🗑️ Message deleted');
+      return true;
+    } catch (e) {
+      debugPrint('ChatService.deleteMessage error: $e');
+      return false;
+    }
+  }
+
+  /// Edit a message
+  static Future<Message?> editMessage(String messageId, String newContent) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return null;
+
+      final updated = await _client.from(messagesTable).update({
+        'content': newContent,
+        'edited_at': DateTime.now().toIso8601String(),
+      }).eq('id', messageId).eq('sender_id', userId).select().maybeSingle();
+
+      if (updated != null) {
+        debugPrint('✏️ Message edited');
+        return Message.fromJson(Map<String, dynamic>.from(updated));
+      }
+      return null;
+    } catch (e) {
+      debugPrint('ChatService.editMessage error: $e');
+      return null;
+    }
+  }
+
+  /// Send an image message
+  static Future<Message?> sendImageMessage({
+    required String channelId,
+    required String imagePath,
+    String? caption,
+  }) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return null;
+
+      // Generate unique filename
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_$userId.jpg';
+      final storagePath = 'chat-images/$channelId/$fileName';
+
+      // Note: Actual file upload would require dart:io File
+      // This is the structure for the upload
+      // final imageFile = File(imagePath);
+      // await _client.storage.from('media-assets').upload(storagePath, imageFile);
+      
+      final imageUrl = _client.storage.from('media-assets').getPublicUrl(storagePath);
+
+      // Send message with image attachment
+      return sendMessage(
+        channelId: channelId,
+        content: caption ?? '',
+        attachments: [
+          MessageAttachment(
+            filename: fileName,
+            url: imageUrl,
+            size: 0, // Would be calculated from actual file
+          ),
+        ],
+      );
+    } catch (e) {
+      debugPrint('ChatService.sendImageMessage error: $e');
+      return null;
+    }
+  }
+
+  // ==========================
+  // USER BLOCKING
+  // ==========================
+
+  /// Block a user
+  static Future<void> blockUser(String targetUserId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from('blocked_users').upsert({
+        'user_id': userId,
+        'blocked_user_id': targetUserId,
+        'blocked_at': DateTime.now().toIso8601String(),
+      });
+      
+      debugPrint('🚫 User blocked: $targetUserId');
+    } catch (e) {
+      debugPrint('ChatService.blockUser error: $e');
+    }
+  }
+
+  /// Unblock a user
+  static Future<void> unblockUser(String targetUserId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client
+          .from('blocked_users')
+          .delete()
+          .eq('user_id', userId)
+          .eq('blocked_user_id', targetUserId);
+      
+      debugPrint('✅ User unblocked: $targetUserId');
+    } catch (e) {
+      debugPrint('ChatService.unblockUser error: $e');
+    }
+  }
+
+  /// Check if a user is blocked
+  static Future<bool> isUserBlocked(String targetUserId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      final row = await _client
+          .from('blocked_users')
+          .select()
+          .eq('user_id', userId)
+          .eq('blocked_user_id', targetUserId)
+          .maybeSingle();
+      
+      return row != null;
+    } catch (e) {
+      debugPrint('ChatService.isUserBlocked error: $e');
+      return false;
+    }
+  }
+
+  /// Get list of blocked user IDs
+  static Future<List<String>> getBlockedUserIds() async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      final rows = await _client
+          .from('blocked_users')
+          .select('blocked_user_id')
+          .eq('user_id', userId);
+
+      return rows.map((r) => r['blocked_user_id'] as String).toList();
+    } catch (e) {
+      debugPrint('ChatService.getBlockedUserIds error: $e');
+      return [];
+    }
+  }
+
+  // ==========================
+  // CONVERSATION MUTING
+  // ==========================
+
+  /// Mute a conversation
+  static Future<void> muteConversation(String channelId, {Duration? duration}) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final mutedUntil = duration != null
+          ? DateTime.now().add(duration).toIso8601String()
+          : null; // null = muted forever
+
+      await _client.from('channel_members').upsert({
+        'channel_id': channelId,
+        'user_id': userId,
+        'muted_until': mutedUntil,
+        'is_muted': true,
+      });
+      
+      debugPrint('🔇 Conversation muted: $channelId');
+    } catch (e) {
+      debugPrint('ChatService.muteConversation error: $e');
+    }
+  }
+
+  /// Unmute a conversation
+  static Future<void> unmuteConversation(String channelId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _client.from('channel_members').update({
+        'is_muted': false,
+        'muted_until': null,
+      }).eq('channel_id', channelId).eq('user_id', userId);
+      
+      debugPrint('🔔 Conversation unmuted: $channelId');
+    } catch (e) {
+      debugPrint('ChatService.unmuteConversation error: $e');
+    }
+  }
+
+  /// Check if a conversation is muted
+  static Future<bool> isConversationMuted(String channelId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      final row = await _client
+          .from('channel_members')
+          .select('is_muted, muted_until')
+          .eq('channel_id', channelId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (row == null) return false;
+      if (row['is_muted'] != true) return false;
+
+      // Check if mute has expired
+      final mutedUntil = row['muted_until'] as String?;
+      if (mutedUntil != null) {
+        final expiresAt = DateTime.tryParse(mutedUntil);
+        if (expiresAt != null && expiresAt.isBefore(DateTime.now())) {
+          // Mute expired, unmute automatically
+          await unmuteConversation(channelId);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('ChatService.isConversationMuted error: $e');
+      return false;
+    }
+  }
+
+  /// Get mute status for multiple channels
+  static Future<Map<String, bool>> getMuteStatuses(List<String> channelIds) async {
+    final Map<String, bool> result = {for (final id in channelIds) id: false};
+    if (channelIds.isEmpty) return result;
+
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return result;
+
+      final rows = await _client
+          .from('channel_members')
+          .select('channel_id, is_muted, muted_until')
+          .eq('user_id', userId)
+          .inFilter('channel_id', channelIds);
+
+      for (final row in rows) {
+        final chId = row['channel_id'] as String;
+        final isMuted = row['is_muted'] == true;
+        final mutedUntil = row['muted_until'] as String?;
+
+        if (isMuted) {
+          if (mutedUntil != null) {
+            final expiresAt = DateTime.tryParse(mutedUntil);
+            result[chId] = expiresAt == null || expiresAt.isAfter(DateTime.now());
+          } else {
+            result[chId] = true;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('ChatService.getMuteStatuses error: $e');
+    }
+    return result;
+  }
+
+  // ==========================
+  // SEARCH & UTILITIES
+  // ==========================
+
+  /// Search messages in a channel
+  static Future<List<Message>> searchMessages(String channelId, String query) async {
+    if (query.trim().isEmpty) return [];
+    
+    try {
+      final rows = await _client
+          .from(messagesTable)
+          .select()
+          .eq('channel_id', channelId)
+          .ilike('content', '%${query.trim()}%')
+          .order('sent_at', ascending: false)
+          .limit(50);
+
+      return rows
+          .map((r) => Message.fromJson(Map<String, dynamic>.from(r as Map)))
+          .where((m) => !m.isDeleted)
+          .toList();
+    } catch (e) {
+      debugPrint('ChatService.searchMessages error: $e');
+      return [];
+    }
+  }
+
+  /// Get message by ID
+  static Future<Message?> getMessageById(String messageId) async {
+    try {
+      final row = await _client
+          .from(messagesTable)
+          .select()
+          .eq('id', messageId)
+          .maybeSingle();
+
+      if (row == null) return null;
+      return Message.fromJson(Map<String, dynamic>.from(row));
+    } catch (e) {
+      debugPrint('ChatService.getMessageById error: $e');
+      return null;
+    }
+  }
+
+  /// Forward a message to another channel
+  static Future<Message?> forwardMessage(String messageId, String toChannelId) async {
+    try {
+      final original = await getMessageById(messageId);
+      if (original == null || original.isDeleted) return null;
+
+      return sendMessage(
+        channelId: toChannelId,
+        content: original.content,
+        attachments: original.attachments,
+      );
+    } catch (e) {
+      debugPrint('ChatService.forwardMessage error: $e');
+      return null;
+    }
+  }
+
+  /// Clear chat history for a channel (local/soft clear)
+  static Future<void> clearChatHistory(String channelId) async {
+    try {
+      final userId = SupabaseConfig.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Update last_read to now, effectively hiding old messages
+      await _client.from('channel_members').upsert({
+        'channel_id': channelId,
+        'user_id': userId,
+        'cleared_at': DateTime.now().toIso8601String(),
+      });
+      
+      debugPrint('🧹 Chat history cleared for: $channelId');
+    } catch (e) {
+      debugPrint('ChatService.clearChatHistory error: $e');
+    }
+  }
 }
