@@ -1,5 +1,7 @@
 /// Models for the Zone tab - Event day activities
 
+import 'package:thittam1hub/models/models.dart' show EventCategory;
+
 class EventSession {
   final String id;
   final String eventId;
@@ -260,6 +262,7 @@ class ZoneEvent {
   final String? bannerUrl;
   final int attendeeCount;
   final bool isCheckedIn;
+  final EventCategory? category;
 
   ZoneEvent({
     required this.id,
@@ -271,6 +274,7 @@ class ZoneEvent {
     this.bannerUrl,
     this.attendeeCount = 0,
     this.isCheckedIn = false,
+    this.category,
   });
 
   bool get isHappeningNow {
@@ -281,6 +285,19 @@ class ZoneEvent {
   bool get isUpcoming => DateTime.now().isBefore(startDate);
 
   factory ZoneEvent.fromJson(Map<String, dynamic> json, {bool isCheckedIn = false}) {
+    // Parse category from JSON
+    EventCategory? category;
+    final catStr = json['category'] as String?;
+    if (catStr != null) {
+      final upperCat = catStr.toUpperCase();
+      for (final c in EventCategory.values) {
+        if (c.name == upperCat) {
+          category = c;
+          break;
+        }
+      }
+    }
+    
     return ZoneEvent(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -291,6 +308,7 @@ class ZoneEvent {
       bannerUrl: json['banner_url'] as String?,
       attendeeCount: json['attendee_count'] as int? ?? 0,
       isCheckedIn: isCheckedIn,
+      category: category,
     );
   }
 }

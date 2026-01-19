@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:thittam1hub/models/zone_models.dart';
+import 'package:thittam1hub/models/models.dart' show EventCategory;
 import 'package:thittam1hub/supabase/zone_service.dart';
+import 'package:thittam1hub/utils/zone_category_features.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/shimmer_loading.dart';
 import 'package:go_router/go_router.dart';
@@ -173,6 +176,13 @@ class _ZonePageState extends State<ZonePage> {
                           onCheckIn: _handleCheckIn,
                           onCheckOut: _handleCheckOut,
                         ),
+                        
+                        // Category Feature Grid (if category-specific features available)
+                        if (_currentEvent!.category != null)
+                          _CategoryFeatureGrid(
+                            category: _currentEvent!.category!,
+                            eventId: _currentEvent!.id,
+                          ),
 
                         // Live Now Section
                         if (_liveSessions.isNotEmpty) ...[
@@ -340,7 +350,7 @@ class _ZonePageState extends State<ZonePage> {
   }
 }
 
-// ============ Event Context Card ============
+// ============ Event Context Card with Category Theming ============
 
 class _EventContextCard extends StatelessWidget {
   final ZoneEvent event;
@@ -359,6 +369,15 @@ class _EventContextCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    
+    // Get category-specific theming
+    final categoryColor = event.category != null 
+        ? IconMappings.getEventCategoryColor(event.category!)
+        : cs.primary;
+    final categoryIcon = event.category != null
+        ? IconMappings.getEventCategoryIcon(event.category!)
+        : Icons.location_on;
+    final categoryTagline = ZoneCategoryFeatures.getCategoryTagline(event.category);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -368,19 +387,46 @@ class _EventContextCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            cs.primary.withOpacity(0.15),
-            cs.tertiary.withOpacity(0.1),
+            categoryColor.withOpacity(0.15),
+            cs.tertiary.withOpacity(0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.primary.withOpacity(0.3)),
+        border: Border.all(color: categoryColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Category badge
+          if (event.category != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: categoryColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: categoryColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(categoryIcon, size: 14, color: categoryColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    categoryTagline,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: categoryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
           Row(
             children: [
-              Icon(Icons.location_on, size: 18, color: cs.primary),
+              Icon(Icons.location_on, size: 18, color: categoryColor),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -429,6 +475,13 @@ class _EventContextCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
+          
+          // Quick action chips for category features
+          if (event.category != null) ...[
+            _buildCategoryQuickActions(context, event.category!, categoryColor),
+            const SizedBox(height: 12),
+          ],
+          
           Row(
             children: [
               Icon(Icons.people_rounded, size: 16, color: cs.onSurfaceVariant),
@@ -440,9 +493,9 @@ class _EventContextCard extends StatelessWidget {
               const Spacer(),
               if (event.isCheckedIn)
                 Chip(
-                  avatar: Icon(Icons.check_circle, size: 16, color: cs.primary),
+                  avatar: Icon(Icons.check_circle, size: 16, color: categoryColor),
                   label: const Text('Checked In'),
-                  backgroundColor: cs.primary.withOpacity(0.1),
+                  backgroundColor: categoryColor.withOpacity(0.1),
                   side: BorderSide.none,
                   visualDensity: VisualDensity.compact,
                 )
@@ -451,12 +504,192 @@ class _EventContextCard extends StatelessWidget {
                   onPressed: onCheckIn,
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
+                    backgroundColor: categoryColor.withOpacity(0.15),
+                    foregroundColor: categoryColor,
                   ),
                   child: const Text('Check In'),
                 ),
             ],
           ),
         ],
+      ),
+    );
+  }
+  
+  Widget _buildCategoryQuickActions(BuildContext context, EventCategory category, Color themeColor) {
+    final features = ZoneCategoryFeatures.getFeaturesForCategory(category);
+    // Show only first 4 features as quick actions
+    final quickFeatures = features.take(4).toList();
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: quickFeatures.map((feature) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              avatar: Icon(
+                ZoneCategoryFeatures.getFeatureIcon(feature),
+                size: 16,
+                color: themeColor,
+              ),
+              label: Text(
+                ZoneCategoryFeatures.getFeatureName(feature),
+                style: TextStyle(fontSize: 12, color: themeColor),
+              ),
+              backgroundColor: themeColor.withOpacity(0.08),
+              side: BorderSide(color: themeColor.withOpacity(0.2)),
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                // TODO: Navigate to feature-specific page
+                HapticFeedback.lightImpact();
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ============ Category Feature Grid ============
+
+class _CategoryFeatureGrid extends StatelessWidget {
+  final EventCategory category;
+  final String eventId;
+
+  const _CategoryFeatureGrid({
+    required this.category,
+    required this.eventId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final categoryColor = IconMappings.getEventCategoryColor(category);
+    final features = ZoneCategoryFeatures.getFeaturesForCategory(category);
+    
+    // Skip common features already shown elsewhere, show unique category features
+    final uniqueFeatures = features.where((f) => 
+      f != ZoneFeature.sessions && 
+      f != ZoneFeature.announcements && 
+      f != ZoneFeature.polls &&
+      f != ZoneFeature.networking
+    ).take(6).toList();
+    
+    if (uniqueFeatures.isEmpty) return const SizedBox.shrink();
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                IconMappings.getEventCategoryIcon(category),
+                size: 16,
+                color: categoryColor,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Quick Actions',
+                style: textTheme.labelMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: uniqueFeatures.length,
+            itemBuilder: (context, index) {
+              final feature = uniqueFeatures[index];
+              return _FeatureTile(
+                feature: feature,
+                themeColor: categoryColor,
+                onTap: () => _handleFeatureTap(context, feature),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _handleFeatureTap(BuildContext context, ZoneFeature feature) {
+    HapticFeedback.lightImpact();
+    
+    // Show coming soon for now
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${ZoneCategoryFeatures.getFeatureName(feature)} coming soon!'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+class _FeatureTile extends StatelessWidget {
+  final ZoneFeature feature;
+  final Color themeColor;
+  final VoidCallback onTap;
+
+  const _FeatureTile({
+    required this.feature,
+    required this.themeColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Material(
+      color: themeColor.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: themeColor.withOpacity(0.2)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                ZoneCategoryFeatures.getFeatureIcon(feature),
+                size: 28,
+                color: themeColor,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                ZoneCategoryFeatures.getFeatureName(feature),
+                style: textTheme.labelSmall?.copyWith(
+                  color: themeColor,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
