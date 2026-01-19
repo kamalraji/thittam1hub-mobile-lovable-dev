@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:thittam1hub/models/models.dart';
+import 'package:thittam1hub/models/chat_group.dart';
 import 'package:thittam1hub/services/chat_service.dart';
+import 'package:thittam1hub/services/group_chat_service.dart';
 import 'package:thittam1hub/theme.dart';
 import 'package:thittam1hub/widgets/enhanced_empty_state.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/widgets/chat_shimmer.dart';
 import 'package:thittam1hub/widgets/unread_badge.dart';
+import 'create_group_page.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -22,8 +25,10 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   List<WorkspaceChannel> _channels = [];
   Map<String, Message?> _last = {};
   List<DMThread> _dmThreads = [];
+  List<ChatGroup> _groups = [];
   Map<String, int> _unreadCounts = {};
 
+  final _groupService = GroupChatService();
   late final AnimationController _fabController;
 
   @override
@@ -49,6 +54,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
       final channels = await ChatService.getMyChannels();
       final last = await ChatService.getLastMessages(channels.map((e) => e.id).toList());
       final dms = await ChatService.getMyDMThreads();
+      final groups = await _groupService.getMyGroups();
       
       // Fetch unread counts
       final allChannelIds = [
@@ -61,6 +67,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
         _channels = channels;
         _last = last;
         _dmThreads = dms;
+        _groups = groups;
         _unreadCounts = unread;
         _fabController.forward();
       });
@@ -81,6 +88,12 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
     final q = _search.text.trim().toLowerCase();
     if (q.isEmpty) return _dmThreads;
     return _dmThreads.where((t) => t.partnerName.toLowerCase().contains(q)).toList();
+  }
+
+  List<ChatGroup> get _filteredGroups {
+    final q = _search.text.trim().toLowerCase();
+    if (q.isEmpty) return _groups;
+    return _groups.where((g) => g.name.toLowerCase().contains(q) || (g.description ?? '').toLowerCase().contains(q)).toList();
   }
 
   Map<ChannelType, List<WorkspaceChannel>> _grouped(List<WorkspaceChannel> items) {
@@ -159,7 +172,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
               // Content
               if (_loading)
                 const SliverToBoxAdapter(child: ChatListShimmer(itemCount: 8))
-              else if (_channels.isEmpty && _dmThreads.isEmpty)
+              else if (_channels.isEmpty && _dmThreads.isEmpty && _groups.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: _EmptyState(onTap: _load),
@@ -169,6 +182,16 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   _DMSection(
                     threads: _filteredDMs,
                     unreadCounts: _unreadCounts,
+                  ),
+                  _GroupsSection(
+                    groups: _filteredGroups,
+                    onCreateGroup: () async {
+                      final result = await Navigator.push<ChatGroup>(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreateGroupPage()),
+                      );
+                      if (result != null) _load();
+                    },
                   ),
                   _ChannelGroup(
                     title: '📢 Announcements',
@@ -531,6 +554,237 @@ class _DMSection extends StatelessWidget {
         )),
       ]),
     );
+  }
+}
+
+class _GroupsSection extends StatelessWidget {
+  final List<ChatGroup> groups;
+  final VoidCallback onCreateGroup;
+  
+  const _GroupsSection({
+    required this.groups,
+    required this.onCreateGroup,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '👥 Groups',
+                style: context.textStyles.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              GestureDetector(
+                onTap: onCreateGroup,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'New',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (groups.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Text(
+                'No groups yet. Create one!',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          )
+        else
+          ...groups.map((g) => _GroupTile(group: g)),
+      ]),
+    );
+  }
+}
+
+class _GroupTile extends StatelessWidget {
+  final ChatGroup group;
+  
+  const _GroupTile({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasUnread = group.unreadCount > 0;
+    final time = group.lastMessageAt != null ? _formatTime(group.lastMessageAt!) : '';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        // Navigate to group chat (reuse message thread or create group thread page)
+        context.push('/chat/groups/${group.id}', extra: group);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: hasUnread
+              ? theme.colorScheme.primary.withValues(alpha: 0.05)
+              : theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: hasUnread
+                ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                : theme.colorScheme.outline.withValues(alpha: 0.3),
+          ),
+        ),
+        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          // Group avatar
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: group.iconUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: group.iconUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => _buildGroupInitials(context),
+                    errorWidget: (_, __, ___) => _buildGroupInitials(context),
+                  )
+                : _buildGroupInitials(context),
+          ),
+          const SizedBox(width: 14),
+          
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        group.name,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (time.isNotEmpty)
+                      Text(
+                        time,
+                        style: context.textStyles.labelSmall?.copyWith(
+                          color: hasUnread
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        group.lastMessage ?? '${group.memberCount} members',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: hasUnread
+                              ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
+                              : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    if (hasUnread) ...[
+                      const SizedBox(width: 8),
+                      UnreadBadge(count: group.unreadCount, size: 20),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildGroupInitials(BuildContext context) {
+    final hash = group.name.codeUnits.fold(0, (p, c) => p + c);
+    final colors = [
+      AppColors.indigo500,
+      AppColors.teal500,
+      AppColors.pink500,
+      AppColors.violet500,
+      AppColors.emerald500,
+    ];
+    
+    return Container(
+      color: colors[hash % colors.length].withValues(alpha: 0.15),
+      child: Center(
+        child: Text(
+          group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
+          style: TextStyle(
+            color: colors[hash % colors.length],
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+      final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final m = dt.minute.toString().padLeft(2, '0');
+      final am = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$h:$m $am';
+    }
+    final diff = now.difference(dt);
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][dt.weekday - 1];
+    return '${dt.month}/${dt.day}';
   }
 }
 
