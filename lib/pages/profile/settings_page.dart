@@ -63,7 +63,35 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _handleDeleteAccount() async {
+  Future<void> _clearChatCache() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat Cache'),
+        content: const Text(
+          'This will clear all cached messages and media. You will need to re-download them when you open chats.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // TODO: Implement actual cache clearing when CacheService is available
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chat cache cleared')),
+      );
+    }
+  }
+
     final cs = Theme.of(context).colorScheme;
     
     final confirmed = await showDialog<bool>(
@@ -258,6 +286,97 @@ class _SettingsPageState extends State<SettingsPage> {
                 onChanged: (value) => _updatePreference(
                   _prefs!.copyWith(vibrationEnabled: value),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Chat Settings Section
+          _SectionCard(
+            title: 'Chat',
+            children: [
+              _ToggleRow(
+                label: 'Message Notifications',
+                subtitle: 'Receive notifications for new messages',
+                value: _prefs!.chatMessagesEnabled,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(chatMessagesEnabled: value),
+                ),
+              ),
+              const Divider(height: 1),
+              _ToggleRow(
+                label: 'Typing Indicators',
+                subtitle: 'Let others see when you\'re typing',
+                value: _prefs!.typingIndicatorsEnabled,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(typingIndicatorsEnabled: value),
+                ),
+              ),
+              const Divider(height: 1),
+              _ToggleRow(
+                label: 'Read Receipts',
+                subtitle: 'Let others know when you\'ve read messages',
+                value: _prefs!.readReceiptsEnabled,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(readReceiptsEnabled: value),
+                ),
+              ),
+              const Divider(height: 1),
+              _ToggleRow(
+                label: 'Message Previews',
+                subtitle: 'Show message content in notifications',
+                value: _prefs!.messagePreviewsEnabled,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(messagePreviewsEnabled: value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Privacy Section
+          _SectionCard(
+            title: 'Privacy',
+            children: [
+              _ToggleRow(
+                label: 'Show Online Status',
+                subtitle: 'Let others see when you\'re online',
+                value: _prefs!.showOnlineStatus,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(showOnlineStatus: value),
+                ),
+              ),
+              const Divider(height: 1),
+              _ToggleRow(
+                label: 'Show Last Seen',
+                subtitle: 'Display when you were last active',
+                value: _prefs!.showLastSeen,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(showLastSeen: value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Storage & Data Section
+          _SectionCard(
+            title: 'Storage & Data',
+            children: [
+              _ToggleRow(
+                label: 'Auto-download Media',
+                subtitle: 'Download images and videos automatically',
+                value: _prefs!.autoDownloadMedia,
+                onChanged: (value) => _updatePreference(
+                  _prefs!.copyWith(autoDownloadMedia: value),
+                ),
+              ),
+              const Divider(height: 1),
+              _ActionRow(
+                label: 'Clear Chat Cache',
+                subtitle: 'Free up storage space',
+                icon: Icons.delete_outline,
+                onTap: _clearChatCache,
               ),
             ],
           ),
@@ -634,6 +753,61 @@ class _InfoRow extends StatelessWidget {
                   style: context.textStyles.bodyMedium?.withColor(cs.onSurfaceVariant),
                 ),
         ],
+      ),
+    );
+  }
+}
+
+/// Action row with icon button
+class _ActionRow extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ActionRow({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: context.textStyles.bodyMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

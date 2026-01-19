@@ -655,6 +655,19 @@ class NotificationPreferences {
   final bool systemEnabled;
   final bool soundEnabled;
   final bool vibrationEnabled;
+  
+  // Chat-specific settings
+  final bool chatMessagesEnabled;
+  final bool typingIndicatorsEnabled;
+  final bool readReceiptsEnabled;
+  final bool messagePreviewsEnabled;
+  
+  // Privacy settings
+  final bool showOnlineStatus;
+  final bool showLastSeen;
+  
+  // Storage settings
+  final bool autoDownloadMedia;
 
   const NotificationPreferences({
     required this.userId,
@@ -665,6 +678,13 @@ class NotificationPreferences {
     this.systemEnabled = true,
     this.soundEnabled = true,
     this.vibrationEnabled = true,
+    this.chatMessagesEnabled = true,
+    this.typingIndicatorsEnabled = true,
+    this.readReceiptsEnabled = true,
+    this.messagePreviewsEnabled = true,
+    this.showOnlineStatus = true,
+    this.showLastSeen = true,
+    this.autoDownloadMedia = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -676,6 +696,13 @@ class NotificationPreferences {
     'system_enabled': systemEnabled,
     'sound_enabled': soundEnabled,
     'vibration_enabled': vibrationEnabled,
+    'chat_messages_enabled': chatMessagesEnabled,
+    'typing_indicators_enabled': typingIndicatorsEnabled,
+    'read_receipts_enabled': readReceiptsEnabled,
+    'message_previews_enabled': messagePreviewsEnabled,
+    'show_online_status': showOnlineStatus,
+    'show_last_seen': showLastSeen,
+    'auto_download_media': autoDownloadMedia,
   };
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) => NotificationPreferences(
@@ -687,6 +714,13 @@ class NotificationPreferences {
     systemEnabled: json['system_enabled'] as bool? ?? true,
     soundEnabled: json['sound_enabled'] as bool? ?? true,
     vibrationEnabled: json['vibration_enabled'] as bool? ?? true,
+    chatMessagesEnabled: json['chat_messages_enabled'] as bool? ?? true,
+    typingIndicatorsEnabled: json['typing_indicators_enabled'] as bool? ?? true,
+    readReceiptsEnabled: json['read_receipts_enabled'] as bool? ?? true,
+    messagePreviewsEnabled: json['message_previews_enabled'] as bool? ?? true,
+    showOnlineStatus: json['show_online_status'] as bool? ?? true,
+    showLastSeen: json['show_last_seen'] as bool? ?? true,
+    autoDownloadMedia: json['auto_download_media'] as bool? ?? true,
   );
 
   NotificationPreferences copyWith({
@@ -698,6 +732,13 @@ class NotificationPreferences {
     bool? systemEnabled,
     bool? soundEnabled,
     bool? vibrationEnabled,
+    bool? chatMessagesEnabled,
+    bool? typingIndicatorsEnabled,
+    bool? readReceiptsEnabled,
+    bool? messagePreviewsEnabled,
+    bool? showOnlineStatus,
+    bool? showLastSeen,
+    bool? autoDownloadMedia,
   }) => NotificationPreferences(
     userId: userId ?? this.userId,
     workspaceEnabled: workspaceEnabled ?? this.workspaceEnabled,
@@ -707,6 +748,13 @@ class NotificationPreferences {
     systemEnabled: systemEnabled ?? this.systemEnabled,
     soundEnabled: soundEnabled ?? this.soundEnabled,
     vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+    chatMessagesEnabled: chatMessagesEnabled ?? this.chatMessagesEnabled,
+    typingIndicatorsEnabled: typingIndicatorsEnabled ?? this.typingIndicatorsEnabled,
+    readReceiptsEnabled: readReceiptsEnabled ?? this.readReceiptsEnabled,
+    messagePreviewsEnabled: messagePreviewsEnabled ?? this.messagePreviewsEnabled,
+    showOnlineStatus: showOnlineStatus ?? this.showOnlineStatus,
+    showLastSeen: showLastSeen ?? this.showLastSeen,
+    autoDownloadMedia: autoDownloadMedia ?? this.autoDownloadMedia,
   );
 }
 
