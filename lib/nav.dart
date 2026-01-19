@@ -29,6 +29,7 @@ import 'package:thittam1hub/pages/profile/verification_page.dart';
 import 'package:thittam1hub/pages/chat/chat_page.dart';
 import 'package:thittam1hub/pages/chat/message_thread_page.dart';
 import 'package:thittam1hub/pages/chat/new_message_page.dart';
+import 'package:thittam1hub/pages/chat/chat_settings_page.dart';
 import 'package:thittam1hub/pages/impact/who_liked_you_page.dart';
 import 'package:thittam1hub/models/models.dart';
 import 'package:thittam1hub/models/user_ticket.dart';
@@ -259,6 +260,20 @@ class AppRouter {
             GoRoute(
               path: '/profile/settings',
               pageBuilder: (context, state) => _buildPageTransition(const SettingsPage(), state),
+            ),
+            GoRoute(
+              path: '/chat/settings',
+              pageBuilder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return _buildPageTransition(
+                  ChatSettingsPage(
+                    channelId: extra?['channelId'] as String?,
+                    channelName: extra?['channelName'] as String?,
+                    isDM: extra?['isDM'] as bool? ?? false,
+                  ),
+                  state,
+                );
+              },
             ),
             GoRoute(
               path: '/profile/tickets',
