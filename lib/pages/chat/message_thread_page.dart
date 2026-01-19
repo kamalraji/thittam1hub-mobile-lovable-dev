@@ -67,7 +67,7 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
     _composerController.forward();
     
     _subscribeTyping();
-    _loadReactionsAndReceipts();
+    _subscribeToReactions();
     
     // Mark channel as read
     ChatService.updateLastRead(widget.channelId);
@@ -77,6 +77,7 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
   void dispose() {
     _typingCleanup?.cancel();
     _typingDebounce?.cancel();
+    _reactionSubscription?.cancel();
     _composerController.dispose();
     _input.dispose();
     _scroll.dispose();
@@ -115,8 +116,57 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
     });
   }
 
-  Future<void> _loadReactionsAndReceipts() async {
-    // This would be called after messages load
+  Set<String> _loadedMessageIds = {};
+  StreamSubscription? _reactionSubscription;
+
+  Future<void> _loadReactionsAndReceipts([List<Message>? messages]) async {
+    if (messages == null || messages.isEmpty) return;
+    
+    final me = SupabaseConfig.auth.currentUser?.id;
+    if (me == null) return;
+    
+    // Only load for new messages
+    final newIds = messages.map((m) => m.id).where((id) => !_loadedMessageIds.contains(id)).toList();
+    if (newIds.isEmpty) return;
+    
+    _loadedMessageIds.addAll(newIds);
+    
+    try {
+      // Batch load reactions
+      final reactions = await ChatService.getReactionsForMessages(newIds);
+      
+      // Batch load read receipts for own messages
+      final ownMessageIds = messages
+          .where((m) => m.senderId == me)
+          .map((m) => m.id)
+          .toList();
+      final receipts = await ChatService.getReadReceipts(ownMessageIds);
+      
+      if (mounted) {
+        setState(() {
+          _reactions.addAll(reactions);
+          _readReceipts.addAll(receipts);
+        });
+      }
+    } catch (e) {
+      debugPrint('_loadReactionsAndReceipts error: $e');
+    }
+  }
+
+  void _subscribeToReactions() {
+    _reactionSubscription?.cancel();
+    _reactionSubscription = ChatService.streamReactions(widget.channelId).listen((reactions) {
+      final Map<String, List<Map<String, dynamic>>> grouped = {};
+      for (final r in reactions) {
+        final msgId = r['message_id'] as String?;
+        if (msgId != null) {
+          grouped.putIfAbsent(msgId, () => []).add(r);
+        }
+      }
+      if (mounted) {
+        setState(() => _reactions = grouped);
+      }
+    });
   }
 
   Future<void> _onSend() async {
@@ -172,7 +222,19 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
 
   Future<void> _onReaction(String messageId, String emoji) async {
     HapticFeedback.mediumImpact();
-    await ChatService.addReaction(messageId, emoji);
+    
+    // Check if user already reacted with this emoji to toggle
+    final me = SupabaseConfig.auth.currentUser?.id;
+    final reactions = _reactions[messageId] ?? [];
+    final alreadyReacted = reactions.any((r) => 
+      r['user_id'] == me && r['emoji'] == emoji
+    );
+    
+    if (alreadyReacted) {
+      await ChatService.removeReaction(messageId, emoji);
+    } else {
+      await ChatService.addReaction(messageId, emoji);
+    }
   }
 
   void _showReactionPicker(BuildContext context, String messageId, Offset position) {
@@ -228,7 +290,13 @@ class _MessageThreadPageState extends State<MessageThreadPage> with TickerProvid
                 builder: (context, snapshot) {
                   final messages = snapshot.data ?? [];
                   
-                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                  // Load reactions and receipts for new messages
+                  if (messages.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _loadReactionsAndReceipts(messages);
+                      _scrollToBottom();
+                    });
+                  }
                   
                   if (messages.isEmpty) {
                     return const _EmptyThread();
