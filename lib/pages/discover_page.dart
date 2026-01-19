@@ -8,6 +8,7 @@ import 'package:thittam1hub/utils/animations.dart';
 import 'package:thittam1hub/utils/result.dart';
 import 'package:thittam1hub/widgets/branded_refresh_indicator.dart';
 import 'package:thittam1hub/nav.dart';
+import 'package:thittam1hub/utils/icon_mappings.dart';
 
 class DiscoverPage extends StatefulWidget {
   final String? initialCategory;
@@ -49,23 +50,13 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
   }
   
   EventCategory? _parseCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'hackathon':
-        return EventCategory.HACKATHON;
-      case 'workshop':
-        return EventCategory.WORKSHOP;
-      case 'conference':
-        return EventCategory.CONFERENCE;
-      case 'meetup':
-        return EventCategory.MEETUP;
-      case 'webinar':
-        return EventCategory.WEBINAR;
-      case 'seminar':
-        return EventCategory.SEMINAR;
-      case 'competition':
-        return EventCategory.COMPETITION;
-      default:
-        return null;
+    final upper = category.toUpperCase();
+    try {
+      return EventCategory.values.firstWhere(
+        (e) => e.name == upper,
+      );
+    } catch (_) {
+      return null;
     }
   }
   
@@ -211,43 +202,127 @@ class _DiscoverPageState extends State<DiscoverPage> with SingleTickerProviderSt
 
   Widget _categoryChips() {
     final cs = Theme.of(context).colorScheme;
-    final cats = [null, EventCategory.HACKATHON, EventCategory.WORKSHOP, EventCategory.CONFERENCE, EventCategory.MEETUP, EventCategory.WEBINAR, EventCategory.SEMINAR, EventCategory.COMPETITION];
+    // Show featured categories inline, with "More" button for full list
+    final featuredCats = <EventCategory?>[
+      null, // All
+      EventCategory.HACKATHON,
+      EventCategory.WORKSHOP,
+      EventCategory.CONFERENCE,
+      EventCategory.MEETUP,
+      EventCategory.WEBINAR,
+      EventCategory.NETWORKING,
+      EventCategory.STARTUP_PITCH,
+    ];
+    
     return SizedBox(
-      height: 28,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         itemBuilder: (_, i) {
-          final cat = cats[i];
+          // Last item is "More" button
+          if (i == featuredCats.length) {
+            return GestureDetector(
+              onTap: _showCategorySheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: cs.outline.withValues(alpha: 0.3), width: 1.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.more_horiz_rounded, size: 16, color: cs.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      'More',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          
+          final cat = featuredCats[i];
           final selected = _selectedCategory == cat;
           final label = cat == null ? 'All' : cat.displayName;
+          final icon = cat == null 
+              ? IconMappings.filterAll 
+              : IconMappings.getEventCategoryIcon(cat);
+          final color = cat == null 
+              ? cs.primary 
+              : IconMappings.getEventCategoryColor(cat);
+          
           return GestureDetector(
             onTap: () {
               setState(() => _selectedCategory = cat);
               _updateUrl();
             },
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: selected ? cs.primary : cs.surfaceContainerHighest,
+                color: selected ? color : cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: selected ? cs.primary : cs.outline.withValues(alpha: 0.4),
+                  color: selected ? color : cs.outline.withValues(alpha: 0.3),
+                  width: 1.5,
                 ),
+                boxShadow: selected ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : null,
               ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? cs.onPrimary : cs.onSurface,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: selected ? Colors.white : cs.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? Colors.white : cs.onSurface,
+                    ),
+                  ),
+                ],
               ),
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemCount: cats.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemCount: featuredCats.length + 1, // +1 for "More" button
+      ),
+    );
+  }
+
+  void _showCategorySheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CategoryFilterSheet(
+        selectedCategory: _selectedCategory,
+        onCategorySelected: (cat) {
+          setState(() => _selectedCategory = cat);
+          _updateUrl();
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -573,6 +648,162 @@ class _EventsTab extends StatelessWidget {
                 );
               },
             ),
+    );
+  }
+}
+
+/// Bottom sheet for selecting event categories with grouped display
+class _CategoryFilterSheet extends StatelessWidget {
+  const _CategoryFilterSheet({
+    required this.selectedCategory,
+    required this.onCategorySelected,
+  });
+
+  final EventCategory? selectedCategory;
+  final void Function(EventCategory?) onCategorySelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final groupedCategories = IconMappings.getGroupedEventCategories();
+    
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: cs.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+            child: Row(
+              children: [
+                Text(
+                  'Select Category',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (selectedCategory != null)
+                  TextButton(
+                    onPressed: () => onCategorySelected(null),
+                    child: Text(
+                      'Clear',
+                      style: TextStyle(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close_rounded, color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          // Category list
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              itemCount: groupedCategories.length,
+              itemBuilder: (context, index) {
+                final groupName = groupedCategories.keys.elementAt(index);
+                final categories = groupedCategories[groupName]!;
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 12, bottom: 8),
+                      child: Text(
+                        groupName,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: categories.map((config) {
+                        final isSelected = selectedCategory == config.category;
+                        final color = config.category != null
+                            ? IconMappings.getEventCategoryColor(config.category!)
+                            : cs.primary;
+                        
+                        return GestureDetector(
+                          onTap: () => onCategorySelected(config.category),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? color : cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: isSelected ? color : cs.outline.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: isSelected ? [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ] : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  config.icon,
+                                  size: 16,
+                                  color: isSelected ? Colors.white : cs.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  config.label,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected ? Colors.white : cs.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
