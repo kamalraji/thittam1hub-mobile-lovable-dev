@@ -6,63 +6,103 @@ import 'package:flutter/material.dart';
 
 enum EventMode { ONLINE, OFFLINE, HYBRID }
 
+/// Event categories matching the Supabase database enum.
+/// 
+/// These values must stay in sync with the `event_category` enum 
+/// defined in the database. Any additions or removals must be 
+/// coordinated with database migrations.
+/// 
+/// Total: 41 categories matching TypeScript enum in types.ts
+/// 
+/// See also:
+/// - [CategoryUtils] for parsing and validation utilities
+/// - [IconMappings.getEventCategoryIcon] for category icons
+/// - [IconMappings.getEventCategoryColor] for category colors
 enum EventCategory {
-  // Tech & Learning
+  // === Database order (matching Supabase enum) ===
+  
+  /// Technology competitions with coding challenges
   HACKATHON,
+  /// Intensive training programs
   BOOTCAMP,
+  /// Hands-on learning sessions
   WORKSHOP,
-  WEBINAR,
-  SEMINAR,
-  LECTURE,
-  TRAINING,
-  SYMPOSIUM,
-  
-  // Professional & Career
+  /// Large-scale professional gatherings
   CONFERENCE,
+  /// Community gatherings
   MEETUP,
-  NETWORKING,
-  CAREER_FAIR,
-  SUMMIT,
-  PANEL_DISCUSSION,
-  TOWN_HALL,
-  TEAM_BUILDING,
-  OFFSITE,
-  TRADE_SHOW,
-  EXPO,
-  
-  // Startup & Innovation
+  /// Startup presentation events
   STARTUP_PITCH,
-  DEMO_DAY,
-  PRODUCT_LAUNCH,
+  /// Recruitment coding challenges
   HIRING_CHALLENGE,
-  
-  // Academic & Education
+  /// Online presentations
+  WEBINAR,
+  /// Competitive events
   COMPETITION,
-  QUIZ,
-  DEBATE,
-  ORIENTATION,
-  ALUMNI_MEET,
-  
-  // Cultural & Entertainment
-  CULTURAL_FEST,
-  SPORTS_EVENT,
-  CONCERT,
-  EXHIBITION,
-  FESTIVAL,
-  
-  // Social & Community
-  SOCIAL_GATHERING,
-  AWARDS_CEREMONY,
-  GALA,
-  
-  // Charity & Cause
-  FUNDRAISER,
-  CHARITY_EVENT,
-  VOLUNTEER_DRIVE,
-  AWARENESS_CAMPAIGN,
-  
-  // Other
+  /// Uncategorized events
   OTHER,
+  /// Educational presentations
+  SEMINAR,
+  /// Academic conferences
+  SYMPOSIUM,
+  /// Cultural celebrations
+  CULTURAL_FEST,
+  /// Athletic competitions
+  SPORTS_EVENT,
+  /// Introductory sessions
+  ORIENTATION,
+  /// Alumni reunions
+  ALUMNI_MEET,
+  /// Job fairs
+  CAREER_FAIR,
+  /// Educational talks
+  LECTURE,
+  /// Knowledge competitions
+  QUIZ,
+  /// Formal discussions
+  DEBATE,
+  /// Product announcements
+  PRODUCT_LAUNCH,
+  /// Company-wide meetings
+  TOWN_HALL,
+  /// Team bonding activities
+  TEAM_BUILDING,
+  /// Professional development
+  TRAINING,
+  /// Recognition ceremonies
+  AWARDS_CEREMONY,
+  /// Remote team events
+  OFFSITE,
+  /// Professional connections
+  NETWORKING,
+  /// Industry exhibitions
+  TRADE_SHOW,
+  /// Large exhibitions
+  EXPO,
+  /// Executive gatherings
+  SUMMIT,
+  /// Expert discussions
+  PANEL_DISCUSSION,
+  /// Product demonstrations
+  DEMO_DAY,
+  /// Charity fundraising
+  FUNDRAISER,
+  /// Formal celebrations
+  GALA,
+  /// Charitable events
+  CHARITY_EVENT,
+  /// Volunteer recruitment
+  VOLUNTEER_DRIVE,
+  /// Cause promotion
+  AWARENESS_CAMPAIGN,
+  /// Music performances
+  CONCERT,
+  /// Art displays
+  EXHIBITION,
+  /// Multi-day celebrations
+  FESTIVAL,
+  /// Casual meetups
+  SOCIAL_GATHERING,
 }
 
 enum EventVisibility { PUBLIC, PRIVATE, UNLISTED }
